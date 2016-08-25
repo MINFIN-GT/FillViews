@@ -11,12 +11,12 @@ public class CDimensionTiempo {
 			DateTime end = new DateTime(end_year+1,1,1,0,0);
 			try{
 				if(!conn.isClosed()){
-					PreparedStatement pstm_delete = conn.prepareStatement("DELETE FROM dashboard.tiempo WHERE ejercicio BETWEEN ? AND ?");
-					pstm_delete.setInt(1, init_year);
-					pstm_delete.setInt(2, end_year);
-					pstm_delete.executeUpdate();
+					//PreparedStatement pstm_delete = conn.prepareStatement("DELETE FROM dashboard.tiempo WHERE ejercicio BETWEEN ? AND ?");
+					//pstm_delete.setInt(1, init_year);
+					//pstm_delete.setInt(2, end_year);
+					//pstm_delete.executeUpdate();
 					long cont=0;
-					PreparedStatement pstm = conn.prepareStatement("INSERT INTO dashboard.tiempo(dia, semana, mes, trimestre, cuatrimestre, ejercicio, fecha_inicio, fecha_fin) VALUES(?,?,?,?,?,?,?,?)");
+					PreparedStatement pstm = conn.prepareStatement("INSERT INTO dashboard.tiempo VALUES(?,?,?,?,?,?,?,?)");
 					while(init.getMillis()<end.getMillis()){
 						pstm.setInt(1, init.getDayOfMonth());
 						pstm.setInt(2, init.getWeekOfWeekyear());
@@ -26,15 +26,12 @@ public class CDimensionTiempo {
 						pstm.setInt(6, init.getYear());
 						pstm.setLong(7, init.getMillis());
 						pstm.setLong(8, init.plusHours(23).plusMinutes(59).plusSeconds(59).plusMillis(999).getMillis());
-						pstm.addBatch();
 						init = init.plusDays(1);
 						cont++;
-						if(cont%1000==0)
-							pstm.executeBatch();
-						if(cont%10==0)
+						pstm.executeUpdate();
+						if(cont%100==0)
 							CLogger.writeConsole(cont+" Registros insertados");
 					}
-					pstm.executeBatch();
 					pstm.close();
 					CLogger.writeConsole("Totald e registros insertados "+cont);
 				}

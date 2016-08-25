@@ -14,6 +14,7 @@ public class CEjecucionCalamidad {
 	
 	public static boolean loadEjecucionFisicaFinanciera(boolean descentralizadas){
 		DateTime date = new DateTime();
+		String esquema = descentralizadas ? "sicoindescent" : "sicoinprod";
 		String query = "select p.ejercicio,p.entidad, e.nombre entidad_nombre, p.unidad_ejecutora, ue.nombre unidad_ejecutora_nombre,  p.programa, prog.NOM_ESTRUCTURA programa_nombre "+
        ",p.subprograma, subp.nom_estructura subprograma_nombre,  p.proyecto, proy.nom_estructura proyecto_nombre, p.actividad, p.obra, act.nom_estructura actividad_nombre, "+
        "p.RENGLON, r.nombre renglon_nombre, metas.codigo_meta, metas.descripcion meta_nombre  , metas.unidad_medida, um.nombre unidad_medida_nombre, "+
@@ -25,10 +26,10 @@ public class CEjecucionCalamidad {
        " then sum(gasto.monto_renglon) "+
        " else null "+
        "end ejecutado, metas.meta, avance.meta_avanzado "+
-       "from EG_F6_PARTIDAS p  "+
-       "left join (select distinct p3.entidad from eg_f6_partidas p3 where p3.unidad_ejecutora > 0 and p3.ejercicio = "+date.getYear()+") p2 on ( p2.entidad = p.entidad) "+ 
+       "from "+esquema+".EG_F6_PARTIDAS p  "+
+       "left join (select distinct p3.entidad from "+esquema+".eg_f6_partidas p3 where p3.unidad_ejecutora > 0 and p3.ejercicio = "+date.getYear()+") p2 on ( p2.entidad = p.entidad) "+ 
        "left join (select d.ejercicio, d.entidad, d.unidad_ejecutora, d.programa, d.subprograma, d.proyecto, d.obra, d.actividad, d.renglon, d.monto_renglon  "+
-       "     from eg_gastos_hoja h, eg_gastos_detalle d  "+
+       "     from "+esquema+".eg_gastos_hoja h, "+esquema+".eg_gastos_detalle d  "+
        "     where h.ejercicio=d.ejercicio and h.entidad=d.entidad and h.unidad_ejecutora=d.unidad_ejecutora and h.no_cur=d.no_cur "+
        "     and h.estado='APROBADO' and h.clase_registro in ('DEV','CYD','REG','RDP') and d.ejercicio = "+date.getYear()+" and d.programa = 94 "+
        "   ) gasto "+
@@ -36,21 +37,21 @@ public class CEjecucionCalamidad {
        "       and p.programa=gasto.programa and p.subprograma=gasto.subprograma and p.proyecto=gasto.proyecto and p.obra=gasto.obra "+ 
        "       and p.actividad=gasto.actividad and p.renglon=gasto.renglon ) "+
        "left join (select m.ejercicio,m.entidad,m.unidad_ejecutora,m.programa,m.subprograma,m.proyecto,m.obra,m.actividad,m.codigo_meta,m.descripcion, m.unidad_medida,(m.CANTIDAD+m.ADICION+m.DISMINUCION) meta "+
-       "     from sf_meta m left join (select distinct m3.entidad from sf_meta m3 where m3.unidad_ejecutora > 0 and m3.ejercicio = "+date.getYear()+") m2 on ( m2.entidad = m.entidad) "+
+       "     from "+esquema+".sf_meta m left join (select distinct m3.entidad from "+esquema+".sf_meta m3 where m3.unidad_ejecutora > 0 and m3.ejercicio = "+date.getYear()+") m2 on ( m2.entidad = m.entidad) "+
        "     where (m2.entidad is null or m.unidad_ejecutora>0) and m.ejercicio = "+date.getYear()+" and m.programa=94 "+
        "   ) metas "+
        "   on (p.ejercicio = metas.ejercicio and p.entidad=metas.entidad and p.unidad_ejecutora=metas.unidad_ejecutora "+
        "       and p.programa=metas.programa and p.subprograma = metas.subprograma and p.proyecto=metas.proyecto and p.obra=metas.obra "+
        "       and p.actividad=metas.actividad) "+
        "left join (select d.ejercicio, d.entidad, d.unidad_ejecutora, d.programa, d.subprograma, d.proyecto, d.obra, d.actividad, d.codigo_meta, d.cantidad_unidades meta_avanzado"+
-       "     from sf_ejecucion_hoja_4 h, sf_ejecucion_detalle_4 d "+
+       "     from "+esquema+".sf_ejecucion_hoja_4 h, "+esquema+".sf_ejecucion_detalle_4 d "+
        "     where h.ejercicio=d.ejercicio and h.entidad=d.entidad and h.unidad_ejecutora=d.unidad_ejecutora and h.no_cur=d.no_cur "+
        "     and h.estado='APROBADO' and d.ejercicio = "+date.getYear()+" and d.programa=94 "+
        "     ) avance   "+
        "     on(metas.ejercicio=avance.ejercicio and metas.entidad=avance.entidad and metas.unidad_ejecutora=avance.unidad_ejecutora "+
        "     and metas.programa=avance.programa and metas.subprograma=avance.subprograma and metas.proyecto=avance.proyecto and metas.obra=avance.obra "+
        "     and metas.actividad=avance.actividad and metas.codigo_meta=avance.codigo_meta) "+
-       ",cg_entidades e, cg_entidades ue, cp_estructuras prog, cp_estructuras subp, cp_estructuras proy, cp_estructuras act, cp_objetos_gasto r, fp_unidad_medida um "+
+       ","+esquema+".cg_entidades e, "+esquema+".cg_entidades ue, "+esquema+".cp_estructuras prog, "+esquema+".cp_estructuras subp, "+esquema+".cp_estructuras proy, "+esquema+".cp_estructuras act, "+esquema+".cp_objetos_gasto r, "+esquema+".fp_unidad_medida um "+
        "where (p2.entidad is null or p.unidad_ejecutora>0)  "+
        "and p.ejercicio= "+date.getYear()+" and p.programa = 94  "+
        "and e.ejercicio=p.ejercicio and e.entidad=p.entidad and e.unidad_ejecutora = 0 "+
@@ -72,35 +73,38 @@ public class CEjecucionCalamidad {
 		try{
 			Connection conn = descentralizadas ? CHive.openConnectiondes() : CHive.openConnection();			
 			if(!conn.isClosed()&&CMemSQL.connect()){
-				ResultSet rs = conn.prepareStatement(query).executeQuery();
+				PreparedStatement pstm0 = conn.prepareStatement(query);
+				pstm0.setFetchSize(100);
+				ResultSet rs = pstm0.executeQuery();
 				if(rs!=null){
 					int rows = 0;
 					CLogger.writeConsole("CEjecucionCalamidad (loadEjecucionFisica "+ (descentralizadas ? "Descentralizadas" : "Centralizadas") +"):");
-					PreparedStatement pstm;
+					PreparedStatement pstm=null;		
 					boolean first=true;
 					ret=true;
+					pstm = CMemSQL.getConnection().prepareStatement("Insert INTO calamidad_ejecucion (ejercicio,entidad,entidad_nombre,unidad_ejecutora,"
+							+ " unidad_ejecutora_nombre,programa,programa_nombre "+
+						       ",subprograma,subprograma_nombre,proyecto,proyecto_nombre,actividad,obra,actividad_nombre, "+
+						       "RENGLON,renglon_nombre,codigo_meta,meta_nombre,unidad_medida,unidad_medida_nombre, "+
+						       "vigente, "+
+						       "ejecutado,meta,meta_avanzado) "+
+								"values (?,?,?,?,?,"
+									  + "?,?,?,?,?,"
+									  + "?,?,?,?,?,"
+									  + "?,?,?,?,?,"
+									  + "?,?,?,?) ");
 					while(rs.next()){
 						if (first && !descentralizadas){
-							first=false;
-							pstm = CMemSQL.getConnection().prepareStatement("delete from calamidad_ejecucion "
+							first=false;							
+							PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from calamidad_ejecucion "
 									+" where ejercicio=" + date.getYear())  ;
-							if (pstm.executeUpdate()>0)
+							if (pstm2.executeUpdate()>0)
 								CLogger.writeConsole("Registros eliminados");
 							else
 								CLogger.writeConsole("Sin registros para eliminar");	
-							pstm.close();
+							pstm2.close();
 						}
-						pstm = CMemSQL.getConnection().prepareStatement("Insert INTO calamidad_ejecucion (ejercicio,entidad,entidad_nombre,unidad_ejecutora,"
-								+ " unidad_ejecutora_nombre,programa,programa_nombre "+
-							       ",subprograma,subprograma_nombre,proyecto,proyecto_nombre,actividad,obra,actividad_nombre, "+
-							       "RENGLON,renglon_nombre,codigo_meta,meta_nombre,unidad_medida,unidad_medida_nombre, "+
-							       "vigente, "+
-							       "ejecutado,meta,meta_avanzado) "+
-									"values (?,?,?,?,?,"
-										  + "?,?,?,?,?,"
-										  + "?,?,?,?,?,"
-										  + "?,?,?,?,?,"
-										  + "?,?,?,?) ");
+						
 						pstm.setInt(1, rs.getInt("ejercicio"));
 						pstm.setInt(2, rs.getInt("entidad"));
 						pstm.setString(3, rs.getString("entidad_nombre"));
@@ -125,14 +129,19 @@ public class CEjecucionCalamidad {
 						pstm.setDouble(22, rs.getDouble("ejecutado"));
 						pstm.setDouble(23, rs.getDouble("meta"));
 						pstm.setDouble(24, rs.getDouble("meta_avanzado"));
-						ret = ret && pstm.executeUpdate()>0;
+						pstm.addBatch();
 						rows++;
-						if((rows % 5) == 0)
+						if((rows % 10) == 0){
+							ret = ret & pstm.executeBatch().length>0;
 							CLogger.writeConsole(String.join("Records escritos: ",String.valueOf(rows)));
-						pstm.close();
-					}		
+						}
+					}
+					ret = ret & pstm.executeBatch().length>0;
+					pstm.close();
 				}
+				pstm0.close();
 			}
+			
 			conn.close();
 		}
 		catch(Exception e){
@@ -148,15 +157,17 @@ public class CEjecucionCalamidad {
 	public static boolean loadActividadesPresupuestarias(boolean descentralizadas,int programa){
 		boolean ret=false;
 		int act = 0;
+		String esquema = descentralizadas ? "sicoindescent" : "sicoinprod";
+
 		DateTime date = new DateTime();
 		try{
 			Connection conn = descentralizadas ? CHive.openConnectiondes() : CHive.openConnection();			
 			if(!conn.isClosed()&&CMemSQL.connect()){
 				ResultSet rs = conn.prepareStatement("select e1.ejercicio,e1.ENTIDAD,e1.unidad_ejecutora,e1.programa,e1.subprograma,e1.proyecto,e1.obra,e1.actividad, " + 
 						"e1.nom_estructura nombre,e1.DESCRIPCION, meta.meta,meta.fecha_inicio,meta.fecha_fin,ejecucion.avance " + 
-						"from sicoinprod.cp_estructuras e1 " + 
+						"from "+esquema+".cp_estructuras e1 " + 
 						"  left join (  " + 
-						"  select distinct e3.entidad from sicoinprod.cp_estructuras e3 where e3.unidad_ejecutora > 0 and e3.ejercicio = "+ date.getYear()+" " + 
+						"  select distinct e3.entidad from "+esquema+".cp_estructuras e3 where e3.unidad_ejecutora > 0 and e3.ejercicio = "+ date.getYear()+" " + 
 						"  ) e2  " + 
 						"  on (  " + 
 						"    e2.entidad = e1.entidad " + 
@@ -164,7 +175,7 @@ public class CEjecucionCalamidad {
 						"  left join ( " + 
 						"  select  m.ejercicio,m.entidad,m.unidad_ejecutora,m.programa,m.subprograma,m.proyecto,m.actividad,m.obra, " + 
 						"         sum(m.cantidad+m.adicion+m.disminucion) meta, min(m.fecha_inicio) fecha_inicio, max(m.fecha_fin) fecha_fin           " + 
-						"  from SF_META m  " + 
+						"  from "+esquema+".sf_meta m  " + 
 						"  group by  m.ejercicio,m.entidad,m.unidad_ejecutora,m.programa,m.subprograma,m.proyecto,m.actividad,m.obra " + 
 						") meta " + 
 						"on ( " + 
@@ -179,7 +190,7 @@ public class CEjecucionCalamidad {
 						")  " + 
 						"left join ( " + 
 						"  select d.ejercicio,d.entidad,d.unidad_ejecutora,d.programa,d.subprograma,d.proyecto,d.obra,d.actividad,sum(d.CANTIDAD_UNIDADES) avance " + 
-						"  from sicoinprod.sf_ejecucion_hoja_4 h, sicoinprod.sf_ejecucion_detalle_4 d " + 
+						"  from "+esquema+".sf_ejecucion_hoja_4 h, "+esquema+".sf_ejecucion_detalle_4 d " + 
 						"  where h.ejercicio = d.ejercicio " + 
 						"  and h.entidad = d.entidad " + 
 						"  and h.unidad_ejecutora = d.unidad_ejecutora " + 
