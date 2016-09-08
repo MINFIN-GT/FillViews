@@ -28,6 +28,7 @@ public class CMain {
 		options.addOption("dt", "dimension-tiempo", false, "crea la dimension tiempo");
 		options.addOption("mp", "metas-presidenciales", false, "calcula la vista de metas presidenciales");
 		options.addOption("mp_des", "metas-presidenciales-descentralizadas", false, "calcula la vista de metas presidenciales");
+		options.addOption("efp", "ejecucion-financiera-prestamos", false, "cargar ejecucion financiera de Prestamos");
 		options.addOption( "h", "help", false, "muestra este listado de opciones" );
 	}
 	
@@ -86,6 +87,12 @@ public class CMain {
 				 if(CMeta.calcularMv_meta_presidencial_descentralizadas(conn, start.getYear()))
 					 CLogger.writeConsole("Datos de metas presidenciales descentralizadas calculados con exito");
 			 }
+			 else if(cline.hasOption("ejecucion-financiera-prestamos")){
+				 CLogger.writeConsole("Inicio carga de ejecucion financiera de los prestamos");
+				 if(CEjecucionPrestamos.loadEjecucionFisicaFinanciera())
+					 CLogger.writeConsole("Datos de prestamos cargada con exito");
+			 }
+			 
 
 			 else if (cline.hasOption("update-all")){
 				 CLogger.writeConsole("Inicio de importacion de todos las tablas.");
@@ -97,7 +104,8 @@ public class CMain {
 						CEjecucionFisica.loadEjeucionHoja(conn, false, false) &&
 						CEjecucionFisica.loadEjecucionDetalle(conn, false, false) &&
 						CUnidadMedida.loadUnidadesMedida(conn, false, false) &&
-						CEjecucionCalamidad.loadEjecucionFisicaFinanciera(false)&&CEjecucionCalamidad.loadEjecucionFisicaFinanciera(true) 
+						CEjecucionCalamidad.loadEjecucionFisicaFinanciera(false)&&CEjecucionCalamidad.loadEjecucionFisicaFinanciera(true) &&
+						CEjecucionPrestamos.loadEjecucionFisicaFinanciera()
 					)
 					CLogger.writeConsole("todas las tablas importadas con exito");
 			 }
