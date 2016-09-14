@@ -14,7 +14,7 @@ public class CEjecucionPrestamos {
 				"	prestamo.ejercicio,  " + 
 				"	prestamo.fuente, f.nombre fuente_nombre, " + 
 				"	prestamo.organismo,  o.nombre organismo_nombre, " + 
-				"	prestamo.correlativo, prestamo.prestamo_nombre, " + 
+				"	prestamo.correlativo, prestamo.prestamo_nombre, prestamo.prestamo_sigla, " + 
 				"	p.entidad,  e.NOMBRE entidad_nombre, " + 
 				"	p.unidad_ejecutora, ue.nombre unidad_ejecutora_nombre, " + 
 				"	p.programa, prog.NOM_ESTRUCTURA programa_nombre, " + 
@@ -27,7 +27,7 @@ public class CEjecucionPrestamos {
 				"(sum (p.asignado)+ sum (p.adicion)+ sum (p.disminucion)+ sum (p.traspaso_p)+ sum (p.traspaso_n)+ sum (p.transferencia_p)+ sum (p.transferencia_n))  vigente " + 
 				" ,sum (gasto.monto_renglon)   ejecutado " + 
 				"from ( " + 
-				"	select fe.ejercicio, fe.fuente, fe.organismo, fe.correlativo, fe.nombre prestamo_nombre " + 
+				"	select fe.ejercicio, fe.fuente, fe.organismo, fe.correlativo, fe.nombre prestamo_nombre, fe.sigla prestamo_sigla " + 
 				"	from dashboard.prestamo p, sicoinprod.cg_fuentes_especificas fe " + 
 				"	where  p.fuente = fe.fuente  " + 
 				"	and p.organismo = fe.organismo " + 
@@ -67,7 +67,7 @@ public class CEjecucionPrestamos {
 				"    AND proy.ejercicio = p.ejercicio AND proy.entidad = p.entidad AND proy.unidad_ejecutora = p.unidad_ejecutora AND proy.programa = p.programa AND proy.subprograma = p.subprograma AND proy.proyecto = p.proyecto AND proy.nivel_estructura = 4 " + 
 				"    AND act.ejercicio = p.ejercicio AND act.entidad = p.entidad AND act.unidad_ejecutora = p.unidad_ejecutora AND act.programa = p.programa AND act.subprograma = p.subprograma AND act.proyecto = p.proyecto AND act.obra = p.obra AND act.actividad = p.actividad AND act.nivel_estructura = 5 " + 
 				"    AND r.ejercicio = p.ejercicio AND r.renglon = p.renglon " + 
-				"group by prestamo.ejercicio, prestamo.fuente, f.nombre, prestamo.organismo,  o.nombre, prestamo.correlativo, prestamo.prestamo_nombre, " + 
+				"group by prestamo.ejercicio, prestamo.fuente, f.nombre, prestamo.organismo,  o.nombre, prestamo.correlativo, prestamo.prestamo_nombre, prestamo.prestamo_sigla, " + 
 				"p.entidad,  e.NOMBRE, p.unidad_ejecutora,p.programa, prog.NOM_ESTRUCTURA, ue.nombre,p.subprograma, subp.NOM_ESTRUCTURA,p.proyecto, proy.NOM_ESTRUCTURA,p.obra,p.actividad, act.NOM_ESTRUCTURA " + 
 				",p.renglon, r.nombre, p.actividad" ;
 		boolean ret = false;		
@@ -80,14 +80,15 @@ public class CEjecucionPrestamos {
 				ResultSet rs = pstm0.executeQuery();
 				boolean first = true;
 				int rows = 0;
-				pstm = CMemSQL.getConnection().prepareStatement("Insert INTO prestamo (ejercicio,fuente,fuente_nombre,organismo,organismo_nombre,correlativo,prestamo_nombre,entidad,entidad_nombre,unidad_ejecutora,"
+				pstm = CMemSQL.getConnection().prepareStatement("Insert INTO prestamo (ejercicio,fuente,fuente_nombre,organismo,organismo_nombre,correlativo,prestamo_nombre,prestamo_sigla,entidad,entidad_nombre,unidad_ejecutora,"
 						+ " unidad_ejecutora_nombre,programa,programa_nombre,subprograma,subprograma_nombre,proyecto,proyecto_nombre,actividad,obra,actividad_obra_nombre,renglon,renglon_nombre,"+
 					       "asignado,vigente,ejecutado) "+
 							"values (?,?,?,?,?,"
 								  + "?,?,?,?,?,"
 								  + "?,?,?,?,?,"
 								  + "?,?,?,?,?,"
-								  + "?,?,?,?,?) "); 
+								  + "?,?,?,?,?,"
+								  + "?) "); 
 				while(rs.next()){	
 					ret = true;	
 					if (first){
@@ -105,24 +106,25 @@ public class CEjecucionPrestamos {
 					pstm.setString(5, rs.getString("organismo_nombre"));
 					pstm.setInt(6, rs.getInt("correlativo"));
 					pstm.setString(7, rs.getString("prestamo_nombre"));
-					pstm.setInt(8, rs.getInt("entidad"));
-					pstm.setString(9, rs.getString("entidad_nombre"));
-					pstm.setInt(10, rs.getInt("unidad_ejecutora"));
-					pstm.setString(11, rs.getString("unidad_ejecutora_nombre"));
-					pstm.setInt(12, rs.getInt("programa"));
-					pstm.setString(13, rs.getString("programa_nombre"));
-					pstm.setInt(14, rs.getInt("subprograma"));
-					pstm.setString(15, rs.getString("subprograma_nombre"));
-					pstm.setInt(16,rs.getInt("proyecto"));
-					pstm.setString(17, rs.getString("proyecto_nombre"));
-					pstm.setInt(18,rs.getInt("actividad"));
-					pstm.setInt(19,rs.getInt("obra"));
-					pstm.setString(20, rs.getString("actividad_obra_nombre"));
-					pstm.setInt(21,rs.getInt("renglon"));
-					pstm.setString(22, rs.getString("renglon_nombre"));
-					pstm.setDouble(23, rs.getDouble("asignado"));
-					pstm.setDouble(24, rs.getDouble("vigente"));
-					pstm.setDouble(25, rs.getDouble("ejecutado"));
+					pstm.setString(8, rs.getString("prestamo_sigla"));
+					pstm.setInt(9, rs.getInt("entidad"));
+					pstm.setString(10, rs.getString("entidad_nombre"));
+					pstm.setInt(11, rs.getInt("unidad_ejecutora"));
+					pstm.setString(12, rs.getString("unidad_ejecutora_nombre"));
+					pstm.setInt(13, rs.getInt("programa"));
+					pstm.setString(14, rs.getString("programa_nombre"));
+					pstm.setInt(15, rs.getInt("subprograma"));
+					pstm.setString(16, rs.getString("subprograma_nombre"));
+					pstm.setInt(17,rs.getInt("proyecto"));
+					pstm.setString(18, rs.getString("proyecto_nombre"));
+					pstm.setInt(19,rs.getInt("actividad"));
+					pstm.setInt(20,rs.getInt("obra"));
+					pstm.setString(21, rs.getString("actividad_obra_nombre"));
+					pstm.setInt(22,rs.getInt("renglon"));
+					pstm.setString(23, rs.getString("renglon_nombre"));
+					pstm.setDouble(24, rs.getDouble("asignado"));
+					pstm.setDouble(25, rs.getDouble("vigente"));
+					pstm.setDouble(26, rs.getDouble("ejecutado"));
 					pstm.addBatch();
 					rows++;
 					if((rows % 100) == 0){
