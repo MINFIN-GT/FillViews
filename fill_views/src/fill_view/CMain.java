@@ -90,11 +90,8 @@ public class CMain {
 			 else if(cline.hasOption("ejecucion-financiera-prestamos")){
 				 CLogger.writeConsole("Inicio carga de ejecucion financiera de los prestamos");
 				 if(CEjecucionPrestamos.loadEjecucionFisicaFinanciera())
-					 CLogger.writeConsole("Datos de prestamos cargada con exito");
-			 }
-			 
-
-			 else if (cline.hasOption("update-all")){
+					 CLogger.writeConsole("Datos de prestamos cargados con exito");
+			 }else if (cline.hasOption("update-all")){
 				 CLogger.writeConsole("Inicio de importacion de todos las tablas.");
 				 if(	CFechaActualizacionData.UpdateLoadDate("ejecucionpresupuestaria") &&
 						CTrianguloNorte.loadEjesTrianguloNorte() &&
@@ -105,13 +102,13 @@ public class CMain {
 						CEjecucionFisica.loadEjecucionDetalle(conn, false, false) &&
 						CUnidadMedida.loadUnidadesMedida(conn, false, false) &&
 						CEjecucionCalamidad.loadEjecucionFisicaFinanciera(false)&&CEjecucionCalamidad.loadEjecucionFisicaFinanciera(true) &&
-						CEjecucionPrestamos.loadEjecucionFisicaFinanciera()
+						CEjecucionPrestamos.loadEjecucionFisicaFinanciera() 
 					)
 					CLogger.writeConsole("todas las tablas importadas con exito");
 			 }
 			 else if(cline.hasOption("dimension-tiempo")){
-				 CDimensionTiempo.createDimension(conn, 2011, 2015);
-				 CLogger.writeConsole("Se ha creado la dimensión tiempo");
+				 CDimensionTiempo.createDimension(conn, 2011, 2016);
+				 CLogger.writeConsole("Se ha creado la dimension tiempo");
 			 }
 			 else if(cline.hasOption("help")){
 				 HelpFormatter formater = new HelpFormatter();
