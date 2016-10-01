@@ -22,4 +22,4 @@ public class CLogger {
 		System.out.println(String.join(" ", sdf.format(date),message, "\n", e.getMessage()));
 		e.printStackTrace(System.out);
 	}
-}
+} 
