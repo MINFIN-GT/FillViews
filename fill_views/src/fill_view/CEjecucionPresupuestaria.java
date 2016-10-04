@@ -46,7 +46,7 @@ public class CEjecucionPresupuestaria {
 						"				group by month(gh.fec_aprobado), gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma, " + 
 						"				gd.proyecto, gd.actividad, gd.obra, gd.renglon, gd.fuente");   
  
-				ret = ret && pstm.executeUpdate()>0;
+				pstm.executeUpdate();
 				pstm.close();
 					
 				///Actualiza la vista de cuota
@@ -101,7 +101,7 @@ public class CEjecucionPresupuestaria {
 		                    "d.fuente, "+ 
 		                    "t.mes"
 						);	
-				ret = ret &&  pstm.executeUpdate()>0;
+				pstm.executeUpdate();
 				pstm.close();
 				
 				//Actualiza la vista de mv_vigente
@@ -124,7 +124,7 @@ public class CEjecucionPresupuestaria {
 						"where p.ejercicio= year(current_date()) " + 
 						"and p.ejercicio=t.ejercicio  " + 
 						"and t.dia=1");
-				ret = ret &&  pstm.executeUpdate()>0;
+				pstm.executeUpdate();
 				pstm.close();
 				
 				//Actualiza la vista de mv_ejecucion_presupuestaria
@@ -201,7 +201,7 @@ public class CEjecucionPresupuestaria {
 						"and sgr.renglon = g.subgrupo " + 
 						"and gr.ejercicio = v.ejercicio " + 
 						"and gr.grupo_gasto = g.grupo");
-				ret = ret &&  pstm.executeUpdate()>0;
+				pstm.executeUpdate();
 				pstm.close();
 				
 				ResultSet rs = conn.prepareStatement("SELECT * FROM dashboard.mv_ejecucion_presupuestaria").executeQuery();
