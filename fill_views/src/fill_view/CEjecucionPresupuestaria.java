@@ -25,6 +25,10 @@ public class CEjecucionPresupuestaria {
 				pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_vigente");
 				pstm.executeUpdate();
 				pstm.close();
+				pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_ejecucion_presupuestaria");
+				pstm.executeUpdate();
+				pstm.close();
+				
 				
 				///Actualiza la vista de gasto
 				pstm = conn.prepareStatement("insert into table dashboard.mv_gasto select gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma, gd.proyecto, gd.actividad, gd.obra, gd.renglon, gd.fuente, " + 
