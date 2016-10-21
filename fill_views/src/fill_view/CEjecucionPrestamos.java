@@ -8,7 +8,7 @@ import java.sql.ResultSet;
 import utilities.CLogger;
 
 public class CEjecucionPrestamos {
-	public static boolean loadEjecucionFisicaFinanciera(){
+	public static boolean loadEjecucionFinanciera(){
 		CLogger.writeConsole("CEjecucionPrestamos (Ejecucion financiera)");
 		String query = "select   " + 
 				"	prestamo.ejercicio,  " + 
@@ -22,7 +22,7 @@ public class CEjecucionPrestamos {
 				"	p.proyecto, proy.NOM_ESTRUCTURA proyecto_nombre, " + 
 				"	p.obra, " + 
 				"	p.actividad, act.NOM_ESTRUCTURA actividad_obra_nombre, " + 
-				"	p.renglon, r.nombre renglon_nombre " + 
+				"	p.renglon, r.nombre renglon_nombre, p.geografico, g.nombre geografico_nombre " + 
 				", sum(p.asignado)  asignado, " + 
 				"(sum (p.asignado)+ sum (p.adicion)+ sum (p.disminucion)+ sum (p.traspaso_p)+ sum (p.traspaso_n)+ sum (p.transferencia_p)+ sum (p.transferencia_n))  vigente " + 
 				" ,sum (gasto.monto_renglon)   ejecutado " + 
@@ -44,7 +44,7 @@ public class CEjecucionPrestamos {
 				"   ON (p2.entidad = p.entidad and p2.ejercicio=prestamo.ejercicio " + 
 				")  " + 
 				"left join ( " + 
-				"		select d.ejercicio, d.entidad, d.unidad_ejecutora, d.programa, d.subprograma, d.proyecto, d.obra, d.actividad, d.renglon, d.monto_renglon, d.fuente, d.organismo, d.correlativo " + 
+				"		select d.ejercicio, d.entidad, d.unidad_ejecutora, d.programa, d.subprograma, d.proyecto, d.obra, d.actividad, d.renglon, d.monto_renglon, d.fuente, d.organismo, d.correlativo, d.geografico " + 
 				"		from sicoinprod.eg_gastos_hoja h, sicoinprod.eg_gastos_detalle d    " + 
 				"		where h.ejercicio=d.ejercicio and h.entidad=d.entidad and h.unidad_ejecutora=d.unidad_ejecutora and h.no_cur=d.no_cur   " + 
 				"		and h.estado='APROBADO' and h.clase_registro in ('DEV','CYD','REG','RDP')  " + 
@@ -56,7 +56,7 @@ public class CEjecucionPrestamos {
 				")  " + 
 				",sicoinprod.cg_fuentes f, sicoinprod.cg_organismos o, sicoinprod.cg_entidades e,  " + 
 				"sicoinprod.cg_entidades ue, sicoinprod.cp_estructuras prog, sicoinprod.cp_estructuras subp, sicoinprod.cp_estructuras proy,  " + 
-				"sicoinprod.cp_estructuras act, sicoinprod.cp_objetos_gasto r " + 
+				"sicoinprod.cp_estructuras act, sicoinprod.cp_objetos_gasto r, sicoinprod.cg_geograficos g " + 
 				"where (p2.entidad IS NULL OR p.unidad_ejecutora > 0) " + 
 				"	and f.ejercicio = p.ejercicio and f.fuente = p.fuente	 " + 
 				"	and o.ejercicio = p.ejercicio and o.organismo = p.organismo " + 
@@ -67,9 +67,10 @@ public class CEjecucionPrestamos {
 				"    AND proy.ejercicio = p.ejercicio AND proy.entidad = p.entidad AND proy.unidad_ejecutora = p.unidad_ejecutora AND proy.programa = p.programa AND proy.subprograma = p.subprograma AND proy.proyecto = p.proyecto AND proy.nivel_estructura = 4 " + 
 				"    AND act.ejercicio = p.ejercicio AND act.entidad = p.entidad AND act.unidad_ejecutora = p.unidad_ejecutora AND act.programa = p.programa AND act.subprograma = p.subprograma AND act.proyecto = p.proyecto AND act.obra = p.obra AND act.actividad = p.actividad AND act.nivel_estructura = 5 " + 
 				"    AND r.ejercicio = p.ejercicio AND r.renglon = p.renglon " + 
+				" 	 AND g.ejercicio = p.ejercicio and g.geografico = p.geografico and g.restrictiva='N' " + 
 				"group by prestamo.ejercicio, prestamo.fuente, f.nombre, prestamo.organismo,  o.nombre, prestamo.correlativo, prestamo.prestamo_nombre, prestamo.prestamo_sigla, " + 
 				"p.entidad,  e.NOMBRE, p.unidad_ejecutora,p.programa, prog.NOM_ESTRUCTURA, ue.nombre,p.subprograma, subp.NOM_ESTRUCTURA,p.proyecto, proy.NOM_ESTRUCTURA,p.obra,p.actividad, act.NOM_ESTRUCTURA " + 
-				",p.renglon, r.nombre, p.actividad" ;
+				",p.renglon, r.nombre, p.geografico, g.nombre" ;
 		boolean ret = false;		
 		try{
 			Connection conn = CHive.openConnection();			
@@ -81,14 +82,14 @@ public class CEjecucionPrestamos {
 				boolean first = true;
 				int rows = 0;
 				pstm = CMemSQL.getConnection().prepareStatement("Insert INTO prestamo (ejercicio,fuente,fuente_nombre,organismo,organismo_nombre,correlativo,prestamo_nombre,prestamo_sigla,entidad,entidad_nombre,unidad_ejecutora,"
-						+ " unidad_ejecutora_nombre,programa,programa_nombre,subprograma,subprograma_nombre,proyecto,proyecto_nombre,actividad,obra,actividad_obra_nombre,renglon,renglon_nombre,"+
+						+ " unidad_ejecutora_nombre,programa,programa_nombre,subprograma,subprograma_nombre,proyecto,proyecto_nombre,actividad,obra,actividad_obra_nombre,renglon,renglon_nombre,geografico,geografico_nombre,"+
 					       "asignado,vigente,ejecutado) "+
 							"values (?,?,?,?,?,"
 								  + "?,?,?,?,?,"
 								  + "?,?,?,?,?,"
 								  + "?,?,?,?,?,"
 								  + "?,?,?,?,?,"
-								  + "?) "); 
+								  + "?,?,?) "); 
 				while(rs.next()){	
 					ret = true;	
 					if (first){
@@ -122,9 +123,11 @@ public class CEjecucionPrestamos {
 					pstm.setString(21, rs.getString("actividad_obra_nombre"));
 					pstm.setInt(22,rs.getInt("renglon"));
 					pstm.setString(23, rs.getString("renglon_nombre"));
-					pstm.setDouble(24, rs.getDouble("asignado"));
-					pstm.setDouble(25, rs.getDouble("vigente"));
-					pstm.setDouble(26, rs.getDouble("ejecutado"));
+					pstm.setInt(24,rs.getInt("geografico"));
+					pstm.setString(25, rs.getString("geografico_nombre"));
+					pstm.setDouble(26, rs.getDouble("asignado"));
+					pstm.setDouble(27, rs.getDouble("vigente"));
+					pstm.setDouble(28, rs.getDouble("ejecutado"));
 					pstm.addBatch();
 					rows++;
 					if((rows % 100) == 0){

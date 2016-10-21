@@ -90,7 +90,7 @@ public class CMain {
 			 }
 			 else if(cline.hasOption("ejecucion-financiera-prestamos")){
 				 CLogger.writeConsole("Inicio carga de ejecucion financiera de los prestamos");
-				 if(CEjecucionPrestamos.loadEjecucionFisicaFinanciera())
+				 if(CEjecucionPrestamos.loadEjecucionFinanciera())
 					 CLogger.writeConsole("Datos de prestamos cargados con exito");
 			 }else if (cline.hasOption("update-all")){
 				 CLogger.writeConsole("Inicio de importacion de todos las tablas.");
@@ -103,7 +103,7 @@ public class CMain {
 						CEjecucionFisica.loadEjecucionDetalle(conn, false, false) &&
 						CUnidadMedida.loadUnidadesMedida(conn, false, false) &&
 						CEjecucionCalamidad.loadEjecucionFisicaFinanciera(false)&&CEjecucionCalamidad.loadEjecucionFisicaFinanciera(true) &&
-						CEjecucionPrestamos.loadEjecucionFisicaFinanciera() 
+						CEjecucionPrestamos.loadEjecucionFinanciera() 
 					)
 					CLogger.writeConsole("todas las tablas importadas con exito");
 			 }
