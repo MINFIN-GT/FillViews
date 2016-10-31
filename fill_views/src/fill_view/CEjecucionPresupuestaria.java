@@ -32,7 +32,7 @@ public class CEjecucionPresupuestaria {
 				pstm.executeUpdate();
 				pstm.close();
 				
-				
+				CLogger.writeConsole("Insertando valores a MV_ESTRUCTURA");
 				pstm = conn.prepareStatement("insert into table dashboard.mv_estructura "+
 						"select e.ejercicio,t.mes, e.entidad, e.nombre entidad_nombre, ue.unidad_ejecutora, ue.nombre ue_nombre, "+
 						"p.programa, p.nom_estructura programa_nombre, "+
@@ -79,8 +79,9 @@ public class CEjecucionPresupuestaria {
 				pstm.executeUpdate();
 				pstm.close();
 				
+				CLogger.writeConsole("Insertando valores a MV_GASTO");
 				///Actualiza la vista de gasto
-				pstm = conn.prepareStatement("inser into table dashboard.mv_gasto "
+				pstm = conn.prepareStatement("insert into table dashboard.mv_gasto "
 						+"select t1.mes,t1.entidad, t1.unidad_ejecutora, t1.programa, t1.subprograma, t1.proyecto, t1.actividad, t1.obra, "+
 						"t2.fuente, t2.grupo, t2.grupo_nombre, t2.subgrupo, t2.subgrupo_nombre, t2.renglon, t2.renglon_nombre, t2.ano_1, t2.ano_2, t2.ano_3, t2.ano_4, t2.ano_5, t2.ano_actual  "+
 						"from dashboard.mv_estructura t1 left outer join ( "+
@@ -122,7 +123,8 @@ public class CEjecucionPresupuestaria {
  
 				pstm.executeUpdate();
 				pstm.close();
-					
+				
+				CLogger.writeConsole("Insertando valores a MV_CUOTA");
 				///Actualiza la vista de cuota
 				pstm = conn.prepareStatement("INSERT INTO table dashboard.mv_cuota "+
 						"SELECT d.ejercicio, "+ 
@@ -160,8 +162,9 @@ public class CEjecucionPresupuestaria {
 		                   "end) aprobado "+
 		                   "FROM sicoinprod.eg_financiero_detalle_4 D, "+
 		                   "sicoinprod.eg_financiero_hoja_4 H1, dashboard.tiempo t "+ 
-		                   "WHERE  h1.ejercicio = d.ejercicio "+  
-		                   	"and d.ejercicio = t.ejercicio "+ 
+		                   "WHERE  h1.ejercicio = year(current_date()) "+
+		                    "AND h1.ejercicio = d.ejercicio "+  
+		                   	"AND d.ejercicio = t.ejercicio "+ 
 		                    "AND h1.entidad = d.entidad "+
 		                    "AND h1.unidad_ejecutora = d.unidad_ejecutora "+
 		                    "AND h1.unidad_desconcentrada = d.unidad_desconcentrada "+
@@ -178,6 +181,7 @@ public class CEjecucionPresupuestaria {
 				pstm.executeUpdate();
 				pstm.close();
 				
+				CLogger.writeConsole("Insertando valores a MV_VIGENTE");
 				//Actualiza la vista de mv_vigente
 				pstm = conn.prepareStatement("INSERT INTO TABLE dashboard.mv_vigente select p.ejercicio,p.entidad, p.unidad_ejecutora, p.fuente, p.renglon, p.programa, p.subprograma, p.proyecto, p.actividad, p.obra, t.mes, p.asignado, " + 
 						"case " + 
@@ -201,10 +205,11 @@ public class CEjecucionPresupuestaria {
 				pstm.executeUpdate();
 				pstm.close();
 				
+				CLogger.writeConsole("Insertando valores a MV_EJECUCION_PRESUPUESTARIA");
 				//Actualiza la vista de mv_ejecucion_presupuestaria
 				pstm = conn.prepareStatement("INSERT INTO TABLE dashboard.mv_ejecucion_presupuestaria "+
 						"select e.*, g.fuente, g.grupo, g.grupo_nombre, g.subgrupo, g.subgrupo_nombre, g.renglon, g.renglon_nombre, g.ano_1, g.ano_2, g.ano_3, g.ano_4, g.ano_5, g.ano_actual, c.solicitado, c.aprobado, v.asignado, v.vigente "+
-						"from mv_estructura e, mv_gasto g, mv_cuota c, mv_vigente v "+
+						"from dashboard.mv_estructura e, dashboard.mv_gasto g, dashboard.mv_cuota c, dashboard.mv_vigente v "+
 						"where e.mes = g.mes  "+
 						"and e.entidad = g.entidad "+
 						"and e.unidad_ejecutora = g.unidad_ejecutora "+
@@ -229,67 +234,75 @@ public class CEjecucionPresupuestaria {
 						"and v.mes = e.mes");
 				pstm.executeUpdate();
 				pstm.close();
-				
-				ResultSet rs = conn.prepareStatement("SELECT * FROM dashboard.mv_ejecucion_presupuestaria").executeQuery();
 				boolean bconn =  CMemSQL.connect();
-				if(rs!=null && bconn){
+				CLogger.writeConsole("Cargando datos a cache");
+				if(bconn){
 					ret = true;
 					int rows = 0;
 					boolean first=true;
-					while(rs.next()){
-						if(first){
-							pstm = CMemSQL.getConnection().prepareStatement("delete from mv_ejecucion_presupuestaria ");
-							if (pstm.executeUpdate()>0)
-								CLogger.writeConsole("Registros eliminados");
-							else
-								CLogger.writeConsole("Sin registros para eliminar");	
-							pstm.close();
-							first=false;
+					PreparedStatement pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ejecucion_presupuestaria(ejercicio, mes, entidad, entidad_nombre, unidad_ejecutora, ue_nombre, programa, programa_nombre, subprograma, subprograma_nombre, " + 
+							"proyecto, proyecto_nombre, actividad, obra, act_obra_nombre, renglon, renglon_nombre, subgrupo, subgrupo_nombre, grupo," + 
+							"grupo_nombre, fuente, ano_1, ano_2, ano_3, ano_4, ano_5, ano_actual, solicitado, aprobado, asignado, vigente) "
+							+ "values (?,?,?,?,?,?,?,?,?,?,"
+							+ "?,?,?,?,?,?,?,?,?,?,"
+							+ "?,?,?,?,?,?,?,?,?,?,?,?) ");
+					for(int i=1; i<13; i++){
+						pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ejecucion_presupuestaria where mes = ?");
+						pstm.setInt(1, i);
+						pstm.setFetchSize(10000);
+						ResultSet rs = pstm.executeQuery();
+						while(rs!=null && rs.next()){
+							if(first){
+								PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ejecucion_presupuestaria ");
+								if (pstm2.executeUpdate()>0)
+									CLogger.writeConsole("Registros eliminados");
+								else
+									CLogger.writeConsole("Sin registros para eliminar");	
+								pstm2.close();
+								first=false;
+							}
+							pstm1.setInt(1, rs.getInt("ejercicio"));
+							pstm1.setInt(2, rs.getInt("mes"));
+							pstm1.setInt(3, rs.getInt("entidad"));
+							pstm1.setString(4, rs.getString("entidad_nombre"));
+							pstm1.setInt(5, rs.getInt("unidad_ejecutora"));
+							pstm1.setString(6, rs.getString("ue_nombre"));
+							pstm1.setInt(7, rs.getInt("programa"));
+							pstm1.setString(8, rs.getString("programa_nombre"));
+							pstm1.setInt(9, rs.getInt("subprograma"));
+							pstm1.setString(10, rs.getString("subprograma_nombre"));
+							pstm1.setInt(11, rs.getInt("proyecto"));
+							pstm1.setString(12, rs.getString("proyecto_nombre"));
+							pstm1.setInt(13, rs.getInt("actividad"));
+							pstm1.setInt(14, rs.getInt("obra"));
+							pstm1.setString(15, rs.getString("actividad_obra_nombre"));
+							pstm1.setInt(16, rs.getInt("renglon"));
+							pstm1.setString(17, rs.getString("renglon_nombre"));
+							pstm1.setInt(18, rs.getInt("subgrupo"));
+							pstm1.setString(19, rs.getString("subgrupo_nombre"));
+							pstm1.setInt(20, rs.getInt("grupo"));
+							pstm1.setString(21, rs.getString("grupo_nombre"));
+							pstm1.setInt(22, rs.getInt("fuente"));
+							pstm1.setDouble(23, rs.getDouble("ano_1"));
+							pstm1.setDouble(24, rs.getDouble("ano_2"));
+							pstm1.setDouble(25, rs.getDouble("ano_3"));
+							pstm1.setDouble(26, rs.getDouble("ano_4"));
+							pstm1.setDouble(27, rs.getDouble("ano_5"));
+							pstm1.setDouble(28, rs.getDouble("ano_actual"));
+							pstm1.setDouble(29, rs.getDouble("solicitado"));
+							pstm1.setDouble(30, rs.getDouble("aprobado"));
+							pstm1.setDouble(31, rs.getDouble("asignado"));
+							pstm1.setDouble(32, rs.getDouble("vigente"));
+							pstm1.addBatch();
+							rows++;
+							if((rows % 10000) == 0){
+								pstm1.executeBatch();
+								CLogger.writeConsole(String.join("Records escritos: ",String.valueOf(rows)));
+							}
 						}
-						pstm = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ejecucion_presupuestaria(ejercicio, mes, entidad, entidad_nombre, unidad_ejecutora, ue_nombre, programa, programa_nombre, subprograma, subprograma_nombre, " + 
-								"proyecto, proyecto_nombre, actividad, obra, act_obra_nombre, renglon, renglon_nombre, subgrupo, subgrupo_nombre, grupo," + 
-								"grupo_nombre, fuente, ano_1, ano_2, ano_3, ano_4, ano_5, ano_actual, solicitado, aprobado, asignado, vigente) "
-								+ "values (?,?,?,?,?,?,?,?,?,?,"
-								+ "?,?,?,?,?,?,?,?,?,?,"
-								+ "?,?,?,?,?,?,?,?,?,?,?,?) ");
-						pstm.setInt(1, rs.getInt("ejercicio"));
-						pstm.setInt(2, rs.getInt("mes"));
-						pstm.setInt(3, rs.getInt("entidad"));
-						pstm.setString(4, rs.getString("entidad_nombre"));
-						pstm.setInt(5, rs.getInt("unidad_ejecutora"));
-						pstm.setString(6, rs.getString("ue_nombre"));
-						pstm.setInt(7, rs.getInt("programa"));
-						pstm.setString(8, rs.getString("programa_nombre"));
-						pstm.setInt(9, rs.getInt("subprograma"));
-						pstm.setString(10, rs.getString("subprograma_nombre"));
-						pstm.setInt(11, rs.getInt("proyecto"));
-						pstm.setString(12, rs.getString("proyecto_nombre"));
-						pstm.setInt(13, rs.getInt("actividad"));
-						pstm.setInt(14, rs.getInt("obra"));
-						pstm.setString(15, rs.getString("act_obra_nombre"));
-						pstm.setInt(16, rs.getInt("renglon"));
-						pstm.setString(17, rs.getString("renglon_nombre"));
-						pstm.setInt(18, rs.getInt("subgrupo"));
-						pstm.setString(19, rs.getString("subgrupo_nombre"));
-						pstm.setInt(20, rs.getInt("grupo"));
-						pstm.setString(21, rs.getString("grupo_nombre"));
-						pstm.setInt(22, rs.getInt("fuente"));
-						pstm.setDouble(23, rs.getDouble("ano_1"));
-						pstm.setDouble(24, rs.getDouble("ano_2"));
-						pstm.setDouble(25, rs.getDouble("ano_3"));
-						pstm.setDouble(26, rs.getDouble("ano_4"));
-						pstm.setDouble(27, rs.getDouble("ano_5"));
-						pstm.setDouble(28, rs.getDouble("ano_actual"));
-						pstm.setDouble(29, rs.getDouble("solicitado"));
-						pstm.setDouble(30, rs.getDouble("aprobado"));
-						pstm.setDouble(31, rs.getDouble("asignado"));
-						pstm.setDouble(32, rs.getDouble("vigente"));
-						ret = ret && pstm.executeUpdate()>0;
-						rows++;
-						if((rows % 10000) == 0)
-							CLogger.writeConsole(String.join("Records escritos: ",String.valueOf(rows)));
 						pstm.close();
-					}		
+					}
+					pstm1.close();
 				}
 				
 			}					
