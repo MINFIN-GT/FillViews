@@ -25,6 +25,9 @@ public class CEjecucionPresupuestaria {
 				pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_cuota");
 				pstm.executeUpdate();
 				pstm.close();
+				pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_anticipo");
+				pstm.executeUpdate();
+				pstm.close();
 				pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_vigente");
 				pstm.executeUpdate();
 				pstm.close();
@@ -34,17 +37,14 @@ public class CEjecucionPresupuestaria {
 				
 				CLogger.writeConsole("Insertando valores a MV_ESTRUCTURA");
 				pstm = conn.prepareStatement("insert into table dashboard.mv_estructura "+
-						"select e.ejercicio,t.mes, e.entidad, e.nombre entidad_nombre, ue.unidad_ejecutora, ue.nombre ue_nombre, "+
+						"select e.ejercicio, e.entidad, e.nombre entidad_nombre, ue.unidad_ejecutora, ue.nombre unidad_ejecutora_nombre, "+
 						"p.programa, p.nom_estructura programa_nombre, "+
 						"sp.subprograma, sp.nom_estructura subprograma_nombre, "+
 						"pr.proyecto, pr.nom_estructura proyecto_nombre, "+
 						"ao.actividad, ao.obra, ao.nom_estructura actividad_obra_nombre "+
 						"from sicoinprod.cg_entidades e, sicoinprod.cg_entidades ue, dashboard.mv_entidad mve, "+
-						"sicoinprod.cp_estructuras p, sicoinprod.cp_estructuras sp, sicoinprod.cp_estructuras pr, sicoinprod.cp_estructuras ao, "+
-						"dashboard.tiempo t "+
+						"sicoinprod.cp_estructuras p, sicoinprod.cp_estructuras sp, sicoinprod.cp_estructuras pr, sicoinprod.cp_estructuras ao "+
 						"where e.ejercicio = year(current_date()) "+
-						"and t.ejercicio = e.ejercicio "+
-						"and t.dia = 1 "+
 						"and ue.ejercicio = e.ejercicio "+
 						"and e.restrictiva = 'N' "+
 						"and ue.restrictiva = 'N' "+
@@ -82,44 +82,31 @@ public class CEjecucionPresupuestaria {
 				CLogger.writeConsole("Insertando valores a MV_GASTO");
 				///Actualiza la vista de gasto
 				pstm = conn.prepareStatement("insert into table dashboard.mv_gasto "
-						+"select t1.mes,t1.entidad, t1.unidad_ejecutora, t1.programa, t1.subprograma, t1.proyecto, t1.actividad, t1.obra, "+
-						"t2.fuente, t2.grupo, t2.grupo_nombre, t2.subgrupo, t2.subgrupo_nombre, t2.renglon, t2.renglon_nombre, t2.ano_1, t2.ano_2, t2.ano_3, t2.ano_4, t2.ano_5, t2.ano_actual  "+
-						"from dashboard.mv_estructura t1 left outer join ( "+
-						"select gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma, gd.proyecto, gd.actividad, gd.obra, gd.renglon, r.nombre renglon_nombre, gd.fuente,   "+
-						"						 	month(gh.fec_aprobado) mes, gd.renglon - (gd.renglon%100) grupo, gg.nombre grupo_nombre, gd.renglon - (gd.renglon%10) subgrupo, sg.nombre subgrupo_nombre,  "+  
-						"						 	sum( case when gh.ejercicio = (year(current_date()) - 5) then gd.monto_renglon else 0 end) ano_1,    "+
-						"						 	sum( case when gh.ejercicio = (year(current_date()) - 4) then gd.monto_renglon else 0 end) ano_2,    "+
-						"						 	sum( case when gh.ejercicio = (year(current_date()) - 3) then gd.monto_renglon else 0 end) ano_3,    "+
-						"						 	sum( case when gh.ejercicio = (year(current_date()) - 2) then gd.monto_renglon else 0 end) ano_4,    "+
-						"						 	sum( case when gh.ejercicio = (year(current_date()) - 1) then gd.monto_renglon else 0 end) ano_5,    "+
-						"						 	sum( case when gh.ejercicio = (year(current_date())) then gd.monto_renglon else 0 end) ano_actual    "+
-						"						 				from sicoinprod.eg_gastos_hoja gh, sicoinprod.eg_gastos_detalle gd,    "+
-						"										sicoinprod.cp_grupos_gasto gg, sicoinprod.cp_objetos_gasto sg, sicoinprod.cp_objetos_gasto r "+		
-						"						 				where gh.ejercicio = gd.ejercicio       "+
-						"						 				and gh.entidad = gd.entidad     "+
-						"						 				and gh.unidad_ejecutora = gd.unidad_ejecutora    "+ 
-						"						 				and gh.no_cur = gd.no_cur     "+
-						"						 				and gh.clase_registro IN ('DEV', 'CYD', 'RDP', 'REG')   "+  
-						"						 				and gh.estado = 'APROBADO'     "+
-						"						 				and gh.ejercicio > (year(current_date())-6) "+    
-						" 										and gg.ejercicio = year(current_date()) "+
-		 				" 										and gg.grupo_gasto = (gd.renglon-(gd.renglon%100)) "+
-		 				" 										and sg.ejercicio = year(current_date())  "+
-		 				" 										and sg.renglon = (gd.renglon - (gd.renglon%10)) "+     
-		 				" 										and r.ejercicio = year(current_date()) "+
-		 				" 										and r.renglon = gd.renglon "+
-						"						 				group by month(gh.fec_aprobado), gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma, "+    
-						"						 				gd.proyecto, gd.actividad, gd.obra, gg.nombre, sg.nombre, r.nombre, gd.renglon, gd.fuente "+
-						") t2 "+
-						"on (t1.mes = t2.mes "+ 
-						"	and t1.entidad = t2.entidad "+
-						"	and t1.unidad_ejecutora = t2.unidad_ejecutora "+
-						"	and t1.programa = t2.programa "+
-						"	and t1.subprograma = t2.subprograma "+
-						"	and t1.proyecto  = t2.proyecto "+
-						"	and t1.actividad = t2.actividad "+
-						"	and t1.obra = t2.obra "+
-						")");
+						+"select month(gh.fec_aprobado) mes, gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma, gd.proyecto, gd.actividad, gd.obra, gd.renglon, r.nombre renglon_nombre, gd.fuente,     " + 
+						"						 						 	gd.renglon - (gd.renglon%100) grupo, gg.nombre grupo_nombre, gd.renglon - (gd.renglon%10) subgrupo, sg.nombre subgrupo_nombre,      " + 
+						"						 						 	sum( case when gh.ejercicio = (year(current_date()) - 5) then gd.monto_renglon else 0 end) ano_1,      " + 
+						"						 						 	sum( case when gh.ejercicio = (year(current_date()) - 4) then gd.monto_renglon else 0 end) ano_2,      " + 
+						"						 						 	sum( case when gh.ejercicio = (year(current_date()) - 3) then gd.monto_renglon else 0 end) ano_3,      " + 
+						"						 						 	sum( case when gh.ejercicio = (year(current_date()) - 2) then gd.monto_renglon else 0 end) ano_4,      " + 
+						"						 						 	sum( case when gh.ejercicio = (year(current_date()) - 1) then gd.monto_renglon else 0 end) ano_5,      " + 
+						"						 						 	sum( case when gh.ejercicio = (year(current_date())) then gd.monto_renglon else 0 end) ano_actual      " + 
+						"						 						 				from sicoinprod.eg_gastos_hoja gh, sicoinprod.eg_gastos_detalle gd,      " + 
+						"						 										sicoinprod.cp_grupos_gasto gg, sicoinprod.cp_objetos_gasto sg, sicoinprod.cp_objetos_gasto r  		 " + 
+						"						 						 				where gh.ejercicio = gd.ejercicio         " + 
+						"						 						 				and gh.entidad = gd.entidad       " + 
+						"						 						 				and gh.unidad_ejecutora = gd.unidad_ejecutora       " + 
+						"						 						 				and gh.no_cur = gd.no_cur       " + 
+						"						 						 				and gh.clase_registro IN ('DEV', 'CYD', 'RDP', 'REG')       " + 
+						"						 						 				and gh.estado = 'APROBADO'       " + 
+						"						 						 				and gh.ejercicio > (year(current_date())-6)       " + 
+						"						  										and gg.ejercicio = year(current_date())   " + 
+						"		 				  										and gg.grupo_gasto = (gd.renglon-(gd.renglon%100))   " + 
+						"		 				  										and sg.ejercicio = year(current_date())    " + 
+						"		 				  										and sg.renglon = (gd.renglon - (gd.renglon%10))        " + 
+						"		 				  										and r.ejercicio = year(current_date())   " + 
+						"		 				  										and r.renglon = gd.renglon   " + 
+						"						 						 				group by month(gh.fec_aprobado), gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma,       " + 
+						"						 						 				gd.proyecto, gd.actividad, gd.obra, gg.nombre, sg.nombre, r.nombre, gd.renglon, gd.fuente  ");
  
 				pstm.executeUpdate();
 				pstm.close();
@@ -127,125 +114,196 @@ public class CEjecucionPresupuestaria {
 				CLogger.writeConsole("Insertando valores a MV_CUOTA");
 				///Actualiza la vista de cuota
 				pstm = conn.prepareStatement("INSERT INTO table dashboard.mv_cuota "+
-						"SELECT d.ejercicio, "+ 
-		                   "d.entidad, "+ 
-		                   "d.unidad_ejecutora, "+ 
-		                   "d.fuente, "+  
-		                   "t.mes, "+
-		                   "sum(case  "+
-		                   	"when t.mes=1 and d.cuatrimestre=1 then cuota_mes1_sol "+
-		                   	"when t.mes=2 and d.cuatrimestre=1 then cuota_mes2_sol "+
-		                   	"when t.mes=3 and d.cuatrimestre=1 then cuota_mes3_sol "+
-		                   	"when t.mes=4 and d.cuatrimestre=1 then cuota_mes4_sol "+
-		                   	"when t.mes=5 and d.cuatrimestre=2 then cuota_mes1_sol "+
-		                   	"when t.mes=6 and d.cuatrimestre=2 then cuota_mes2_sol "+
-		                   	"when t.mes=7 and d.cuatrimestre=2 then cuota_mes3_sol "+
-		                   	"when t.mes=8 and d.cuatrimestre=2 then cuota_mes4_sol "+
-		                   	"when t.mes=9 and d.cuatrimestre=3 then cuota_mes1_sol "+
-		                   	"when t.mes=10 and d.cuatrimestre=3 then cuota_mes2_sol "+
-		                   	"when t.mes=11 and d.cuatrimestre=3 then cuota_mes3_sol "+
-		                   	"when t.mes=12 and d.cuatrimestre=3 then cuota_mes4_sol "+
-		                   "end) solicitado, "+  
-		                   "sum(case  "+
-		                   	"when t.mes=1 and d.cuatrimestre=1 then cuota_mes1_apr "+
-		                   	"when t.mes=2 and d.cuatrimestre=1 then cuota_mes2_apr "+
-		                   	"when t.mes=3 and d.cuatrimestre=1 then cuota_mes3_apr "+
-		                   	"when t.mes=4 and d.cuatrimestre=1 then cuota_mes4_apr "+
-		                   	"when t.mes=5 and d.cuatrimestre=2 then cuota_mes1_apr "+
-		                   	"when t.mes=6 and d.cuatrimestre=2 then cuota_mes2_apr "+
-		                   	"when t.mes=7 and d.cuatrimestre=2 then cuota_mes3_apr "+
-		                   	"when t.mes=8 and d.cuatrimestre=2 then cuota_mes4_apr "+
-		                   	"when t.mes=9 and d.cuatrimestre=3 then cuota_mes1_apr "+
-		                   	"when t.mes=10 and d.cuatrimestre=3 then cuota_mes2_apr "+
-		                   	"when t.mes=11 and d.cuatrimestre=3 then cuota_mes3_apr "+
-		                   	"when t.mes=12 and d.cuatrimestre=3 then cuota_mes4_apr "+
-		                   "end) aprobado "+
-		                   "FROM sicoinprod.eg_financiero_detalle_4 D, "+
-		                   "sicoinprod.eg_financiero_hoja_4 H1, dashboard.tiempo t "+ 
-		                   "WHERE  h1.ejercicio = year(current_date()) "+
-		                    "AND h1.ejercicio = d.ejercicio "+  
-		                   	"AND d.ejercicio = t.ejercicio "+ 
-		                    "AND h1.entidad = d.entidad "+
-		                    "AND h1.unidad_ejecutora = d.unidad_ejecutora "+
-		                    "AND h1.unidad_desconcentrada = d.unidad_desconcentrada "+
-		                    "AND h1.no_cur = d.no_cur  "+
-		                    "AND H1.CLASE_REGISTRO IN ('RPG', 'PRG', 'RPGI') "+ 
-		                    "AND H1.estado = 'APROBADO' "+ 
-		                    "AND t.dia = 1 "+
-		                    "GROUP BY d.ejercicio, "+
-		                    "d.entidad,  "+
-		                    "d.unidad_ejecutora,  "+
-		                    "d.fuente, "+ 
-		                    "t.mes"
+						"SELECT d.ejercicio, t.mes,  " + 
+						"                   d.entidad,  " + 
+						"                   d.unidad_ejecutora,  " + 
+						"                   d.fuente,   " + 
+						"                   sum(case  " + 
+						"                   when t.mes = 1 and d.cuatrimestre = 1 then d.cuota_mes1_sol  " + 
+						"                   when t.mes = 2 and d.cuatrimestre = 1 then d.cuota_mes2_sol " + 
+						"                   when t.mes = 3 and d.cuatrimestre = 1 then d.cuota_mes3_sol " + 
+						"                   when t.mes = 4 and d.cuatrimestre = 1 then d.cuota_mes4_sol " + 
+						"                   when t.mes = 5 and d.cuatrimestre = 2 then d.cuota_mes1_sol  " + 
+						"                   when t.mes = 6 and d.cuatrimestre = 2 then d.cuota_mes2_sol " + 
+						"                   when t.mes = 7 and d.cuatrimestre = 2 then d.cuota_mes3_sol " + 
+						"                   when t.mes = 8 and d.cuatrimestre = 2 then d.cuota_mes4_sol " + 
+						"                   when t.mes = 9 and d.cuatrimestre = 3 then d.cuota_mes1_sol  " + 
+						"                   when t.mes = 10 and d.cuatrimestre = 3 then d.cuota_mes2_sol " + 
+						"                   when t.mes = 11 and d.cuatrimestre = 3 then d.cuota_mes3_sol " + 
+						"                   when t.mes = 12 and d.cuatrimestre = 3 then d.cuota_mes4_sol " + 
+						"                   end ) solicitado, " + 
+						"                   sum(case  " + 
+						"                   when t.mes = 1 and d.cuatrimestre = 1 then d.cuota_mes1_apr  " + 
+						"                   when t.mes = 2 and d.cuatrimestre = 1 then d.cuota_mes2_apr " + 
+						"                   when t.mes = 3 and d.cuatrimestre = 1 then d.cuota_mes3_apr " + 
+						"                   when t.mes = 4 and d.cuatrimestre = 1 then d.cuota_mes4_apr " + 
+						"                   when t.mes = 5 and d.cuatrimestre = 2 then d.cuota_mes1_apr  " + 
+						"                   when t.mes = 6 and d.cuatrimestre = 2 then d.cuota_mes2_apr " + 
+						"                   when t.mes = 7 and d.cuatrimestre = 2 then d.cuota_mes3_apr " + 
+						"                   when t.mes = 8 and d.cuatrimestre = 2 then d.cuota_mes4_apr " + 
+						"                   when t.mes = 9 and d.cuatrimestre = 3 then d.cuota_mes1_apr  " + 
+						"                   when t.mes = 10 and d.cuatrimestre = 3 then d.cuota_mes2_apr " + 
+						"                   when t.mes = 11 and d.cuatrimestre = 3 then d.cuota_mes3_apr " + 
+						"                   when t.mes = 12 and d.cuatrimestre = 3 then d.cuota_mes4_apr " + 
+						"                   end ) aprobado " + 
+						"                   FROM sicoinprod.EG_FINANCIERO_DETALLE_4 D,  " + 
+						"                   sicoinprod.eg_financiero_hoja_4 H1, dashboard.tiempo t  " + 
+						"                   WHERE  h1.ejercicio=2016   " + 
+						"                   and h1.ejercicio = d.ejercicio " + 
+						"                    and t.ejercicio = h1.ejercicio " + 
+						"                    and t.dia = 1 " + 
+						"                    AND h1.entidad = d.entidad  " + 
+						"                    AND h1.unidad_ejecutora = d.unidad_ejecutora  " + 
+						"                    AND h1.unidad_desconcentrada = d.unidad_desconcentrada  " + 
+						"                    AND h1.no_cur = d.no_cur  " + 
+						"                    AND H1.CLASE_REGISTRO IN ('RPG', 'PRG', 'RPGI')  " + 
+						"                    AND H1.estado = 'APROBADO'  " + 
+						"                    GROUP BY d.ejercicio,  " + 
+						"                    t.mes, " + 
+						"                    d.entidad,  " + 
+						"                    d.unidad_ejecutora,  " + 
+						"                    d.fuente "
+						);	
+				pstm.executeUpdate();
+				pstm.close();
+				
+				CLogger.writeConsole("Insertando valores a MV_ANTICIPO");
+				///Actualiza la vista de cuota
+				pstm = conn.prepareStatement("INSERT INTO table dashboard.mv_anticipo "+
+						"SELECT d.ejercicio, " + 
+						" 		t.mes,   " + 
+						"        d.entidad,   " + 
+						"        d.unidad_ejecutora,   " + 
+						"        d.fuente,   " + 
+						"        sum(d.cuota_fondo_rotativo_apr + d.cuota_fideicomisos_apr + d.CUOTA_CONVENIOS_APR + d.cuota_contratos_apr + d.cuota_otros_apr + d.cuota_paa_apr) anticipo   " + 
+						"	    FROM  sicoinprod.eg_anticipo_hoja h,   " + 
+						"	          sicoinprod.eg_anticipo_detalle d, " + 
+						"	          dashboard.tiempo t   " + 
+						"	    WHERE h.ejercicio = d.ejercicio   " + 
+						"	    AND h.ejercicio= year(current_date()) " + 
+						"	    and t.ejercicio = h.ejercicio " + 
+						"	    and t.dia = 1 " + 
+						"	    and d.cuatrimestre = ceil(t.mes/4) " + 
+						"	    and d.mes = t.mes-((d.cuatrimestre-1)*4) " + 
+						"	    AND   h.entidad = d.entidad   " + 
+						"	    AND   h.unidad_ejecutora = d.unidad_ejecutora   " + 
+						"	    AND   h.no_cur = d.no_cur   " + 
+						"	    AND   h.estado = 'APROBADO'   " + 
+						"	    AND   h.clase_registro IN ('PRG','RPG')   " + 
+						"	    group by d.ejercicio, t.mes, d.entidad, d.unidad_ejecutora, d.fuente"
 						);	
 				pstm.executeUpdate();
 				pstm.close();
 				
 				CLogger.writeConsole("Insertando valores a MV_VIGENTE");
 				//Actualiza la vista de mv_vigente
-				pstm = conn.prepareStatement("INSERT INTO TABLE dashboard.mv_vigente select p.ejercicio,p.entidad, p.unidad_ejecutora, p.fuente, p.renglon, p.programa, p.subprograma, p.proyecto, p.actividad, p.obra, t.mes, p.asignado, " + 
-						"case " + 
-						"               when t.mes=1 then vigente_1 " + 
-						"               when t.mes=2 then vigente_2 " + 
-						"               when t.mes=3 then vigente_3 " + 
-						"               when t.mes=4 then vigente_4 " + 
-						"               when t.mes=5 then vigente_5 " + 
-						"               when t.mes=6 then vigente_6 " + 
-						"               when t.mes=7 then vigente_7 " + 
-						"               when t.mes=8 then vigente_8 " + 
-						"               when t.mes=9 then vigente_9 " + 
-						"               when t.mes=10 then vigente_10 " + 
-						"               when t.mes=11 then vigente_11 " + 
-						"               when t.mes=12 then vigente_12 " + 
-						"end AS vigente " + 
-						"from sicoinprod.vw_partidas p , dashboard.tiempo t " + 
-						"where p.ejercicio= year(current_date()) " + 
-						"and p.ejercicio=t.ejercicio  " + 
-						"and t.dia=1");
+				pstm = conn.prepareStatement("INSERT INTO TABLE dashboard.mv_vigente select p.ejercicio, t.mes, p.entidad, p.unidad_ejecutora, p.programa, p.subprograma, p.proyecto, p.actividad, p.obra, p.fuente,  " + 
+						"(p.renglon-p.renglon%100) grupo, gg.nombre grupo_nombre, (p.renglon-p.renglon%10) subgrupo, sg.nombre subgrupo_nombre,  " + 
+						"p.renglon, r.nombre renglon_nombre, p.asignado,   " + 
+						"						case   " + 
+						"						               when t.mes=1 then vigente_1   " + 
+						"						               when t.mes=2 then vigente_2   " + 
+						"						               when t.mes=3 then vigente_3   " + 
+						"						               when t.mes=4 then vigente_4   " + 
+						"						               when t.mes=5 then vigente_5   " + 
+						"						               when t.mes=6 then vigente_6   " + 
+						"						               when t.mes=7 then vigente_7   " + 
+						"						               when t.mes=8 then vigente_8   " + 
+						"						               when t.mes=9 then vigente_9   " + 
+						"						               when t.mes=10 then vigente_10   " + 
+						"						               when t.mes=11 then vigente_11   " + 
+						"						               when t.mes=12 then vigente_12   " + 
+						"						end AS vigente   " + 
+						"						from sicoinprod.vw_partidas p , dashboard.tiempo t, sicoinprod.cp_grupos_gasto gg, " + 
+						"						sicoinprod.cp_objetos_gasto sg, sicoinprod.cp_objetos_gasto r   " + 
+						"						where p.ejercicio= year(current_date())   " + 
+						"						and p.ejercicio=t.ejercicio    " + 
+						"						and t.dia=1 " + 
+						"						and gg.grupo_gasto = (p.renglon - p.renglon%100) " + 
+						"						and gg.ejercicio = p.ejercicio  " + 
+						"						and sg.ejercicio = p.ejercicio " + 
+						"						and sg.renglon = (p.renglon - p.renglon%10) " + 
+						"						and r.ejercicio = p.ejercicio " + 
+						"						and r.renglon = p.renglon");
 				pstm.executeUpdate();
 				pstm.close();
 				
 				CLogger.writeConsole("Insertando valores a MV_EJECUCION_PRESUPUESTARIA");
 				//Actualiza la vista de mv_ejecucion_presupuestaria
 				pstm = conn.prepareStatement("INSERT INTO TABLE dashboard.mv_ejecucion_presupuestaria "+
-						"select e.*, g.fuente, g.grupo, g.grupo_nombre, g.subgrupo, g.subgrupo_nombre, g.renglon, g.renglon_nombre, g.ano_1, g.ano_2, g.ano_3, g.ano_4, g.ano_5, g.ano_actual, c.solicitado, c.aprobado, v.asignado, v.vigente "+
-						"from dashboard.mv_estructura e, dashboard.mv_gasto g, dashboard.mv_cuota c, dashboard.mv_vigente v "+
-						"where e.mes = g.mes  "+
-						"and e.entidad = g.entidad "+
-						"and e.unidad_ejecutora = g.unidad_ejecutora "+
-						"and e.programa = g.programa "+
-						"and e.subprograma = g.subprograma "+
-						"and e.proyecto = g.proyecto "+
-						"and e.actividad = g.actividad "+
-						"and e.obra = g.obra "+
-						"and g.entidad = c.entidad "+
-						"and g.unidad_ejecutora = c.unidad_ejecutora "+
-						"and g.fuente = c.fuente "+
-						"and g.mes = c.mes "+
-						"and v.entidad = e.entidad "+
-						"and v.unidad_ejecutora = e.unidad_ejecutora "+
-						"and v.programa = e.programa "+
-						"and v.subprograma = e.subprograma "+
-						"and v.proyecto = e.proyecto "+
-						"and v.actividad = e.actividad "+
-						"and v.obra = e.obra "+
-						"and v.renglon = g.renglon "+
-						"and v.fuente = g.fuente "+
-						"and v.mes = e.mes");
+						" select   " + 
+						"						year(current_date()) ejercicio,   " + 
+						"						t1.entidad,   " + 
+						"						t1.unidad_ejecutora,   " + 
+						"						t1.programa,   " + 
+						"						t1.subprograma,   " + 
+						"						t1.proyecto,   " + 
+						"						t1.actividad,   " + 
+						"						t1.obra,   " + 
+						"						t1.mes, t1.fuente, t1.grupo, t1.grupo_nombre, t1.subgrupo, t1.subgrupo_nombre, t1.renglon, t1.renglon_nombre,     " + 
+						"												 t1.ano_1, t1.ano_2, t1.ano_3, t1.ano_4, t1.ano_5, t1.ano_actual, t1.asignado, t1.vigente, a.anticipo anticipo_cuota, c.solicitado solicitado_cuota,     " + 
+						"												 c.aprobado aprobado_cuota      " + 
+						"												 from (     " + 
+						"												 	select nvl(g.mes,v.mes) mes,      " + 
+						"												 	nvl(g.entidad, v.entidad) entidad,     " + 
+						"												 	nvl(g.unidad_ejecutora, v.unidad_ejecutora) unidad_ejecutora,     " + 
+						"												 	nvl(g.programa, v.programa) programa,     " + 
+						"												 	nvl(g.subprograma, v.subprograma) subprograma,     " + 
+						"												 	nvl(g.proyecto, v.proyecto) proyecto,     " + 
+						"												 	nvl(g.actividad, v.actividad) actividad,     " + 
+						"												 	nvl(g.obra, v.obra) obra,     " + 
+						"												 	nvl(g.fuente, v.fuente) fuente,     " + 
+						"												 	nvl(g.grupo, v.grupo) grupo,     " + 
+						"												 	nvl(g.grupo_nombre, v.grupo_nombre) grupo_nombre,     " + 
+						"												 	nvl(g.subgrupo, v.subgrupo) subgrupo,     " + 
+						"												 	nvl(g.subgrupo_nombre, v.subgrupo_nombre) subgrupo_nombre,     " + 
+						"												 	nvl(g.renglon, v.renglon) renglon,     " + 
+						"												 	nvl(g.renglon_nombre, v.renglon_nombre) renglon_nombre,     " + 
+						"												 	g.ano_1 ano_1, g.ano_2 ano_2, g.ano_3 ano_3, g.ano_4 ano_4, g.ano_5 ano_5, g.ano_actual ano_actual,     " + 
+						"												 	v.asignado asignado, v.vigente vigente     " + 
+						"												 	from dashboard.mv_gasto g full outer join dashboard.mv_vigente v     " + 
+						"												 	on (     " + 
+						"												 		g.entidad = v.entidad     " + 
+						"												 		and g.unidad_ejecutora = v.unidad_ejecutora     " + 
+						"												 		and g.programa = v.programa     " + 
+						"												 		and g.subprograma = v.subprograma     " + 
+						"												 		and g.proyecto = v.proyecto     " + 
+						"												 		and g.actividad = v.actividad     " + 
+						"												 		and g.obra = v.obra     " + 
+						"												 		and g.renglon = v.renglon     " + 
+						"												 		and g.fuente = v.fuente     " + 
+						"												 		and g.mes = v.mes     " + 
+						"												 	)     " + 
+						"												 ) t1   " + 
+						"												 left outer join dashboard.mv_cuota c  " + 
+						"												 on (  " + 
+						"												 	c.entidad = t1.entidad     " + 
+						"												 	and c.unidad_ejecutora = t1.unidad_ejecutora     " + 
+						"												 	and c.fuente = t1.fuente     " + 
+						"												 	and c.mes = t1.mes  " + 
+						"												 )  " + 
+						"												 left outer join dashboard.mv_anticipo a " + 
+						"												 on( " + 
+						"												 	a.entidad = t1.entidad " + 
+						"												 	and a.unidad_ejecutora = t1.unidad_ejecutora " + 
+						"												 	and a.fuente = t1.fuente " + 
+						"												 	and a.mes = t1.mes " + 
+						"												 )" );
 				pstm.executeUpdate();
 				pstm.close();
 				boolean bconn =  CMemSQL.connect();
-				CLogger.writeConsole("Cargando datos a cache");
+				CLogger.writeConsole("Cargando datos a cache de MV_EJECUCION_PRESUPUESTARIA");
 				if(bconn){
 					ret = true;
 					int rows = 0;
+					int rows_total=0;
 					boolean first=true;
-					PreparedStatement pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ejecucion_presupuestaria(ejercicio, mes, entidad, entidad_nombre, unidad_ejecutora, ue_nombre, programa, programa_nombre, subprograma, subprograma_nombre, " + 
-							"proyecto, proyecto_nombre, actividad, obra, act_obra_nombre, renglon, renglon_nombre, subgrupo, subgrupo_nombre, grupo," + 
-							"grupo_nombre, fuente, ano_1, ano_2, ano_3, ano_4, ano_5, ano_actual, solicitado, aprobado, asignado, vigente) "
+					PreparedStatement pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ejecucion_presupuestaria(ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, " + 
+							"proyecto, actividad, obra, renglon, renglon_nombre, subgrupo, subgrupo_nombre, grupo," + 
+							"grupo_nombre, fuente, ano_1, ano_2, ano_3, ano_4, ano_5, ano_actual, solicitado, aprobado, anticipo, asignado, vigente) "
 							+ "values (?,?,?,?,?,?,?,?,?,?,"
 							+ "?,?,?,?,?,?,?,?,?,?,"
-							+ "?,?,?,?,?,?,?,?,?,?,?,?) ");
+							+ "?,?,?,?,?,?,?) ");
 					for(int i=1; i<13; i++){
 						pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ejecucion_presupuestaria where mes = ?");
 						pstm.setInt(1, i);
@@ -264,44 +322,92 @@ public class CEjecucionPresupuestaria {
 							pstm1.setInt(1, rs.getInt("ejercicio"));
 							pstm1.setInt(2, rs.getInt("mes"));
 							pstm1.setInt(3, rs.getInt("entidad"));
-							pstm1.setString(4, rs.getString("entidad_nombre"));
-							pstm1.setInt(5, rs.getInt("unidad_ejecutora"));
-							pstm1.setString(6, rs.getString("ue_nombre"));
-							pstm1.setInt(7, rs.getInt("programa"));
-							pstm1.setString(8, rs.getString("programa_nombre"));
-							pstm1.setInt(9, rs.getInt("subprograma"));
-							pstm1.setString(10, rs.getString("subprograma_nombre"));
-							pstm1.setInt(11, rs.getInt("proyecto"));
-							pstm1.setString(12, rs.getString("proyecto_nombre"));
-							pstm1.setInt(13, rs.getInt("actividad"));
-							pstm1.setInt(14, rs.getInt("obra"));
-							pstm1.setString(15, rs.getString("actividad_obra_nombre"));
-							pstm1.setInt(16, rs.getInt("renglon"));
-							pstm1.setString(17, rs.getString("renglon_nombre"));
-							pstm1.setInt(18, rs.getInt("subgrupo"));
-							pstm1.setString(19, rs.getString("subgrupo_nombre"));
-							pstm1.setInt(20, rs.getInt("grupo"));
-							pstm1.setString(21, rs.getString("grupo_nombre"));
-							pstm1.setInt(22, rs.getInt("fuente"));
-							pstm1.setDouble(23, rs.getDouble("ano_1"));
-							pstm1.setDouble(24, rs.getDouble("ano_2"));
-							pstm1.setDouble(25, rs.getDouble("ano_3"));
-							pstm1.setDouble(26, rs.getDouble("ano_4"));
-							pstm1.setDouble(27, rs.getDouble("ano_5"));
-							pstm1.setDouble(28, rs.getDouble("ano_actual"));
-							pstm1.setDouble(29, rs.getDouble("solicitado"));
-							pstm1.setDouble(30, rs.getDouble("aprobado"));
-							pstm1.setDouble(31, rs.getDouble("asignado"));
-							pstm1.setDouble(32, rs.getDouble("vigente"));
+							pstm1.setInt(4, rs.getInt("unidad_ejecutora"));
+							pstm1.setInt(5, rs.getInt("programa"));
+							pstm1.setInt(6, rs.getInt("subprograma"));
+							pstm1.setInt(7, rs.getInt("proyecto"));
+							pstm1.setInt(8, rs.getInt("actividad"));
+							pstm1.setInt(9, rs.getInt("obra"));
+							pstm1.setInt(10, rs.getInt("renglon"));
+							pstm1.setString(11, rs.getString("renglon_nombre"));
+							pstm1.setInt(12, rs.getInt("subgrupo"));
+							pstm1.setString(13, rs.getString("subgrupo_nombre"));
+							pstm1.setInt(14, rs.getInt("grupo"));
+							pstm1.setString(15, rs.getString("grupo_nombre"));
+							pstm1.setInt(16, rs.getInt("fuente"));
+							pstm1.setDouble(17, rs.getDouble("ano_1"));
+							pstm1.setDouble(18, rs.getDouble("ano_2"));
+							pstm1.setDouble(19, rs.getDouble("ano_3"));
+							pstm1.setDouble(20, rs.getDouble("ano_4"));
+							pstm1.setDouble(21, rs.getDouble("ano_5"));
+							pstm1.setDouble(22, rs.getDouble("ano_actual"));
+							pstm1.setDouble(23, rs.getDouble("solicitado_cuota"));
+							pstm1.setDouble(24, rs.getDouble("aprobado_cuota"));
+							pstm1.setDouble(25, rs.getDouble("anticipo_cuota"));
+							pstm1.setDouble(26, rs.getDouble("asignado"));
+							pstm1.setDouble(27, rs.getDouble("vigente"));
 							pstm1.addBatch();
 							rows++;
-							if((rows % 10000) == 0){
+							if((rows % 10000) == 0)
 								pstm1.executeBatch();
-								CLogger.writeConsole(String.join("Records escritos: ",String.valueOf(rows)));
-							}
 						}
+						CLogger.writeConsole("Records escritos: "+rows+" - mes: "+i);
+						pstm1.executeBatch();
+						rows_total += rows;
+						rows=0;
+						rs.close();
 						pstm.close();
 					}
+					
+					CLogger.writeConsole("Records escritos Totales: "+rows_total);
+					pstm1.close();
+					
+					CLogger.writeConsole("Cargando datos a cache de MV_ESTRUCTURA");
+					ret = true;
+					rows = 0;
+					first=true;
+					pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_estructura(ejercicio, entidad, entidad_nombre, unidad_ejecutora, unidad_ejecutora_nombre, "
+							+ "programa, programa_nombre, subprograma, subprograma_nombre, proyecto, proyecto_nombre, "
+							+ "actividad, obra, actividad_obra_nombre) "
+							+ "values (?,?,?,?,?,?,?,?,?,?,"
+							+ "?,?,?,?) ");
+					pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_estructura");
+					pstm.setFetchSize(10000);
+					ResultSet rs = pstm.executeQuery();
+					while(rs!=null && rs.next()){
+						if(first){
+							PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_estructura ");
+							if (pstm2.executeUpdate()>0)
+								CLogger.writeConsole("Registros eliminados");
+							else
+								CLogger.writeConsole("Sin registros para eliminar");	
+							pstm2.close();
+							first=false;
+						}
+						pstm1.setInt(1, rs.getInt("ejercicio"));
+						pstm1.setInt(2, rs.getInt("entidad"));
+						pstm1.setString(3, rs.getString("entidad_nombre"));
+						pstm1.setInt(4, rs.getInt("unidad_ejecutora"));
+						pstm1.setString(5, rs.getString("unidad_ejecutora_nombre"));
+						pstm1.setInt(6, rs.getInt("programa"));
+						pstm1.setString(7, rs.getString("programa_nombre"));
+						pstm1.setInt(8, rs.getInt("subprograma"));
+						pstm1.setString(9, rs.getString("subprograma_nombre"));
+						pstm1.setInt(10, rs.getInt("proyecto"));
+						pstm1.setString(11, rs.getString("proyecto_nombre"));
+						pstm1.setInt(12, rs.getInt("actividad"));
+						pstm1.setInt(13, rs.getInt("obra"));
+						pstm1.setString(14, rs.getString("actividad_obra_nombre"));
+						pstm1.addBatch();
+						rows++;
+						if((rows % 10000) == 0)
+							pstm1.executeBatch();
+					}
+					pstm1.executeBatch();
+					rs.close();
+					pstm.close();
+					
+					CLogger.writeConsole("Records escritos Totales: "+rows);
 					pstm1.close();
 				}
 				
