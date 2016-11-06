@@ -30,6 +30,7 @@ public class CMain {
 		options.addOption("mp_des", "metas-presidenciales-descentralizadas", false, "calcula la vista de metas presidenciales");
 		options.addOption("efp", "ejecucion-financiera-prestamos", false, "cargar ejecucion financiera de Prestamos");
 		options.addOption("ep", "ejecucion-presupuestaria", false, "cargar ejecucion presupuestaria");
+		options.addOption("ef", "ejecucion-fisica", false, "cargar ejecucion fisica");
 		options.addOption( "h", "help", false, "muestra este listado de opciones" );
 	}
 	
@@ -115,6 +116,11 @@ public class CMain {
 				 CLogger.writeConsole("Inicio carga de ejecucion presupuestaria");
 				 if(CEjecucionPresupuestaria.loadEjecucionPresupuestaria(conn))
 					 CLogger.writeConsole("Datos de ejecucion presupuestaria cargados con exito");
+			 }
+			 else if(cline.hasOption("ejecucion-fisica")){
+				 CLogger.writeConsole("Inicio carga de ejecucion fisica");
+				 if(CEjecucionFisica.loadEjeucionFisica(conn))
+					 CLogger.writeConsole("Datos de ejecucion fisica cargados con exito");
 			 }
 			 else if(cline.hasOption("help")){
 				 HelpFormatter formater = new HelpFormatter();

@@ -341,9 +341,21 @@ public class CEjecucionPresupuestaria {
 							pstm1.setDouble(20, rs.getDouble("ano_4"));
 							pstm1.setDouble(21, rs.getDouble("ano_5"));
 							pstm1.setDouble(22, rs.getDouble("ano_actual"));
-							pstm1.setDouble(23, rs.getDouble("solicitado_cuota"));
-							pstm1.setDouble(24, rs.getDouble("aprobado_cuota"));
-							pstm1.setDouble(25, rs.getDouble("anticipo_cuota"));
+							Double solicitado_cuota=rs.getDouble("solicitado_cuota");
+							if(!rs.wasNull())
+								pstm1.setDouble(23, solicitado_cuota);
+							else
+								pstm1.setObject(23, null);
+							Double aprobado_cuota=rs.getDouble("aprobado_cuota");
+							if(!rs.wasNull())
+								pstm1.setDouble(24, aprobado_cuota);
+							else
+								pstm1.setObject(24, null);
+							Double anticipo_cuota=rs.getDouble("anticipo_cuota");
+							if(!rs.wasNull())
+								pstm1.setDouble(25, anticipo_cuota);
+							else
+								pstm1.setObject(25, null);
 							pstm1.setDouble(26, rs.getDouble("asignado"));
 							pstm1.setDouble(27, rs.getDouble("vigente"));
 							pstm1.addBatch();
