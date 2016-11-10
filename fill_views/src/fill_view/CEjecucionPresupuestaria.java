@@ -83,7 +83,7 @@ public class CEjecucionPresupuestaria {
 				///Actualiza la vista de gasto
 				pstm = conn.prepareStatement("insert into table dashboard.mv_gasto "
 						+"select month(gh.fec_aprobado) mes, gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma, gd.proyecto, gd.actividad, gd.obra, gd.renglon, r.nombre renglon_nombre, gd.fuente,     " + 
-						"						 						 	gd.renglon - (gd.renglon%100) grupo, gg.nombre grupo_nombre, gd.renglon - (gd.renglon%10) subgrupo, sg.nombre subgrupo_nombre,      " + 
+						"						 						 	gd.renglon - (gd.renglon%100) grupo, gg.nombre grupo_nombre, gd.renglon - (gd.renglon%10) subgrupo, sg.nombre subgrupo_nombre, gd.geografico,      " + 
 						"						 						 	sum( case when gh.ejercicio = (year(current_date()) - 5) then gd.monto_renglon else 0 end) ano_1,      " + 
 						"						 						 	sum( case when gh.ejercicio = (year(current_date()) - 4) then gd.monto_renglon else 0 end) ano_2,      " + 
 						"						 						 	sum( case when gh.ejercicio = (year(current_date()) - 3) then gd.monto_renglon else 0 end) ano_3,      " + 
@@ -106,7 +106,7 @@ public class CEjecucionPresupuestaria {
 						"		 				  										and r.ejercicio = year(current_date())   " + 
 						"		 				  										and r.renglon = gd.renglon   " + 
 						"						 						 				group by month(gh.fec_aprobado), gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma,       " + 
-						"						 						 				gd.proyecto, gd.actividad, gd.obra, gg.nombre, sg.nombre, r.nombre, gd.renglon, gd.fuente  ");
+						"						 						 				gd.proyecto, gd.actividad, gd.obra, gg.nombre, sg.nombre, r.nombre, gd.renglon, gd.fuente, gd.geografico  ");
  
 				pstm.executeUpdate();
 				pstm.close();
@@ -240,7 +240,7 @@ public class CEjecucionPresupuestaria {
 						"						t1.proyecto,   " + 
 						"						t1.actividad,   " + 
 						"						t1.obra,   " + 
-						"						t1.mes, t1.fuente, t1.grupo, t1.grupo_nombre, t1.subgrupo, t1.subgrupo_nombre, t1.renglon, t1.renglon_nombre,     " + 
+						"						t1.mes, t1.fuente, t1.grupo, t1.grupo_nombre, t1.subgrupo, t1.subgrupo_nombre, t1.renglon, t1.renglon_nombre, t1.geografico,    " + 
 						"												 t1.ano_1, t1.ano_2, t1.ano_3, t1.ano_4, t1.ano_5, t1.ano_actual, t1.asignado, t1.vigente, a.anticipo anticipo_cuota, c.solicitado solicitado_cuota,     " + 
 						"												 c.aprobado aprobado_cuota      " + 
 						"												 from (     " + 
@@ -259,6 +259,7 @@ public class CEjecucionPresupuestaria {
 						"												 	nvl(g.subgrupo_nombre, v.subgrupo_nombre) subgrupo_nombre,     " + 
 						"												 	nvl(g.renglon, v.renglon) renglon,     " + 
 						"												 	nvl(g.renglon_nombre, v.renglon_nombre) renglon_nombre,     " + 
+						"													g.geografico,  "+									
 						"												 	g.ano_1 ano_1, g.ano_2 ano_2, g.ano_3 ano_3, g.ano_4 ano_4, g.ano_5 ano_5, g.ano_actual ano_actual,     " + 
 						"												 	v.asignado asignado, v.vigente vigente     " + 
 						"												 	from dashboard.mv_gasto g full outer join dashboard.mv_vigente v     " + 
@@ -300,10 +301,10 @@ public class CEjecucionPresupuestaria {
 					boolean first=true;
 					PreparedStatement pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ejecucion_presupuestaria(ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, " + 
 							"proyecto, actividad, obra, renglon, renglon_nombre, subgrupo, subgrupo_nombre, grupo," + 
-							"grupo_nombre, fuente, ano_1, ano_2, ano_3, ano_4, ano_5, ano_actual, solicitado, aprobado, anticipo, asignado, vigente) "
+							"grupo_nombre, geografico, fuente, ano_1, ano_2, ano_3, ano_4, ano_5, ano_actual, solicitado, aprobado, anticipo, asignado, vigente) "
 							+ "values (?,?,?,?,?,?,?,?,?,?,"
 							+ "?,?,?,?,?,?,?,?,?,?,"
-							+ "?,?,?,?,?,?,?) ");
+							+ "?,?,?,?,?,?,?,?) ");
 					for(int i=1; i<13; i++){
 						pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ejecucion_presupuestaria where mes = ?");
 						pstm.setInt(1, i);
@@ -334,30 +335,31 @@ public class CEjecucionPresupuestaria {
 							pstm1.setString(13, rs.getString("subgrupo_nombre"));
 							pstm1.setInt(14, rs.getInt("grupo"));
 							pstm1.setString(15, rs.getString("grupo_nombre"));
-							pstm1.setInt(16, rs.getInt("fuente"));
-							pstm1.setDouble(17, rs.getDouble("ano_1"));
-							pstm1.setDouble(18, rs.getDouble("ano_2"));
-							pstm1.setDouble(19, rs.getDouble("ano_3"));
-							pstm1.setDouble(20, rs.getDouble("ano_4"));
-							pstm1.setDouble(21, rs.getDouble("ano_5"));
-							pstm1.setDouble(22, rs.getDouble("ano_actual"));
+							pstm1.setInt(16, rs.getInt("geografico"));
+							pstm1.setInt(17, rs.getInt("fuente"));
+							pstm1.setDouble(18, rs.getDouble("ano_1"));
+							pstm1.setDouble(19, rs.getDouble("ano_2"));
+							pstm1.setDouble(20, rs.getDouble("ano_3"));
+							pstm1.setDouble(21, rs.getDouble("ano_4"));
+							pstm1.setDouble(22, rs.getDouble("ano_5"));
+							pstm1.setDouble(23, rs.getDouble("ano_actual"));
 							Double solicitado_cuota=rs.getDouble("solicitado_cuota");
 							if(!rs.wasNull())
-								pstm1.setDouble(23, solicitado_cuota);
-							else
-								pstm1.setObject(23, null);
-							Double aprobado_cuota=rs.getDouble("aprobado_cuota");
-							if(!rs.wasNull())
-								pstm1.setDouble(24, aprobado_cuota);
+								pstm1.setDouble(24, solicitado_cuota);
 							else
 								pstm1.setObject(24, null);
-							Double anticipo_cuota=rs.getDouble("anticipo_cuota");
+							Double aprobado_cuota=rs.getDouble("aprobado_cuota");
 							if(!rs.wasNull())
-								pstm1.setDouble(25, anticipo_cuota);
+								pstm1.setDouble(25, aprobado_cuota);
 							else
 								pstm1.setObject(25, null);
-							pstm1.setDouble(26, rs.getDouble("asignado"));
-							pstm1.setDouble(27, rs.getDouble("vigente"));
+							Double anticipo_cuota=rs.getDouble("anticipo_cuota");
+							if(!rs.wasNull())
+								pstm1.setDouble(26, anticipo_cuota);
+							else
+								pstm1.setObject(26, null);
+							pstm1.setDouble(27, rs.getDouble("asignado"));
+							pstm1.setDouble(28, rs.getDouble("vigente"));
 							pstm1.addBatch();
 							rows++;
 							if((rows % 10000) == 0)
