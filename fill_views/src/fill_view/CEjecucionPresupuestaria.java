@@ -40,45 +40,54 @@ public class CEjecucionPresupuestaria {
 				
 				CLogger.writeConsole("Insertando valores a MV_ESTRUCTURA");
 				pstm = conn.prepareStatement("insert into table dashboard.mv_estructura "+
-						"select e.ejercicio, e.entidad, e.nombre entidad_nombre, ue.unidad_ejecutora, ue.nombre unidad_ejecutora_nombre, "+
-						"p.programa, p.nom_estructura programa_nombre, "+
-						"sp.subprograma, sp.nom_estructura subprograma_nombre, "+
-						"pr.proyecto, pr.nom_estructura proyecto_nombre, "+
-						"ao.actividad, ao.obra, ao.nom_estructura actividad_obra_nombre "+
-						"from sicoinprod.cg_entidades e, sicoinprod.cg_entidades ue, dashboard.mv_entidad mve, "+
-						"sicoinprod.cp_estructuras p, sicoinprod.cp_estructuras sp, sicoinprod.cp_estructuras pr, sicoinprod.cp_estructuras ao "+
-						"where e.ejercicio = year(current_date()) "+
-						"and ue.ejercicio = e.ejercicio "+
-						"and e.restrictiva = 'N' "+
-						"and ue.restrictiva = 'N' "+
-						"and e.unidad_ejecutora = 0 "+
-						"and ue.entidad = e.entidad "+
-						"and ((e.entidad between 11130000 and 11130020) OR e.entidad = 11140021) "+ 
-						"and mve.entidad = e.entidad "+
-						"and mve.ejercicio = e.ejercicio "+
-						"and ((ue.unidad_ejecutora = 0 and mve.unidades_ejecutoras=1) or (ue.unidad_ejecutora>0 and mve.unidades_ejecutoras>1)) "+
-						"and p.ejercicio = e.ejercicio "+
-						"and p.entidad = e.entidad "+
-						"and p.unidad_ejecutora = ue.unidad_ejecutora "+
-						"and p.nivel_estructura = 2 "+
-						"and sp.ejercicio = e.ejercicio "+
-						"and sp.entidad = e.entidad "+
-						"and sp.unidad_ejecutora = ue.unidad_ejecutora "+
-						"and sp.programa = p.programa "+
-						"and sp.nivel_estructura = 3 "+
-						"and pr.ejercicio = e.ejercicio "+
-						"and pr.entidad = e.entidad "+
-						"and pr.unidad_ejecutora = ue.unidad_ejecutora "+
-						"and pr.programa = p.programa "+
-						"and pr.subprograma = sp.subprograma "+
-						"and pr.nivel_estructura = 4 "+
-						"and ao.ejercicio = e.ejercicio "+
-						"and ao.entidad = e.entidad "+
-						"and ao.unidad_ejecutora = ue.unidad_ejecutora "+
-						"and ao.programa = p.programa "+
-						"and ao.subprograma = sp.subprograma "+
-						"and ao.proyecto = pr.proyecto "+
-						"and ao.nivel_estructura = 5");
+						"select e.ejercicio, e.entidad, e.nombre entidad_nombre, es.sigla, ue.unidad_ejecutora, ue.nombre unidad_ejecutora_nombre,  " + 
+						"p.programa, p.nom_estructura programa_nombre,  " + 
+						"sp.subprograma, sp.nom_estructura subprograma_nombre,  " + 
+						"pr.proyecto, pr.nom_estructura proyecto_nombre,  " + 
+						"ao.actividad, ao.obra, ao.nom_estructura actividad_obra_nombre  " + 
+						"from sicoinprod.cg_entidades e, sicoinprod.cg_entidades ue " + 
+						"left outer join sicoinprod.cp_estructuras p  " + 
+						"on( " + 
+						"p.ejercicio = ue.ejercicio  " + 
+						"and p.entidad = ue.entidad  " + 
+						"and p.unidad_ejecutora = ue.unidad_ejecutora  " + 
+						"and p.nivel_estructura = 2 " + 
+						") left outer join sicoinprod.cp_estructuras sp  " + 
+						"on( " + 
+						"sp.ejercicio = ue.ejercicio  " + 
+						"and sp.entidad = ue.entidad  " + 
+						"and sp.unidad_ejecutora = ue.unidad_ejecutora  " + 
+						"and sp.programa = p.programa  " + 
+						"and sp.nivel_estructura = 3  " + 
+						") left outer join sicoinprod.cp_estructuras pr " + 
+						"on( " + 
+						"pr.ejercicio = ue.ejercicio  " + 
+						"and pr.entidad = ue.entidad   " + 
+						"and pr.unidad_ejecutora = ue.unidad_ejecutora  " + 
+						"and pr.programa = p.programa  " + 
+						"and pr.subprograma = sp.subprograma  " + 
+						"and pr.nivel_estructura = 4  " + 
+						") left outer join sicoinprod.cp_estructuras ao " + 
+						"on( " + 
+						"ao.ejercicio = ue.ejercicio  " + 
+						"and ao.entidad = ue.entidad  " + 
+						"and ao.unidad_ejecutora = ue.unidad_ejecutora  " + 
+						"and ao.programa = p.programa  " + 
+						"and ao.subprograma = sp.subprograma  " + 
+						"and ao.proyecto = pr.proyecto  " + 
+						"and ao.nivel_estructura = 5 " + 
+						"), dashboard.mv_entidad mve, dashboard.entidad_sigla es  " + 
+						"where e.ejercicio = year(current_date())  " + 
+						"and ue.ejercicio = e.ejercicio  " + 
+						"and e.restrictiva = 'N'  " + 
+						"and ue.restrictiva = 'N'  " + 
+						"and e.unidad_ejecutora = 0  " + 
+						"and ue.entidad = e.entidad  " + 
+						"and ((e.entidad between 11130000 and 11130020) OR e.entidad = 11140021)   " + 
+						"and mve.entidad = e.entidad  " + 
+						"and mve.ejercicio = e.ejercicio  " + 
+						"and ((ue.unidad_ejecutora = 0 and mve.unidades_ejecutoras=1) or (ue.unidad_ejecutora>0 and mve.unidades_ejecutoras>1))  " + 
+						"and es.entidad = e.entidad");
 				pstm.executeUpdate();
 				pstm.close();
 				
@@ -492,11 +501,11 @@ public class CEjecucionPresupuestaria {
 					ret = true;
 					rows = 0;
 					first=true;
-					pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_estructura(ejercicio, entidad, entidad_nombre, unidad_ejecutora, unidad_ejecutora_nombre, "
+					pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_estructura(ejercicio, entidad, entidad_nombre, sigla, unidad_ejecutora, unidad_ejecutora_nombre, "
 							+ "programa, programa_nombre, subprograma, subprograma_nombre, proyecto, proyecto_nombre, "
 							+ "actividad, obra, actividad_obra_nombre) "
 							+ "values (?,?,?,?,?,?,?,?,?,?,"
-							+ "?,?,?,?) ");
+							+ "?,?,?,?,?) ");
 					pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_estructura");
 					pstm.setFetchSize(10000);
 					ResultSet rs = pstm.executeQuery();
@@ -513,17 +522,18 @@ public class CEjecucionPresupuestaria {
 						pstm1.setInt(1, rs.getInt("ejercicio"));
 						pstm1.setInt(2, rs.getInt("entidad"));
 						pstm1.setString(3, rs.getString("entidad_nombre"));
-						pstm1.setInt(4, rs.getInt("unidad_ejecutora"));
-						pstm1.setString(5, rs.getString("unidad_ejecutora_nombre"));
-						pstm1.setInt(6, rs.getInt("programa"));
-						pstm1.setString(7, rs.getString("programa_nombre"));
-						pstm1.setInt(8, rs.getInt("subprograma"));
-						pstm1.setString(9, rs.getString("subprograma_nombre"));
-						pstm1.setInt(10, rs.getInt("proyecto"));
-						pstm1.setString(11, rs.getString("proyecto_nombre"));
-						pstm1.setInt(12, rs.getInt("actividad"));
-						pstm1.setInt(13, rs.getInt("obra"));
-						pstm1.setString(14, rs.getString("actividad_obra_nombre"));
+						pstm1.setString(4, rs.getString("sigla"));
+						pstm1.setInt(5, rs.getInt("unidad_ejecutora"));
+						pstm1.setString(6, rs.getString("unidad_ejecutora_nombre"));
+						pstm1.setInt(7, rs.getInt("programa"));
+						pstm1.setString(8, rs.getString("programa_nombre"));
+						pstm1.setInt(9, rs.getInt("subprograma"));
+						pstm1.setString(10, rs.getString("subprograma_nombre"));
+						pstm1.setInt(11, rs.getInt("proyecto"));
+						pstm1.setString(12, rs.getString("proyecto_nombre"));
+						pstm1.setInt(13, rs.getInt("actividad"));
+						pstm1.setInt(14, rs.getInt("obra"));
+						pstm1.setString(15, rs.getString("actividad_obra_nombre"));
 						pstm1.addBatch();
 						rows++;
 						if((rows % 10000) == 0)
