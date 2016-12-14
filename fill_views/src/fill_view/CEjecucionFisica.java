@@ -178,7 +178,7 @@ public class CEjecucionFisica {
 			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ejecucion_fisica "+
 				"select me.*, e.entidad_nombre, e.unidad_ejecutora_nombre, " + 
 				"e.programa_nombre, e.subprograma_nombre, e.proyecto_nombre,e.actividad_obra_nombre, um.nombre unidad_medida_nombre, " + 
-				"ej.ejecucion, mo.mod_adicion, mo.mod_disminucion " + 
+				"ej.ejecucion, mo.modificacion " + 
 				"from ( " + 
 				"	select m.ejercicio, mes.mes, m.entidad, m.unidad_ejecutora, m.programa, m.subprograma, m.proyecto, m.actividad, m.obra, m.codigo_meta, " + 
 				"	m.cantidad, m.unidad_medida " + 
@@ -189,21 +189,14 @@ public class CEjecucionFisica {
 				"	and m.entidad = ent.entidad " + 
 				"	and ((m.unidad_ejecutora=0 and ent.unidades_ejecutoras=1) or (m.unidad_ejecutora>0 and ent.unidades_ejecutoras>1)) " + 
 				")me left outer join ( " + 
-				"	select m1.ejercicio, m1.entidad, m1.unidad_ejecutora, m1.programa, m1.subprograma, m1.proyecto, m1.actividad, m1.obra, m1.codigo_meta, " + 
-				"	month(l.fecha_log) mes, sum(l.adicion) mod_adicion, sum(l.disminucion) mod_disminucion " + 
-				"	from sicoinprod.sf_meta m1 left outer join sicoinprod.sf_meta_log l " + 
-				"	on( m1.estado = 'APROBADO' " + 
-				"		and m1.ejercicio = l.ejercicio " + 
-				"		and m1.entidad = l.entidad " + 
-				"		and m1.unidad_ejecutora = l.unidad_ejecutora " + 
-				"		and m1.programa = l.programa " + 
-				"		and m1.subprograma = l.subprograma " + 
-				"		and m1.proyecto = l.proyecto " + 
-				"		and m1.actividad = l.actividad " + 
-				"		and m1.obra = l.obra " + 
-				"		and m1.codigo_meta = l.codigo_meta  " + 
-				"	) " + 
-				"	group by m1.ejercicio, m1.entidad, m1.unidad_ejecutora, m1.programa, m1.subprograma, m1.proyecto, m1.actividad, m1.obra, m1.codigo_meta, m1.fecha_inicio, m1.fecha_fin, m1.descripcion, m1.cantidad, m1.unidad_medida, month(l.fecha_log) " + 
+				"	select md.ejercicio, month(mh.fec_aprobado) mes, md.entidad, md.unidad_ejecutora, md.programa, md.subprograma, md.proyecto, md.actividad, md.obra, md.codigo_meta, sum(md.cantidad_unidades) modificacion  " + 
+				"	from sicoinprod.sf_modificacion_hoja mh,sicoinprod.sf_modificacion_detalle md " + 
+				"	where mh.ejercicio = md.ejercicio " + 
+				"	and mh.entidad = md.entidad " + 
+				"	and mh.unidad_ejecutora = md.unidad_ejecutora " + 
+				"	and mh.no_cur = md.no_cur " + 
+				"	and mh.estado = 'APROBADO' " + 
+				"	group by md.ejercicio, month(mh.fec_aprobado), md.entidad, md.unidad_ejecutora, md.programa, md.subprograma, md.proyecto, md.actividad, md.obra, md.codigo_meta " + 
 				") mo " + 
 				"on( " + 
 				"	me.ejercicio = mo.ejercicio " + 
@@ -225,7 +218,7 @@ public class CEjecucionFisica {
 				"				sum(ed.cantidad_unidades) ejecucion   " + 
 				"				from sicoinprod.sf_ejecucion_hoja_4 eh,   " + 
 				"				sicoinprod.sf_ejecucion_detalle_4 ed   " + 
-				"				where eh.ejercicio =  " + date.getYear() +" "+ 
+				"				where eh.ejercicio =  " + date.getYear() + " "+ 
 				"				and eh.ejercicio = ed.ejercicio   " + 
 				"				and eh.entidad = ed.entidad   " + 
 				"				and eh.unidad_ejecutora = ed.unidad_ejecutora   " + 
@@ -245,7 +238,7 @@ public class CEjecucionFisica {
 				"	and me.obra = ej.obra " + 
 				"	and me.codigo_meta = ej.codigo_meta " + 
 				"), sicoinprod.fp_unidad_medida um, dashboard.mv_estructura e " + 
-				"where me.ejercicio = " + date.getYear() +" "+  
+				"where me.ejercicio =  " + date.getYear() + " "+ 
 				"and um.codigo = me.unidad_medida   " + 
 				"and um.ejercicio = me.ejercicio   " + 
 				"and me.entidad = e.entidad   " + 
@@ -254,7 +247,7 @@ public class CEjecucionFisica {
 				"and me.subprograma = e.subprograma   " + 
 				"and me.proyecto = e.proyecto   " + 
 				"and me.actividad = e.actividad   " + 
-				"and me.obra = e.obra");
+				"and me.obra = e.obra  ");
 			pstm.executeUpdate();
 			pstm.close();
 			
@@ -271,9 +264,9 @@ public class CEjecucionFisica {
 					PreparedStatement pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ejecucion_fisica(ejercicio, mes, entidad, entidad_nombre,"
 							+ "unidad_ejecutora, unidad_ejecutora_nombre, programa, programa_nombre, subprograma, subprograma_nombre,"
 							+ "proyecto, proyecto_nombre, actividad, obra, actividad_obra_nombre, codigo_meta, cantidad,"
-							+ "unidad_nombre, ejecucion, mod_adicion, mod_disminucion) "
+							+ "unidad_nombre, ejecucion, modificacion) "
 							+ "values (?,?,?,?,?,?,?,?,?,?,"
-							+ "?,?,?,?,?,?,?,?,?,?,?) ");
+							+ "?,?,?,?,?,?,?,?,?,?) ");
 					while(rs.next()){
 						if(first){
 							pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ejecucion_fisica "
@@ -305,8 +298,7 @@ public class CEjecucionFisica {
 						pstm1.setDouble(17, rs.getDouble("cantidad"));
 						pstm1.setString(18, rs.getString("unidad_medida_nombre"));
 						pstm1.setDouble(19, rs.getDouble("ejecucion"));
-						pstm1.setDouble(20, rs.getDouble("mod_adicion"));
-						pstm1.setDouble(21, rs.getDouble("mod_disminucion"));
+						pstm1.setDouble(20, rs.getDouble("modificacion"));
 						pstm1.addBatch();
 						
 						rows++;
