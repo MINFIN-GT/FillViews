@@ -174,10 +174,6 @@ public class CEjecucionFisica {
 			pstm.executeUpdate();
 			pstm.close();
 			
-			pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.sf_meta");
-			pstm.executeUpdate();
-			pstm.close();
-		
 			CLogger.writeConsole("Insertando valores a MV_EJECUCION_FISICA");
 			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ejecucion_fisica "+
 				"select me.*, e.entidad_nombre, e.unidad_ejecutora_nombre, " + 
