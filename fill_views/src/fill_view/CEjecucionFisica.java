@@ -173,6 +173,10 @@ public class CEjecucionFisica {
 			pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_ejecucion_fisica");
 			pstm.executeUpdate();
 			pstm.close();
+			
+			pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.sf_meta");
+			pstm.executeUpdate();
+			pstm.close();
 		
 			CLogger.writeConsole("Insertando valores a MV_EJECUCION_FISICA");
 			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ejecucion_fisica "+
@@ -258,7 +262,7 @@ public class CEjecucionFisica {
 				if(rs!=null && bconn){
 					ret = true;
 					int rows = 0;
-					CLogger.writeConsole("CEjecucionFisica (loadEjeucionFisica):");
+					CLogger.writeConsole("CEjecucionFisica (loadEjeucionFisica mv_ejecucion_fisica):");
 					PreparedStatement pstm2;
 					boolean first=true;
 					PreparedStatement pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ejecucion_fisica(ejercicio, mes, entidad, entidad_nombre,"
@@ -299,6 +303,74 @@ public class CEjecucionFisica {
 						pstm1.setString(18, rs.getString("unidad_medida_nombre"));
 						pstm1.setDouble(19, rs.getDouble("ejecucion"));
 						pstm1.setDouble(20, rs.getDouble("modificacion"));
+						pstm1.addBatch();
+						
+						rows++;
+						if((rows % 10000) == 0){
+							pstm1.executeBatch();
+							CLogger.writeConsole(String.join("Records escritos: ",String.valueOf(rows)));
+						}
+					}	
+					pstm1.executeBatch();
+					CLogger.writeConsole(String.join("Total de records escritos: ",String.valueOf(rows)));
+					rs.close();
+					pstm1.close();
+					pstm.close();
+				}
+				pstm = conn.prepareStatement("SELECT * FROM sicoinprod.sf_meta");
+				rs = pstm.executeQuery();
+				if(rs!=null){
+					ret = true;
+					int rows = 0;
+					CLogger.writeConsole("CEjecucionFisica (loadEjeucionFisica sf_meta):");
+					PreparedStatement pstm2;
+					boolean first=true;
+					PreparedStatement pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO sf_meta(ejercicio, entidad, unidad_ejecutora, programa,"
+							+ "subprograma, proyecto, actividad, obra, codigo_meta, fecha_inicio, fecha_fin, descripcion, cantidad,"
+							+ "unidad_medida, adicion, disminucion, estado, nivel_meta, ejercicio_meta, id_meta, snip, reservado, habilitado,"
+							+ "tipo_beneficiado) "
+							+ "values (?,?,?,?,?,?,?,?,?,?,"
+							+ "?,?,?,?,?,?,?,?,?,?,"
+							+ "?,?,?,?) ");
+					while(rs.next()){
+						if(first){
+							pstm2 = CMemSQL.getConnection().prepareStatement("delete from sf_meta "
+									+ " where ejercicio=" + date.getYear())  ;
+							if (pstm2.executeUpdate()>0)
+								CLogger.writeConsole("Registros eliminados");
+							else
+								CLogger.writeConsole("Sin registros para eliminar");	
+							pstm2.close();
+							first=false;
+						}
+						SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.S");
+					    Timestamp fecha_inicio = new Timestamp(dateFormat.parse(rs.getString("fecha_inicio")).getTime());
+					    Timestamp fecha_fin = new Timestamp(dateFormat.parse(rs.getString("fecha_fin")).getTime());
+					    
+						pstm1.setInt(1, rs.getInt("ejercicio"));
+						pstm1.setInt(2, rs.getInt("entidad"));
+						pstm1.setInt(3, rs.getInt("unidad_ejecutora"));
+						pstm1.setInt(4, rs.getInt("programa"));
+						pstm1.setInt(5, rs.getInt("subprograma"));
+						pstm1.setInt(6, rs.getInt("proyecto"));
+						pstm1.setInt(7, rs.getInt("actividad"));
+						pstm1.setInt(8, rs.getInt("obra"));
+						pstm1.setInt(9,rs.getInt("codigo_meta"));
+						pstm1.setTimestamp(10, fecha_inicio);
+						pstm1.setTimestamp(11, fecha_fin);
+						pstm1.setString(12, rs.getString("descripcion"));
+						pstm1.setInt(13, rs.getInt("cantidad"));
+						pstm1.setInt(14, rs.getInt("unidad_medida"));
+						pstm1.setInt(15, rs.getInt("adicion"));
+						pstm1.setInt(16, rs.getInt("disminucion"));
+						pstm1.setString(17, rs.getString("estado"));
+						pstm1.setInt(18, rs.getInt("nivel_meta"));
+						pstm1.setInt(19, rs.getInt("ejercicio_meta"));
+						pstm1.setInt(20, rs.getInt("id_meta"));
+						pstm1.setInt(21, rs.getInt("snip"));
+						pstm1.setDouble(22, rs.getDouble("reservado"));
+						pstm1.setString(23, rs.getString("habilitado"));
+						pstm1.setInt(24, rs.getInt("tipo_beneficiado"));
 						pstm1.addBatch();
 						
 						rows++;
