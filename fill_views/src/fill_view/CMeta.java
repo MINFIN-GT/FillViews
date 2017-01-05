@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+import org.joda.time.DateTime;
+
 import utilities.CLogger;
 
 public class CMeta {
@@ -35,6 +37,7 @@ public class CMeta {
 	
 	public static boolean calcularMv_meta_presidencial(Connection conn, int ejercicio){
 		boolean ret = false;
+		DateTime now = new DateTime();
 		String sql="select t.ejercicio, t.mes, mp.id, mp.nombre, em.nombre nombre_entidad,uem.nombre nombre_unidad_ejecutora, pm.nom_estructura nombre_programa, spm.nom_estructura nombre_subprograma, prm.nom_estructura nombre_proyecto, ao.nom_estructura nombre_actividad_obra, " + 
 				"         ep.entidad, ep.unidad_ejecutora, ep.programa, ep.subprograma, ep.proyecto, ep.actividad, ep.obra, mm.codigo_meta,  " + 
 				"         v.renglon, rm.nombre nombre_renglon, v.asignado, v.vigente_1, v.vigente_2, v.vigente_3, v.vigente_4, v.vigente_5, v.vigente_6, v.vigente_7, v.vigente_8, v.vigente_9, v.vigente_10, v.vigente_11, v.vigente_12, " + 
@@ -258,11 +261,11 @@ public class CMeta {
 		try{
 			if(!conn.isClosed() && CMemSQL.connect()){
 				PreparedStatement pstm = conn.prepareStatement(sql);
-				pstm.setInt(1, 2016);
-				pstm.setInt(2, 2016);
-				pstm.setInt(3, 2016);
-				pstm.setInt(4, 2016);
-				pstm.setInt(5, 2016);
+				pstm.setInt(1, now.getYear());
+				pstm.setInt(2, now.getYear());
+				pstm.setInt(3, now.getYear());
+				pstm.setInt(4, now.getYear());
+				pstm.setInt(5, now.getYear());
 				ResultSet rs = pstm.executeQuery();
 				PreparedStatement pstmi = CMemSQL.getConnection().prepareStatement("INSERT INTO mv_meta_presidencial(ejercicio, mes, id, nombre, entidad, entidad_nombre, "
 						+ "unidad_ejecutora, unidad_ejecutora_nombre, programa, programa_nombre, subprograma, subprograma_nombre, proyecto, proyecto_nombre, actividad, obra, "
@@ -334,6 +337,7 @@ public class CMeta {
 	
 	public static boolean calcularMv_meta_presidencial_descentralizadas(Connection conn, int ejercicio){
 		boolean ret = false;
+		DateTime now = new DateTime();
 		String sql="select t.ejercicio, t.mes, mp.id, mp.nombre, em.nombre nombre_entidad,uem.nombre nombre_unidad_ejecutora, pm.nom_estructura nombre_programa, spm.nom_estructura nombre_subprograma, prm.nom_estructura nombre_proyecto, ao.nom_estructura nombre_actividad_obra, " + 
 				"         ep.entidad, ep.unidad_ejecutora, ep.programa, ep.subprograma, ep.proyecto, ep.actividad, ep.obra, mm.codigo_meta,  " + 
 				"         v.renglon, rm.nombre nombre_renglon, v.asignado, v.vigente_1, v.vigente_2, v.vigente_3, v.vigente_4, v.vigente_5, v.vigente_6, v.vigente_7, v.vigente_8, v.vigente_9, v.vigente_10, v.vigente_11, v.vigente_12, " + 
@@ -557,11 +561,11 @@ public class CMeta {
 		try{
 			if(!conn.isClosed() && CMemSQL.connect()){
 				PreparedStatement pstm = conn.prepareStatement(sql);
-				pstm.setInt(1, 2016);
-				pstm.setInt(2, 2016);
-				pstm.setInt(3, 2016);
-				pstm.setInt(4, 2016);
-				pstm.setInt(5, 2016);
+				pstm.setInt(1, now.getYear());
+				pstm.setInt(2, now.getYear());
+				pstm.setInt(3, now.getYear());
+				pstm.setInt(4, now.getYear());
+				pstm.setInt(5, now.getYear());
 				ResultSet rs = pstm.executeQuery();
 				PreparedStatement pstmi = CMemSQL.getConnection().prepareStatement("INSERT INTO mv_meta_presidencial(ejercicio, mes, id, nombre, entidad, entidad_nombre, "
 						+ "unidad_ejecutora, unidad_ejecutora_nombre, programa, programa_nombre, subprograma, subprograma_nombre, proyecto, proyecto_nombre, actividad, obra, "

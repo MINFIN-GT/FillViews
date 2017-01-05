@@ -160,7 +160,7 @@ public class CEjecucionPresupuestaria {
 						"                   end ) aprobado " + 
 						"                   FROM sicoinprod.EG_FINANCIERO_DETALLE_4 D,  " + 
 						"                   sicoinprod.eg_financiero_hoja_4 H1, dashboard.tiempo t  " + 
-						"                   WHERE  h1.ejercicio=2016   " + 
+						"                   WHERE  h1.ejercicio = year(current_date())   " + 
 						"                   and h1.ejercicio = d.ejercicio " + 
 						"                    and t.ejercicio = h1.ejercicio " + 
 						"                    and t.dia = 1 " + 
