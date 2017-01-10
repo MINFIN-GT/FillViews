@@ -29,7 +29,7 @@ public class CMain {
 		options.addOption("mp", "metas-presidenciales", false, "calcula la vista de metas presidenciales");
 		options.addOption("mp_des", "metas-presidenciales-descentralizadas", false, "calcula la vista de metas presidenciales");
 		options.addOption("efp", "ejecucion-financiera-prestamos", false, "cargar ejecucion financiera de Prestamos");
-		options.addOption("ep", "ejecucion-presupuestaria", false, "cargar ejecucion presupuestaria");
+		options.addOption("ep", "ejecucion-presupuestaria", true, "cargar ejecucion presupuestaria");
 		options.addOption("ef", "ejecucion-fisica", false, "cargar ejecucion fisica");
 		options.addOption( "h", "help", false, "muestra este listado de opciones" );
 	}
@@ -109,17 +109,21 @@ public class CMain {
 					CLogger.writeConsole("todas las tablas importadas con exito");
 			 }
 			 else if(cline.hasOption("dimension-tiempo")){
-				 CDimensionTiempo.createDimension(conn, 2011, (new DateTime()).getYear());
+				 CDimensionTiempo.createDimension(conn, 2017, (new DateTime()).getYear());
 				 CLogger.writeConsole("Se ha creado la dimension tiempo");
 			 }
 			 else if(cline.hasOption("ejecucion-presupuestaria")){
 				 CLogger.writeConsole("Inicio carga de ejecucion presupuestaria");
-				 if(CEjecucionPresupuestaria.loadEjecucionPresupuestaria(conn))
+				 Integer ejercicio = cline.getOptionValue("ep")!=null && cline.getOptionValue("ep").length()>0 ? 
+						 Integer.parseInt(cline.getOptionValue("ep")) : start.getYear();
+				 if(CEjecucionPresupuestaria.loadEjecucionPresupuestaria(conn, ejercicio))
 					 CLogger.writeConsole("Datos de ejecucion presupuestaria cargados con exito");
 			 }
 			 else if(cline.hasOption("ejecucion-fisica")){
 				 CLogger.writeConsole("Inicio carga de ejecucion fisica");
-				 if(CEjecucionFisica.loadEjeucionFisica(conn))
+				 Integer ejercicio = cline.getOptionValue("ef")!=null && cline.getOptionValue("ef").length()>0 ? 
+						 Integer.parseInt(cline.getOptionValue("ef")) : start.getYear();
+				 if(CEjecucionFisica.loadEjeucionFisica(conn, ejercicio))
 					 CLogger.writeConsole("Datos de ejecucion fisica cargados con exito");
 			 }
 			 else if(cline.hasOption("help")){

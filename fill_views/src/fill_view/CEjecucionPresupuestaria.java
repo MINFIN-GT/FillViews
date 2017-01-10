@@ -4,18 +4,20 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+
 import utilities.CLogger;
 
 public class CEjecucionPresupuestaria {
 	
-	public static boolean loadEjecucionPresupuestaria(Connection conn){
+	public static boolean loadEjecucionPresupuestaria(Connection conn, Integer ejercicio){
 		
 		boolean ret = false;
 		try{
 			if( !conn.isClosed() && CMemSQL.connect()){
 				ret = true;
 
-				CLogger.writeConsole("CEjecucionPresupuestaria Entidades:");
+				CLogger.writeConsole("CEjecucionPresupuestaria Entidades (Ejercicio "+ejercicio+"):");
+				CLogger.writeConsole("Eliminando data actual:");
 				PreparedStatement pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_estructura");
 				pstm.executeUpdate();
 				pstm.close();
@@ -37,6 +39,36 @@ public class CEjecucionPresupuestaria {
 				pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_ejecucion_presupuestaria_geografico");
 				pstm.executeUpdate();
 				pstm.close();
+				CLogger.writeConsole("Copiando historia:");
+				pstm = conn.prepareStatement("INSERT INTO dashboard.mv_estructura SELECT * FROM dashboard_historia.mv_estructura WHERE ejercicio < ?");
+				pstm.setInt(1, ejercicio);
+				pstm.executeUpdate();
+				pstm.close();
+				pstm = conn.prepareStatement("INSERT INTO dashboard.mv_gasto SELECT * FROM dashboard_historia.mv_gasto WHERE ejercicio < ?");
+				pstm.setInt(1, ejercicio);
+				pstm.executeUpdate();
+				pstm.close();
+				pstm = conn.prepareStatement("INSERT INTO dashboard.mv_cuota SELECT * FROM dashboard_historia.mv_cuota  WHERE ejercicio < ?");
+				pstm.setInt(1, ejercicio);
+				pstm.executeUpdate();
+				pstm.close();
+				pstm = conn.prepareStatement("INSERT INTO dashboard.mv_anticipo SELECT * FROM dashboard_historia.mv_anticipo  WHERE ejercicio < ?");
+				pstm.setInt(1, ejercicio);
+				pstm.executeUpdate();
+				pstm.close();
+				pstm = conn.prepareStatement("INSERT INTO dashboard.mv_vigente SELECT * FROM dashboard_historia.mv_vigente  WHERE ejercicio < ?");
+				pstm.setInt(1, ejercicio);
+				pstm.executeUpdate();
+				pstm.close();
+				pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ejecucion_presupuestaria SELECT * FROM dashboard_historia.mv_ejecucion_presupuestaria WHERE ejercicio < ?");
+				pstm.setInt(1, ejercicio);
+				pstm.executeUpdate();
+				pstm.close(); 
+				pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ejecucion_presupuestaria_geografico SELECT * FROM dashboard_historia.mv_ejecucion_presupuestaria_geografico WHERE ejercicio < ?");
+				pstm.setInt(1, ejercicio);
+				pstm.executeUpdate();
+				pstm.close();
+				
 				
 				CLogger.writeConsole("Insertando valores a MV_ESTRUCTURA");
 				pstm = conn.prepareStatement("insert into table dashboard.mv_estructura "+
@@ -77,7 +109,7 @@ public class CEjecucionPresupuestaria {
 						"and ao.proyecto = pr.proyecto  " + 
 						"and ao.nivel_estructura = 5 " + 
 						"), dashboard.mv_entidad mve, dashboard.entidad_sigla es  " + 
-						"where e.ejercicio = year(current_date())  " + 
+						"where e.ejercicio = ?  " + 
 						"and ue.ejercicio = e.ejercicio  " + 
 						"and e.restrictiva = 'N'  " + 
 						"and ue.restrictiva = 'N'  " + 
@@ -88,20 +120,21 @@ public class CEjecucionPresupuestaria {
 						"and mve.ejercicio = e.ejercicio  " + 
 						"and ((ue.unidad_ejecutora = 0 and mve.unidades_ejecutoras=1) or (ue.unidad_ejecutora>0 and mve.unidades_ejecutoras>1))  " + 
 						"and es.entidad = e.entidad");
+				pstm.setInt(1, ejercicio);
 				pstm.executeUpdate();
 				pstm.close();
 				
 				CLogger.writeConsole("Insertando valores a MV_GASTO");
 				///Actualiza la vista de gasto
 				pstm = conn.prepareStatement("insert into table dashboard.mv_gasto "
-						+"select month(gh.fec_aprobado) mes, gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma, gd.proyecto, gd.actividad, gd.obra, gd.renglon, r.nombre renglon_nombre, gd.fuente,     " + 
+						+"select "+ejercicio+" ejercicio,month(gh.fec_aprobado) mes, gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma, gd.proyecto, gd.actividad, gd.obra, gd.renglon, r.nombre renglon_nombre, gd.fuente,     " + 
 						"						 						 	gd.renglon - (gd.renglon%100) grupo, gg.nombre grupo_nombre, gd.renglon - (gd.renglon%10) subgrupo, sg.nombre subgrupo_nombre, gd.geografico,      " + 
-						"						 						 	sum( case when gh.ejercicio = (year(current_date()) - 5) then gd.monto_renglon else 0 end) ano_1,      " + 
-						"						 						 	sum( case when gh.ejercicio = (year(current_date()) - 4) then gd.monto_renglon else 0 end) ano_2,      " + 
-						"						 						 	sum( case when gh.ejercicio = (year(current_date()) - 3) then gd.monto_renglon else 0 end) ano_3,      " + 
-						"						 						 	sum( case when gh.ejercicio = (year(current_date()) - 2) then gd.monto_renglon else 0 end) ano_4,      " + 
-						"						 						 	sum( case when gh.ejercicio = (year(current_date()) - 1) then gd.monto_renglon else 0 end) ano_5,      " + 
-						"						 						 	sum( case when gh.ejercicio = (year(current_date())) then gd.monto_renglon else 0 end) ano_actual      " + 
+						"						 						 	sum( case when gh.ejercicio = (? - 5) then gd.monto_renglon else 0 end) ano_1,      " + 
+						"						 						 	sum( case when gh.ejercicio = (? - 4) then gd.monto_renglon else 0 end) ano_2,      " + 
+						"						 						 	sum( case when gh.ejercicio = (? - 3) then gd.monto_renglon else 0 end) ano_3,      " + 
+						"						 						 	sum( case when gh.ejercicio = (? - 2) then gd.monto_renglon else 0 end) ano_4,      " + 
+						"						 						 	sum( case when gh.ejercicio = (? - 1) then gd.monto_renglon else 0 end) ano_5,      " + 
+						"						 						 	sum( case when gh.ejercicio = ? then gd.monto_renglon else 0 end) ano_actual      " + 
 						"						 						 				from sicoinprod.eg_gastos_hoja gh, sicoinprod.eg_gastos_detalle gd,      " + 
 						"						 										sicoinprod.cp_grupos_gasto gg, sicoinprod.cp_objetos_gasto sg, sicoinprod.cp_objetos_gasto r  		 " + 
 						"						 						 				where gh.ejercicio = gd.ejercicio         " + 
@@ -110,17 +143,26 @@ public class CEjecucionPresupuestaria {
 						"						 						 				and gh.no_cur = gd.no_cur       " + 
 						"						 						 				and gh.clase_registro IN ('DEV', 'CYD', 'RDP', 'REG')       " + 
 						"						 						 				and gh.estado = 'APROBADO'       " + 
-						"						 						 				and gh.ejercicio > (year(current_date())-6)       " + 
-						"						  										and gg.ejercicio = year(current_date())   " + 
+						"						 						 				and gh.ejercicio > ( ? - 6 )       " + 
+						"						  										and gg.ejercicio =  ? " + 
 						"		 				  										and gg.grupo_gasto = (gd.renglon-(gd.renglon%100))   " + 
-						"		 				  										and sg.ejercicio = year(current_date())    " + 
+						"		 				  										and sg.ejercicio = ?    " + 
 						"		 				  										and sg.renglon = (gd.renglon - (gd.renglon%10))        " + 
-						"		 				  										and r.ejercicio = year(current_date())   " + 
+						"		 				  										and r.ejercicio = ?   " + 
 						"		 				  										and r.renglon = gd.renglon   " + 
 						"						 						 				group by month(gh.fec_aprobado), gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma,       " + 
 						"						 						 				gd.proyecto, gd.actividad, gd.obra, gg.nombre, sg.nombre, r.nombre, gd.renglon, gd.fuente, gd.geografico  ");
- 
-				pstm.executeUpdate();
+				pstm.setInt(1, ejercicio);
+				pstm.setInt(2, ejercicio);
+				pstm.setInt(3, ejercicio);
+				pstm.setInt(4, ejercicio);
+				pstm.setInt(5, ejercicio);
+				pstm.setInt(6, ejercicio);
+				pstm.setInt(7, ejercicio);
+				pstm.setInt(8, ejercicio);
+				pstm.setInt(9, ejercicio);
+				pstm.setInt(10, ejercicio);
+ 				pstm.executeUpdate();
 				pstm.close();
 				
 				CLogger.writeConsole("Insertando valores a MV_CUOTA");
@@ -160,7 +202,7 @@ public class CEjecucionPresupuestaria {
 						"                   end ) aprobado " + 
 						"                   FROM sicoinprod.EG_FINANCIERO_DETALLE_4 D,  " + 
 						"                   sicoinprod.eg_financiero_hoja_4 H1, dashboard.tiempo t  " + 
-						"                   WHERE  h1.ejercicio = year(current_date())   " + 
+						"                   WHERE  h1.ejercicio = ?   " + 
 						"                   and h1.ejercicio = d.ejercicio " + 
 						"                    and t.ejercicio = h1.ejercicio " + 
 						"                    and t.dia = 1 " + 
@@ -176,6 +218,7 @@ public class CEjecucionPresupuestaria {
 						"                    d.unidad_ejecutora,  " + 
 						"                    d.fuente "
 						);	
+				pstm.setInt(1, ejercicio);
 				pstm.executeUpdate();
 				pstm.close();
 				
@@ -192,7 +235,7 @@ public class CEjecucionPresupuestaria {
 						"	          sicoinprod.eg_anticipo_detalle d, " + 
 						"	          dashboard.tiempo t   " + 
 						"	    WHERE h.ejercicio = d.ejercicio   " + 
-						"	    AND h.ejercicio= year(current_date()) " + 
+						"	    AND h.ejercicio= ? " + 
 						"	    and t.ejercicio = h.ejercicio " + 
 						"	    and t.dia = 1 " + 
 						"	    and d.cuatrimestre = ceil(t.mes/4) " + 
@@ -204,6 +247,7 @@ public class CEjecucionPresupuestaria {
 						"	    AND   h.clase_registro IN ('PRG','RPG')   " + 
 						"	    group by d.ejercicio, t.mes, d.entidad, d.unidad_ejecutora, d.fuente"
 						);	
+				pstm.setInt(1, ejercicio);
 				pstm.executeUpdate();
 				pstm.close();
 				
@@ -228,7 +272,7 @@ public class CEjecucionPresupuestaria {
 						"						end AS vigente   " + 
 						"						from sicoinprod.vw_partidas p , dashboard.tiempo t, sicoinprod.cp_grupos_gasto gg, " + 
 						"						sicoinprod.cp_objetos_gasto sg, sicoinprod.cp_objetos_gasto r   " + 
-						"						where p.ejercicio= year(current_date())   " + 
+						"						where p.ejercicio= ?   " + 
 						"						and p.ejercicio=t.ejercicio    " + 
 						"						and t.dia=1 " + 
 						"						and gg.grupo_gasto = (p.renglon - p.renglon%100) " + 
@@ -237,6 +281,7 @@ public class CEjecucionPresupuestaria {
 						"						and sg.renglon = (p.renglon - p.renglon%10) " + 
 						"						and r.ejercicio = p.ejercicio " + 
 						"						and r.renglon = p.renglon");
+				pstm.setInt(1, ejercicio);
 				pstm.executeUpdate();
 				pstm.close();
 				
@@ -244,7 +289,7 @@ public class CEjecucionPresupuestaria {
 				//Actualiza la vista de mv_ejecucion_presupuestaria
 				pstm = conn.prepareStatement("INSERT INTO TABLE dashboard.mv_ejecucion_presupuestaria  "+
 						"select    " + 
-						"												year(current_date()) ejercicio,    " + 
+						"												t1.ejercicio,    " + 
 						"												t1.entidad,    " + 
 						"												t1.unidad_ejecutora,    " + 
 						"												t1.programa,    " + 
@@ -256,7 +301,9 @@ public class CEjecucionPresupuestaria {
 						"																		 t1.ano_1, t1.ano_2, t1.ano_3, t1.ano_4, t1.ano_5, t1.ano_actual, t1.asignado, t1.vigente, a.anticipo anticipo_cuota, c.solicitado solicitado_cuota,      " + 
 						"																		 c.aprobado aprobado_cuota       " + 
 						"																		 from (      " + 
-						"																		 	select nvl(g.mes,v.mes) mes,       " + 
+						"																		 	select " +
+						"																			"+ejercicio+" ejercicio, "+	
+						"																			nvl(g.mes,v.mes) mes,       " + 
 						"																		 	nvl(g.entidad, v.entidad) entidad,      " + 
 						"																		 	nvl(g.unidad_ejecutora, v.unidad_ejecutora) unidad_ejecutora,      " + 
 						"																		 	nvl(g.programa, v.programa) programa,      " + 
@@ -278,12 +325,14 @@ public class CEjecucionPresupuestaria {
 						"																		 		g1.grupo, g1.grupo_nombre, g1.subgrupo, g1.subgrupo_nombre, g1.renglon, g1.renglon_nombre," + 
 						"																		 		sum(g1.ano_1) ano_1, sum(g1.ano_2) ano_2, sum(g1.ano_3) ano_3, sum(g1.ano_4) ano_4, sum(g1.ano_5) ano_5," + 
 						"																		 		sum(g1.ano_actual) ano_actual" + 
-						"																		 		from dashboard.mv_gasto g1" + 
+						"																		 		from dashboard.mv_gasto g1 " +
+						"																				where g1.ejercicio = ? " +		
 						"																		 		group by g1.mes, g1.entidad, g1.unidad_ejecutora, g1.programa, g1.subprograma, g1.proyecto, g1.actividad, g1.obra, g1.fuente, " + 
 						"																		 		g1.grupo, g1.grupo_nombre, g1.subgrupo, g1.subgrupo_nombre, g1.renglon, g1.renglon_nombre" + 
 						"																		 	) g full outer join (	select mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, grupo, grupo_nombre, " + 
 						"																									 subgrupo, subgrupo_nombre, renglon, renglon_nombre, fuente, sum(asignado) asignado, sum(vigente) vigente " + 
 						"																										from dashboard.mv_vigente " + 
+						"																										where ejercicio = ? " +	
 						"																										group by mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, grupo, grupo_nombre, subgrupo, subgrupo_nombre, renglon, renglon_nombre, fuente " + 
 						"																									) v      " + 
 						"																		 	on (      " + 
@@ -301,18 +350,22 @@ public class CEjecucionPresupuestaria {
 						"																		 ) t1    " + 
 						"																		 left outer join dashboard.mv_cuota c   " + 
 						"																		 on (   " + 
-						"																		 	c.entidad = t1.entidad      " + 
+						" 																			c.ejercicio = t1.ejercicio " +
+						"																		 	and c.entidad = t1.entidad      " + 
 						"																		 	and c.unidad_ejecutora = t1.unidad_ejecutora      " + 
 						"																		 	and c.fuente = t1.fuente      " + 
 						"																		 	and c.mes = t1.mes   " + 
 						"																		 )   " + 
 						"																		 left outer join dashboard.mv_anticipo a  " + 
 						"																		 on(  " + 
-						"																		 	a.entidad = t1.entidad  " + 
+						"																			a.ejercicio = t1.ejercicio " +
+						"																		 	and a.entidad = t1.entidad  " + 
 						"																		 	and a.unidad_ejecutora = t1.unidad_ejecutora  " + 
 						"																		 	and a.fuente = t1.fuente  " + 
 						"																		 	and a.mes = t1.mes  " + 
 						"																		 ) " );
+				pstm.setInt(1, ejercicio);
+				pstm.setInt(2, ejercicio);
 				pstm.executeUpdate();
 				pstm.close();
 				
@@ -320,7 +373,7 @@ public class CEjecucionPresupuestaria {
 				//Actualiza la vista de mv_ejecucion_presupuestaria
 				pstm = conn.prepareStatement("INSERT INTO TABLE dashboard.mv_ejecucion_presupuestaria_geografico "+
 						"select " + 
-						"year(current_date()) ejercicio, nvl(g.mes, v.mes),  " + 
+						ejercicio + " ejercicio, nvl(g.mes, v.mes) mes,  " + 
 						"nvl(g.entidad, v.entidad) entidad,  " + 
 						"nvl(g.unidad_ejecutora, v.unidad_ejecutora) unidad_ejecutora,  " + 
 						"nvl(g.programa, v.programa) programa,  " + 
@@ -336,7 +389,10 @@ public class CEjecucionPresupuestaria {
 						"sum(g.ano_actual) ano_actual,  " + 
 						"sum(v.asignado) asignado, sum(v.vigente) vigente     " + 
 						"from dashboard.mv_vigente v full outer join dashboard.mv_gasto g  " + 
-						"on( g.mes = v.mes   " + 
+						"on ( g.ejercicio = ? " +
+						"and v.ejercicio = ? " +
+						"and g.ejercicio = v.ejercicio " +
+						"and g.mes = v.mes   " + 
 						"and g.entidad = v.entidad  " + 
 						"and g.unidad_ejecutora = v.unidad_ejecutora  " + 
 						"and g.programa = v.programa  " + 
@@ -350,12 +406,14 @@ public class CEjecucionPresupuestaria {
 						"and g.subgrupo = v.subgrupo  " + 
 						"and g.renglon = v.renglon  " + 
 						"and g.geografico = v.geografico )  " + 
-						"group by year(current_date()), g.mes, v.mes, g.entidad, v.entidad, " + 
-						"g.unidad_ejecutora, v.unidad_ejecutora, g.programa, v.programa, g.subprograma, v.subprograma, " + 
-						"g.proyecto, v.proyecto, g.actividad, v.actividad, g.obra, v.obra, g.fuente, v.fuente, " + 
-						"g.grupo, v.grupo, g.subgrupo, v.subgrupo, g.renglon, v.renglon,  g.geografico, v.geografico " );
+						"group by nvl(g.mes, v.mes), nvl(g.entidad, v.entidad), " + 
+						"nvl(g.unidad_ejecutora, v.unidad_ejecutora), nvl(g.programa, v.programa), nvl(g.subprograma, v.subprograma), " + 
+						"nvl(g.proyecto, v.proyecto), nvl(g.actividad, v.actividad), nvl(g.obra, v.obra), nvl(g.fuente, v.fuente), " + 
+						"nvl(g.grupo, v.grupo), nvl(g.subgrupo, v.subgrupo), nvl(g.renglon, v.renglon),  nvl(g.geografico, v.geografico) " );
+				pstm.setInt(1, ejercicio);
+				pstm.setInt(2, ejercicio);
 				pstm.executeUpdate();
-				pstm.close();
+				pstm.close(); 
 				
 				boolean bconn =  CMemSQL.connect();
 				CLogger.writeConsole("Cargando datos a cache de MV_EJECUCION_PRESUPUESTARIA");
@@ -371,13 +429,15 @@ public class CEjecucionPresupuestaria {
 							+ "?,?,?,?,?,?,?,?,?,?,"
 							+ "?,?,?,?,?,?,?) ");
 					for(int i=1; i<13; i++){
-						pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ejecucion_presupuestaria where mes = ?");
+						pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ejecucion_presupuestaria where mes = ? and ejercicio = ?");
 						pstm.setInt(1, i);
+						pstm.setInt(2, ejercicio);
 						pstm.setFetchSize(10000);
 						ResultSet rs = pstm.executeQuery();
 						while(rs!=null && rs.next()){
 							if(first){
-								PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ejecucion_presupuestaria ");
+								PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ejecucion_presupuestaria where ejercicio =  ? ");
+								pstm2.setInt(1, ejercicio);
 								if (pstm2.executeUpdate()>0)
 									CLogger.writeConsole("Registros eliminados");
 								else
@@ -450,13 +510,15 @@ public class CEjecucionPresupuestaria {
 							+ "values (?,?,?,?,?,?,?,?,?,?,"
 							+ "?,?,?,?,?,?,?) ");
 					for(int i=1; i<13; i++){
-						pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ejecucion_presupuestaria_geografico where mes = ?");
+						pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ejecucion_presupuestaria_geografico where mes = ? and ejercicio = ? ");
 						pstm.setInt(1, i);
+						pstm.setInt(2, ejercicio);
 						pstm.setFetchSize(10000);
 						ResultSet rs = pstm.executeQuery();
 						while(rs!=null && rs.next()){
 							if(first){
-								PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ejecucion_presupuestaria_geografico ");
+								PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ejecucion_presupuestaria_geografico where ejercicio = ? ");
+								pstm2.setInt(1, ejercicio);
 								if (pstm2.executeUpdate()>0)
 									CLogger.writeConsole("Registros eliminados");
 								else
@@ -506,12 +568,14 @@ public class CEjecucionPresupuestaria {
 							+ "actividad, obra, actividad_obra_nombre) "
 							+ "values (?,?,?,?,?,?,?,?,?,?,"
 							+ "?,?,?,?,?) ");
-					pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_estructura");
+					pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_estructura where ejercicio = ? ");
+					pstm.setInt(1, ejercicio);
 					pstm.setFetchSize(10000);
 					ResultSet rs = pstm.executeQuery();
 					while(rs!=null && rs.next()){
 						if(first){
-							PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_estructura ");
+							PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_estructura where ejercicio = ? ");
+							pstm2.setInt(1, ejercicio);
 							if (pstm2.executeUpdate()>0)
 								CLogger.writeConsole("Registros eliminados");
 							else

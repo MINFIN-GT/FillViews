@@ -165,12 +165,19 @@ public class CEjecucionFisica {
 		return ret;
 	}
 	
-	public static boolean loadEjeucionFisica(Connection conn){
-		DateTime date = new DateTime();
+	public static boolean loadEjeucionFisica(Connection conn, Integer ejercicio){
 		boolean ret = true;
 		try{
+			CLogger.writeConsole("CEjecucionFisica (Ejercicio "+ejercicio+"):");
+			CLogger.writeConsole("Elminiando la data actual de MV_EJECUCION_FISICA");
 			PreparedStatement pstm;
 			pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_ejecucion_fisica");
+			pstm.executeUpdate();
+			pstm.close();
+			
+			CLogger.writeConsole("Cargando la historia");
+			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ejecucion_fisica SELECT * FROM dashboard_historia.mv_ejecucion_fisica WHERE ejercicio < ? ");
+			pstm.setInt(1, ejercicio);
 			pstm.executeUpdate();
 			pstm.close();
 			
@@ -184,14 +191,17 @@ public class CEjecucionFisica {
 				"	m.cantidad, m.unidad_medida " + 
 				"	from sicoinprod.sf_meta m, dashboard.mes mes, dashboard.mv_entidad ent " + 
 				"	where m.estado = 'APROBADO' " + 
-				"	and m.ejercicio = mes.ejercicio " + 
+				"   and m.ejercicio = ? "+
+				"	and mes.ejercicio = m.ejercicio " + 
 				"	and ent.ejercicio = m.ejercicio " + 
 				"	and m.entidad = ent.entidad " + 
+				"   and ent.ejercicio = m.ejercicio " +
 				"	and ((m.unidad_ejecutora=0 and ent.unidades_ejecutoras=1) or (m.unidad_ejecutora>0 and ent.unidades_ejecutoras>1)) " + 
 				")me left outer join ( " + 
 				"	select md.ejercicio, month(mh.fec_aprobado) mes, md.entidad, md.unidad_ejecutora, md.programa, md.subprograma, md.proyecto, md.actividad, md.obra, md.codigo_meta, sum(md.cantidad_unidades) modificacion  " + 
 				"	from sicoinprod.sf_modificacion_hoja mh,sicoinprod.sf_modificacion_detalle md " + 
-				"	where mh.ejercicio = md.ejercicio " + 
+				"	where md.ejercicio = ? "+
+				"   and mh.ejercicio = md.ejercicio " + 
 				"	and mh.entidad = md.entidad " + 
 				"	and mh.unidad_ejecutora = md.unidad_ejecutora " + 
 				"	and mh.no_cur = md.no_cur " + 
@@ -218,7 +228,7 @@ public class CEjecucionFisica {
 				"				sum(ed.cantidad_unidades) ejecucion   " + 
 				"				from sicoinprod.sf_ejecucion_hoja_4 eh,   " + 
 				"				sicoinprod.sf_ejecucion_detalle_4 ed   " + 
-				"				where eh.ejercicio =  " + date.getYear() + " "+ 
+				"				where eh.ejercicio =  ? "+ 
 				"				and eh.ejercicio = ed.ejercicio   " + 
 				"				and eh.entidad = ed.entidad   " + 
 				"				and eh.unidad_ejecutora = ed.unidad_ejecutora   " + 
@@ -238,9 +248,10 @@ public class CEjecucionFisica {
 				"	and me.obra = ej.obra " + 
 				"	and me.codigo_meta = ej.codigo_meta " + 
 				"), sicoinprod.fp_unidad_medida um, dashboard.mv_estructura e " + 
-				"where me.ejercicio =  " + date.getYear() + " "+ 
+				"where me.ejercicio =  ? "+ 
 				"and um.codigo = me.unidad_medida   " + 
-				"and um.ejercicio = me.ejercicio   " + 
+				"and um.ejercicio = me.ejercicio   " +
+				"and me.ejercicio = e.ejercicio "+
 				"and me.entidad = e.entidad   " + 
 				"and me.unidad_ejecutora = e.unidad_ejecutora   " + 
 				"and me.programa = e.programa   " + 
@@ -248,11 +259,16 @@ public class CEjecucionFisica {
 				"and me.proyecto = e.proyecto   " + 
 				"and me.actividad = e.actividad   " + 
 				"and me.obra = e.obra  ");
+			pstm.setInt(1, ejercicio);
+			pstm.setInt(2, ejercicio);
+			pstm.setInt(3, ejercicio);
+			pstm.setInt(4, ejercicio);
 			pstm.executeUpdate();
 			pstm.close();
 			
 			if(!conn.isClosed()){
-				pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ejecucion_fisica");
+				pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ejecucion_fisica where ejercicio = ? ");
+				pstm.setInt(1, ejercicio);
 				ResultSet rs = pstm.executeQuery();
 				boolean bconn = CMemSQL.connect();
 				if(rs!=null && bconn){
@@ -269,8 +285,8 @@ public class CEjecucionFisica {
 							+ "?,?,?,?,?,?,?,?,?,?) ");
 					while(rs.next()){
 						if(first){
-							pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ejecucion_fisica "
-									+ " where ejercicio=" + date.getYear())  ;
+							pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ejecucion_fisica where ejercicio = ?")  ;
+							pstm2.setInt(1, ejercicio);
 							if (pstm2.executeUpdate()>0)
 								CLogger.writeConsole("Registros eliminados");
 							else
@@ -313,7 +329,8 @@ public class CEjecucionFisica {
 					pstm1.close();
 					pstm.close();
 				}
-				pstm = conn.prepareStatement("SELECT * FROM sicoinprod.sf_meta");
+				pstm = conn.prepareStatement("SELECT * FROM sicoinprod.sf_meta where ejercicio = ? ");
+				pstm.setInt(1, ejercicio);
 				rs = pstm.executeQuery();
 				if(rs!=null){
 					ret = true;
@@ -331,7 +348,8 @@ public class CEjecucionFisica {
 					while(rs.next()){
 						if(first){
 							pstm2 = CMemSQL.getConnection().prepareStatement("delete from sf_meta "
-									+ " where ejercicio=" + date.getYear())  ;
+									+ " where ejercicio = ? ")  ;
+							pstm2.setInt(1, ejercicio);
 							if (pstm2.executeUpdate()>0)
 								CLogger.writeConsole("Registros eliminados");
 							else
