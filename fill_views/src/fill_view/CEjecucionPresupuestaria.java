@@ -373,7 +373,7 @@ public class CEjecucionPresupuestaria {
 				//Actualiza la vista de mv_ejecucion_presupuestaria
 				pstm = conn.prepareStatement("INSERT INTO TABLE dashboard.mv_ejecucion_presupuestaria_geografico "+
 						"select " + 
-						ejercicio + " ejercicio, nvl(g.mes, v.mes) mes,  " + 
+						"nvl(g.ejercicio, v.ejercicio) ejercicio, nvl(g.mes, v.mes) mes,  " + 
 						"nvl(g.entidad, v.entidad) entidad,  " + 
 						"nvl(g.unidad_ejecutora, v.unidad_ejecutora) unidad_ejecutora,  " + 
 						"nvl(g.programa, v.programa) programa,  " + 
@@ -389,9 +389,7 @@ public class CEjecucionPresupuestaria {
 						"sum(g.ano_actual) ano_actual,  " + 
 						"sum(v.asignado) asignado, sum(v.vigente) vigente     " + 
 						"from dashboard.mv_vigente v full outer join dashboard.mv_gasto g  " + 
-						"on ( g.ejercicio = ? " +
-						"and v.ejercicio = ? " +
-						"and g.ejercicio = v.ejercicio " +
+						"on ( g.ejercicio = v.ejercicio " +
 						"and g.mes = v.mes   " + 
 						"and g.entidad = v.entidad  " + 
 						"and g.unidad_ejecutora = v.unidad_ejecutora  " + 
@@ -406,12 +404,12 @@ public class CEjecucionPresupuestaria {
 						"and g.subgrupo = v.subgrupo  " + 
 						"and g.renglon = v.renglon  " + 
 						"and g.geografico = v.geografico )  " + 
-						"group by nvl(g.mes, v.mes), nvl(g.entidad, v.entidad), " + 
+						"where g.ejercicio = ? and v.ejercicio = g.ejercicio " +
+						"group by nvl(g.ejercicio, v.ejercicio), nvl(g.mes, v.mes), nvl(g.entidad, v.entidad), " + 
 						"nvl(g.unidad_ejecutora, v.unidad_ejecutora), nvl(g.programa, v.programa), nvl(g.subprograma, v.subprograma), " + 
 						"nvl(g.proyecto, v.proyecto), nvl(g.actividad, v.actividad), nvl(g.obra, v.obra), nvl(g.fuente, v.fuente), " + 
 						"nvl(g.grupo, v.grupo), nvl(g.subgrupo, v.subgrupo), nvl(g.renglon, v.renglon),  nvl(g.geografico, v.geografico) " );
 				pstm.setInt(1, ejercicio);
-				pstm.setInt(2, ejercicio);
 				pstm.executeUpdate();
 				pstm.close(); 
 				
