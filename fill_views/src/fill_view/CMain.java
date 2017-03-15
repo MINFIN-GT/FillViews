@@ -31,6 +31,7 @@ public class CMain {
 		options.addOption("efp", "ejecucion-financiera-prestamos", false, "cargar ejecucion financiera de Prestamos");
 		options.addOption("ep", "ejecucion-presupuestaria", true, "cargar ejecucion presupuestaria");
 		options.addOption("ef", "ejecucion-fisica", false, "cargar ejecucion fisica");
+		options.addOption("ei", "ejecucion-ingresos", false, "cargar ingresos");
 		options.addOption( "h", "help", false, "muestra este listado de opciones" );
 	}
 	
@@ -125,6 +126,13 @@ public class CMain {
 						 Integer.parseInt(cline.getOptionValue("ef")) : start.getYear();
 				 if(CEjecucionFisica.loadEjeucionFisica(conn, ejercicio))
 					 CLogger.writeConsole("Datos de ejecucion fisica cargados con exito");
+			 }
+			 else if(cline.hasOption("ejecucion-ingresos")){
+				 CLogger.writeConsole("Inicio carga de ingresos");
+				 Integer ejercicio = cline.getOptionValue("ei")!=null && cline.getOptionValue("ei").length()>0 ? 
+						 Integer.parseInt(cline.getOptionValue("ei")) : start.getYear();
+				 if(CIngreso.loadIngresos(conn, ejercicio))
+					 CLogger.writeConsole("Datos de ingresos cargados con exito");
 			 }
 			 else if(cline.hasOption("help")){
 				 HelpFormatter formater = new HelpFormatter();
