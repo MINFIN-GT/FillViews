@@ -32,6 +32,7 @@ public class CMain {
 		options.addOption("ep", "ejecucion-presupuestaria", true, "cargar ejecucion presupuestaria");
 		options.addOption("ef", "ejecucion-fisica", false, "cargar ejecucion fisica");
 		options.addOption("ei", "ejecucion-ingresos", false, "cargar ingresos");
+		options.addOption("sn", "snips", false, "cargar snips");
 		options.addOption( "h", "help", false, "muestra este listado de opciones" );
 	}
 	
@@ -133,6 +134,11 @@ public class CMain {
 						 Integer.parseInt(cline.getOptionValue("ei")) : start.getYear();
 				 if(CIngreso.loadIngresos(conn, ejercicio))
 					 CLogger.writeConsole("Datos de ingresos cargados con exito");
+			 }
+			 else if(cline.hasOption("snips")){
+				 CLogger.writeConsole("Inicio carga de snips");
+				 if(CSnip.loadSnip(conn))
+					 CLogger.writeConsole("Datos de snips cargados con exito");
 			 }
 			 else if(cline.hasOption("help")){
 				 HelpFormatter formater = new HelpFormatter();
