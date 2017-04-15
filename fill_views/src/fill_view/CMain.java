@@ -30,6 +30,7 @@ public class CMain {
 		options.addOption("mp_des", "metas-presidenciales-descentralizadas", false, "calcula la vista de metas presidenciales");
 		options.addOption("efp", "ejecucion-financiera-prestamos", false, "cargar ejecucion financiera de Prestamos");
 		options.addOption("ep", "ejecucion-presupuestaria", true, "cargar ejecucion presupuestaria");
+		options.addOption("eph", "ejecucion-presupuestaria-historia", true, "cargar historia ejecucion presupuestaria");
 		options.addOption("ef", "ejecucion-fisica", false, "cargar ejecucion fisica");
 		options.addOption("ei", "ejecucion-ingresos", false, "cargar ingresos");
 		options.addOption("sn", "snips", false, "cargar snips");
@@ -120,6 +121,13 @@ public class CMain {
 						 Integer.parseInt(cline.getOptionValue("ep")) : start.getYear();
 				 if(CEjecucionPresupuestaria.loadEjecucionPresupuestaria(conn, ejercicio))
 					 CLogger.writeConsole("Datos de ejecucion presupuestaria cargados con exito");
+			 }
+			 else if(cline.hasOption("ejecucion-presupuestaria-historia")){
+				 CLogger.writeConsole("Inicio carga de historia de ejecucion presupuestaria");
+				 Integer ejercicio = cline.getOptionValue("eph")!=null && cline.getOptionValue("eph").length()>0 ? 
+						 Integer.parseInt(cline.getOptionValue("eph")) : start.getYear();
+				 if(CEjecucionPresupuestaria.loadEjecucionPresupuestariaHistoria(conn, ejercicio))
+					 CLogger.writeConsole("Datos Historicos de ejecucion presupuestaria cargados con exito");
 			 }
 			 else if(cline.hasOption("ejecucion-fisica")){
 				 CLogger.writeConsole("Inicio carga de ejecucion fisica");
