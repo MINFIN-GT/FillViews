@@ -25,20 +25,20 @@ public class CEjecucionCalamidad {
        "case when (metas.codigo_meta=1 or metas.codigo_meta is null) "+
        " then sum(gasto.monto_renglon) "+
        " else null "+
-       "end ejecutado, metas.meta, avance.meta_avanzado "+
+       "end ejecutado, metas.meta, sum(avance.meta_avanzado) meta_avanzado "+
        "from "+esquema+".EG_F6_PARTIDAS p  "+
-       "left join (select distinct p3.entidad from "+esquema+".eg_f6_partidas p3 where p3.unidad_ejecutora > 0 and p3.ejercicio = "+date.getYear()+") p2 on ( p2.entidad = p.entidad) "+ 
+       "left join (select distinct p3.ejercicio, p3.entidad from "+esquema+".eg_f6_partidas p3 where p3.unidad_ejecutora > 0 and p3.ejercicio <= "+date.getYear()+") p2 on ( p2.entidad = p.entidad and p2.ejercicio = p.ejercicio) "+ 
        "left join (select d.ejercicio, d.entidad, d.unidad_ejecutora, d.programa, d.subprograma, d.proyecto, d.obra, d.actividad, d.renglon, d.monto_renglon  "+
        "     from "+esquema+".eg_gastos_hoja h, "+esquema+".eg_gastos_detalle d  "+
        "     where h.ejercicio=d.ejercicio and h.entidad=d.entidad and h.unidad_ejecutora=d.unidad_ejecutora and h.no_cur=d.no_cur "+
-       "     and h.estado='APROBADO' and h.clase_registro in ('DEV','CYD','REG','RDP') and d.ejercicio = "+date.getYear()+" and d.programa = 94 "+
+       "     and h.estado='APROBADO' and h.clase_registro in ('DEV','CYD','REG','RDP') and d.ejercicio <= "+date.getYear()+" and d.programa = 94 "+
        "   ) gasto "+
        "    on (p.ejercicio = gasto.ejercicio and p.entidad=gasto.entidad and p.unidad_ejecutora=gasto.unidad_ejecutora "+ 
        "       and p.programa=gasto.programa and p.subprograma=gasto.subprograma and p.proyecto=gasto.proyecto and p.obra=gasto.obra "+ 
        "       and p.actividad=gasto.actividad and p.renglon=gasto.renglon ) "+
        "left join (select m.ejercicio,m.entidad,m.unidad_ejecutora,m.programa,m.subprograma,m.proyecto,m.obra,m.actividad,m.codigo_meta,m.descripcion, m.unidad_medida,(m.CANTIDAD+m.ADICION+m.DISMINUCION) meta "+
-       "     from "+esquema+".sf_meta m left join (select distinct m3.entidad from "+esquema+".sf_meta m3 where m3.unidad_ejecutora > 0 and m3.ejercicio = "+date.getYear()+") m2 on ( m2.entidad = m.entidad) "+
-       "     where (m2.entidad is null or m.unidad_ejecutora>0) and m.ejercicio = "+date.getYear()+" and m.programa=94 "+
+       "     from "+esquema+".sf_meta m left join (select distinct m3.ejercicio, m3.entidad from "+esquema+".sf_meta m3 where m3.unidad_ejecutora > 0 and m3.ejercicio <= "+date.getYear()+") m2 on ( m2.entidad = m.entidad and m2.ejercicio = m.ejercicio) "+
+       "     where (m2.entidad is null or m.unidad_ejecutora>0) and m.ejercicio <= "+date.getYear()+" and m.programa=94 "+
        "   ) metas "+
        "   on (p.ejercicio = metas.ejercicio and p.entidad=metas.entidad and p.unidad_ejecutora=metas.unidad_ejecutora "+
        "       and p.programa=metas.programa and p.subprograma = metas.subprograma and p.proyecto=metas.proyecto and p.obra=metas.obra "+
@@ -46,14 +46,14 @@ public class CEjecucionCalamidad {
        "left join (select d.ejercicio, d.entidad, d.unidad_ejecutora, d.programa, d.subprograma, d.proyecto, d.obra, d.actividad, d.codigo_meta, d.cantidad_unidades meta_avanzado"+
        "     from "+esquema+".sf_ejecucion_hoja_4 h, "+esquema+".sf_ejecucion_detalle_4 d "+
        "     where h.ejercicio=d.ejercicio and h.entidad=d.entidad and h.unidad_ejecutora=d.unidad_ejecutora and h.no_cur=d.no_cur "+
-       "     and h.estado='APROBADO' and d.ejercicio = "+date.getYear()+" and d.programa=94 "+
+       "     and h.estado='APROBADO' and d.ejercicio <= "+date.getYear()+" and d.programa=94 "+
        "     ) avance   "+
        "     on(metas.ejercicio=avance.ejercicio and metas.entidad=avance.entidad and metas.unidad_ejecutora=avance.unidad_ejecutora "+
        "     and metas.programa=avance.programa and metas.subprograma=avance.subprograma and metas.proyecto=avance.proyecto and metas.obra=avance.obra "+
        "     and metas.actividad=avance.actividad and metas.codigo_meta=avance.codigo_meta) "+
        ","+esquema+".cg_entidades e, "+esquema+".cg_entidades ue, "+esquema+".cp_estructuras prog, "+esquema+".cp_estructuras subp, "+esquema+".cp_estructuras proy, "+esquema+".cp_estructuras act, "+esquema+".cp_objetos_gasto r, "+esquema+".fp_unidad_medida um "+
        "where (p2.entidad is null or p.unidad_ejecutora>0)  "+
-       "and p.ejercicio= "+date.getYear()+" and p.programa = 94  "+
+       "and p.ejercicio <= "+date.getYear()+" and p.programa = 94  "+
        "and e.ejercicio=p.ejercicio and e.entidad=p.entidad and e.unidad_ejecutora = 0 "+
        "and ue.ejercicio=p.ejercicio and ue.entidad=p.entidad and ue.unidad_ejecutora=p.unidad_ejecutora "+
        "and prog.ejercicio=p.ejercicio and prog.entidad=p.entidad and prog.unidad_ejecutora=p.unidad_ejecutora and prog.programa=p.programa and prog.nivel_estructura=2 "+
@@ -65,7 +65,7 @@ public class CEjecucionCalamidad {
        "group by p.ejercicio,p.entidad, e.nombre, p.unidad_ejecutora, ue.nombre,  p.programa, prog.nom_estructura, "+
        "p.subprograma, subp.nom_estructura, p.proyecto, proy.nom_estructura, p.actividad, p.obra, act.nom_estructura, "+
        "p.RENGLON, r.nombre, metas.codigo_meta, metas.descripcion  , metas.unidad_medida, um.nombre, "+
-       "metas.meta,avance.meta_avanzado "+
+       "metas.meta "+
        "order by p.ejercicio,p.entidad, p.unidad_ejecutora, p.programa,  p.subprograma, "+ 
        "p.proyecto, p.actividad, p.obra, p.RENGLON "+
        ",metas.codigo_meta";
@@ -97,7 +97,7 @@ public class CEjecucionCalamidad {
 						if (first && !descentralizadas){
 							first=false;							
 							PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from calamidad_ejecucion "
-									+" where ejercicio=" + date.getYear())  ;
+									+" where ejercicio <=" + date.getYear())  ;
 							if (pstm2.executeUpdate()>0)
 								CLogger.writeConsole("Registros eliminados");
 							else
