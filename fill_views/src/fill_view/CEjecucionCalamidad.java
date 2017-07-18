@@ -53,7 +53,7 @@ public class CEjecucionCalamidad {
        "     and metas.actividad=avance.actividad and metas.codigo_meta=avance.codigo_meta) "+
        ","+esquema+".cg_entidades e, "+esquema+".cg_entidades ue, "+esquema+".cp_estructuras prog, "+esquema+".cp_estructuras subp, "+esquema+".cp_estructuras proy, "+esquema+".cp_estructuras act, "+esquema+".cp_objetos_gasto r, "+esquema+".fp_unidad_medida um "+
        "where (p2.entidad is null or p.unidad_ejecutora>0)  "+
-       "and p.ejercicio >= "+date.getYear()+" and p.programa = 94  "+
+       "and p.ejercicio <= "+date.getYear()+" and p.programa = 94  "+
        "and e.ejercicio=p.ejercicio and e.entidad=p.entidad and e.unidad_ejecutora = 0 "+
        "and ue.ejercicio=p.ejercicio and ue.entidad=p.entidad and ue.unidad_ejecutora=p.unidad_ejecutora "+
        "and prog.ejercicio=p.ejercicio and prog.entidad=p.entidad and prog.unidad_ejecutora=p.unidad_ejecutora and prog.programa=p.programa and prog.nivel_estructura=2 "+
@@ -209,7 +209,7 @@ public class CEjecucionCalamidad {
 						"    and e1.actividad = ejecucion.actividad " + 
 						"  )  " + 
 						"  where e1.programa="+programa+" " + 
-						"  and e1.ejercicio>="+date.getYear()+"  " + 
+						"  and e1.ejercicio<="+date.getYear()+"  " + 
 						"  and e1.nivel_estructura=5 " + 
 						"  and (e2.entidad is null or e1.unidad_ejecutora>0) ").executeQuery();
 				ResultSet rs2;
