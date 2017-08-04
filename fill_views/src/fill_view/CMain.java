@@ -34,6 +34,8 @@ public class CMain {
 		options.addOption("ef", "ejecucion-fisica", false, "cargar ejecucion fisica");
 		options.addOption("ei", "ejecucion-ingresos", false, "cargar ingresos");
 		options.addOption("sn", "snips", false, "cargar snips");
+		options.addOption("egc", "eventos-guatecompras", false, "cargar eventos guatecompras");
+		options.addOption("egch", "eventos-guatecompras-historia", false, "cargar historia de eventos guatecompras");
 		options.addOption( "h", "help", false, "muestra este listado de opciones" );
 	}
 	
@@ -107,7 +109,7 @@ public class CMain {
 						CEjecucionFisica.loadEjecucionDetalle(conn, false, false) &&
 						CUnidadMedida.loadUnidadesMedida(conn, false, false) &&
 						CEjecucionCalamidad.loadEjecucionFisicaFinanciera(false)&&CEjecucionCalamidad.loadEjecucionFisicaFinanciera(true) &&
-						CEjecucionPrestamos.loadEjecucionFinanciera() 
+						CEjecucionPrestamos.loadEjecucionFinanciera()
 					)
 					CLogger.writeConsole("todas las tablas importadas con exito");
 			 }
@@ -147,6 +149,20 @@ public class CMain {
 				 CLogger.writeConsole("Inicio carga de snips");
 				 if(CSnip.loadSnip(conn))
 					 CLogger.writeConsole("Datos de snips cargados con exito");
+			 }
+			 else if(cline.hasOption("eventos-guatecompras")){
+				 CLogger.writeConsole("Inicio carga de eventos de Guatecompras");
+				 Integer ejercicio = cline.getOptionValue("egc")!=null && cline.getOptionValue("egc").length()>0 ? 
+						 Integer.parseInt(cline.getOptionValue("egc")) : start.getYear();
+				 if(CEventoGuatecompras.loadEventosGC(conn, ejercicio))
+					 CLogger.writeConsole("Datos de eventos de Guatecompras cargados con exito");
+			 }
+			 else if(cline.hasOption("eventos-guatecompras-historia")){
+				 CLogger.writeConsole("Inicio carga historia de eventos de Guatecompras");
+				 Integer ejercicio = cline.getOptionValue("egch")!=null && cline.getOptionValue("egch").length()>0 ? 
+						 Integer.parseInt(cline.getOptionValue("egch")) : start.getYear();
+				 if(CEventoGuatecompras.loadEventosGC(conn, ejercicio))
+					 CLogger.writeConsole("Datos historia de eventos de Guatecompras cargados con exito");
 			 }
 			 else if(cline.hasOption("help")){
 				 HelpFormatter formater = new HelpFormatter();
