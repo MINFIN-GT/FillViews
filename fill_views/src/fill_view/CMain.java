@@ -34,8 +34,8 @@ public class CMain {
 		options.addOption("ef", "ejecucion-fisica", false, "cargar ejecucion fisica");
 		options.addOption("ei", "ejecucion-ingresos", false, "cargar ingresos");
 		options.addOption("sn", "snips", false, "cargar snips");
-		options.addOption("egc", "eventos-guatecompras", false, "cargar eventos guatecompras");
-		options.addOption("egch", "eventos-guatecompras-historia", false, "cargar historia de eventos guatecompras");
+		options.addOption("egc", "eventos-guatecompras", true, "cargar eventos guatecompras");
+		options.addOption("egch", "eventos-guatecompras-historia", true, "cargar historia de eventos guatecompras");
 		options.addOption( "h", "help", false, "muestra este listado de opciones" );
 	}
 	
