@@ -67,7 +67,6 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 						"       AND m.modalidad = c.modalidad " + 
 						"       AND tep.tipo_entidad = te.tipo_entidad_padre " + 
 						"       AND esc.estatus_concurso = c.estatus_concurso " + 
-						"		AND a.estatus = 1 " +	
 						"		AND YEAR(c.fecha_publicacion) = ? "+
 						" GROUP BY tep.TIPO_ENTIDAD, tep.nombre, te.TIPO_ENTIDAD, te.nombre, ec.ENTIDAD_COMPRADORA, ec.nombre, uc.UNIDAD_COMPRADORA, uc.nombre, c.nog_concurso, c.descripcion, c.fecha_publicacion, month(c.fecha_publicacion), year(c.fecha_publicacion), m.MODALIDAD, m.nombre, esc.ESTATUS_CONCURSO, esc.nombre, a.fecha_adjudicacion");
 				pstm.setInt(1, ejercicio);
@@ -158,44 +157,44 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 					pstm.close();
 					
 					CLogger.writeConsole("Insertando valores a MV_EVENTOS_GC_GROUP");
-					pstm = conn.prepareStatement("insert into table dashboard_historia.mv_evento_gc_group "+
+					pstm = conn.prepareStatement("insert into table dashboard.mv_evento_gc_group "+
 							"select "+ejercicio+" ano_publicacion, entidad_compradora, entidad_compradora_nombre, " + 
-							"sum(case when mes_publicacion=1 and ano_publicacion=year(current_timestamp)-2 then 1 else 0 end) mes_1_ano_1, " + 
-							"sum(case when mes_publicacion=1 and ano_publicacion=year(current_timestamp)-1 then 1 else 0 end) mes_1_ano_2, " + 
-							"sum(case when mes_publicacion=1 and ano_publicacion=year(current_timestamp) then 1 else 0 end) mes_1_ano_actual, " + 
-							"sum(case when mes_publicacion=2 and ano_publicacion=year(current_timestamp)-2 then 1 else 0 end) mes_2_ano_1, " + 
-							"sum(case when mes_publicacion=2 and ano_publicacion=year(current_timestamp)-1 then 1 else 0 end) mes_2_ano_2, " + 
-							"sum(case when mes_publicacion=2 and ano_publicacion=year(current_timestamp) then 1 else 0 end) mes_2_ano_actual, " + 
-							"sum(case when mes_publicacion=3 and ano_publicacion=year(current_timestamp)-2 then 1 else 0 end) mes_3_ano_1, " + 
-							"sum(case when mes_publicacion=3 and ano_publicacion=year(current_timestamp)-1 then 1 else 0 end) mes_3_ano_2, " + 
-							"sum(case when mes_publicacion=3 and ano_publicacion=year(current_timestamp) then 1 else 0 end) mes_3_ano_actual, " + 
-							"sum(case when mes_publicacion=4 and ano_publicacion=year(current_timestamp)-2 then 1 else 0 end) mes_4_ano_1, " + 
-							"sum(case when mes_publicacion=4 and ano_publicacion=year(current_timestamp)-1 then 1 else 0 end) mes_4_ano_2, " + 
-							"sum(case when mes_publicacion=4 and ano_publicacion=year(current_timestamp) then 1 else 0 end) mes_4_ano_actual, " + 
-							"sum(case when mes_publicacion=5 and ano_publicacion=year(current_timestamp)-2 then 1 else 0 end) mes_5_ano_1, " + 
-							"sum(case when mes_publicacion=5 and ano_publicacion=year(current_timestamp)-1 then 1 else 0 end) mes_5_ano_2, " + 
-							"sum(case when mes_publicacion=5 and ano_publicacion=year(current_timestamp) then 1 else 0 end) mes_5_ano_actual, " + 
-							"sum(case when mes_publicacion=6 and ano_publicacion=year(current_timestamp)-2 then 1 else 0 end) mes_6_ano_1, " + 
-							"sum(case when mes_publicacion=6 and ano_publicacion=year(current_timestamp)-1 then 1 else 0 end) mes_6_ano_2, " + 
-							"sum(case when mes_publicacion=6 and ano_publicacion=year(current_timestamp) then 1 else 0 end) mes_6_ano_actual, " + 
-							"sum(case when mes_publicacion=7 and ano_publicacion=year(current_timestamp)-2 then 1 else 0 end) mes_7_ano_1, " + 
-							"sum(case when mes_publicacion=7 and ano_publicacion=year(current_timestamp)-1 then 1 else 0 end) mes_7_ano_2, " + 
-							"sum(case when mes_publicacion=7 and ano_publicacion=year(current_timestamp) then 1 else 0 end) mes_7_ano_actual, " + 
-							"sum(case when mes_publicacion=8 and ano_publicacion=year(current_timestamp)-2 then 1 else 0 end) mes_8_ano_1, " + 
-							"sum(case when mes_publicacion=8 and ano_publicacion=year(current_timestamp)-1 then 1 else 0 end) mes_8_ano_2, " + 
-							"sum(case when mes_publicacion=8 and ano_publicacion=year(current_timestamp) then 1 else 0 end) mes_8_ano_actual, " + 
-							"sum(case when mes_publicacion=9 and ano_publicacion=year(current_timestamp)-2 then 1 else 0 end) mes_9_ano_1, " + 
-							"sum(case when mes_publicacion=9 and ano_publicacion=year(current_timestamp)-1 then 1 else 0 end) mes_9_ano_2, " + 
-							"sum(case when mes_publicacion=9 and ano_publicacion=year(current_timestamp) then 1 else 0 end) mes_9_ano_actual, " + 
-							"sum(case when mes_publicacion=10 and ano_publicacion=year(current_timestamp)-2 then 1 else 0 end) mes_10_ano_1, " + 
-							"sum(case when mes_publicacion=10 and ano_publicacion=year(current_timestamp)-1 then 1 else 0 end) mes_10_ano_2, " + 
-							"sum(case when mes_publicacion=10 and ano_publicacion=year(current_timestamp) then 1 else 0 end) mes_10_ano_actual, " + 
-							"sum(case when mes_publicacion=11 and ano_publicacion=year(current_timestamp)-2 then 1 else 0 end) mes_11_ano_1, " + 
-							"sum(case when mes_publicacion=11 and ano_publicacion=year(current_timestamp)-1 then 1 else 0 end) mes_11_ano_2, " + 
-							"sum(case when mes_publicacion=11 and ano_publicacion=year(current_timestamp) then 1 else 0 end) mes_11_ano_actual, " + 
-							"sum(case when mes_publicacion=12 and ano_publicacion=year(current_timestamp)-2 then 1 else 0 end) mes_12_ano_1, " + 
-							"sum(case when mes_publicacion=12 and ano_publicacion=year(current_timestamp)-1 then 1 else 0 end) mes_12_ano_2, " + 
-							"sum(case when mes_publicacion=12 and ano_publicacion=year(current_timestamp) then 1 else 0 end) mes_12_ano_actual " + 
+							"sum(case when mes_publicacion=1 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_1_ano_1, " + 
+							"sum(case when mes_publicacion=1 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_1_ano_2, " + 
+							"sum(case when mes_publicacion=1 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_1_ano_actual, " + 
+							"sum(case when mes_publicacion=2 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_2_ano_1, " + 
+							"sum(case when mes_publicacion=2 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_2_ano_2, " + 
+							"sum(case when mes_publicacion=2 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_2_ano_actual, " + 
+							"sum(case when mes_publicacion=3 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_3_ano_1, " + 
+							"sum(case when mes_publicacion=3 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_3_ano_2, " + 
+							"sum(case when mes_publicacion=3 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_3_ano_actual, " + 
+							"sum(case when mes_publicacion=4 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_4_ano_1, " + 
+							"sum(case when mes_publicacion=4 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_4_ano_2, " + 
+							"sum(case when mes_publicacion=4 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_4_ano_actual, " + 
+							"sum(case when mes_publicacion=5 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_5_ano_1, " + 
+							"sum(case when mes_publicacion=5 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_5_ano_2, " + 
+							"sum(case when mes_publicacion=5 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_5_ano_actual, " + 
+							"sum(case when mes_publicacion=6 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_6_ano_1, " + 
+							"sum(case when mes_publicacion=6 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_6_ano_2, " + 
+							"sum(case when mes_publicacion=6 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_6_ano_actual, " + 
+							"sum(case when mes_publicacion=7 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_7_ano_1, " + 
+							"sum(case when mes_publicacion=7 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_7_ano_2, " + 
+							"sum(case when mes_publicacion=7 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_7_ano_actual, " + 
+							"sum(case when mes_publicacion=8 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_8_ano_1, " + 
+							"sum(case when mes_publicacion=8 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_8_ano_2, " + 
+							"sum(case when mes_publicacion=8 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_8_ano_actual, " + 
+							"sum(case when mes_publicacion=9 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_9_ano_1, " + 
+							"sum(case when mes_publicacion=9 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_9_ano_2, " + 
+							"sum(case when mes_publicacion=9 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_9_ano_actual, " + 
+							"sum(case when mes_publicacion=10 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_10_ano_1, " + 
+							"sum(case when mes_publicacion=10 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_10_ano_2, " + 
+							"sum(case when mes_publicacion=10 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_10_ano_actual, " + 
+							"sum(case when mes_publicacion=11 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_11_ano_1, " + 
+							"sum(case when mes_publicacion=11 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_11_ano_2, " + 
+							"sum(case when mes_publicacion=11 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_11_ano_actual, " + 
+							"sum(case when mes_publicacion=12 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_12_ano_1, " + 
+							"sum(case when mes_publicacion=12 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_12_ano_2, " + 
+							"sum(case when mes_publicacion=12 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_12_ano_actual " + 
 							"from ( " + 
 							"select ano_publicacion, mes_publicacion, entidad_compradora, entidad_compradora_nombre, nog_concurso, sum(monto) " + 
 							"from dashboard_historia.mv_evento_gc " + 
@@ -347,7 +346,6 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 						"       AND m.modalidad = c.modalidad " + 
 						"       AND tep.tipo_entidad = te.tipo_entidad_padre " + 
 						"       AND esc.estatus_concurso = c.estatus_concurso " + 
-						"		AND a.estatus = 1 " +
 						"		AND YEAR(c.fecha_publicacion) = ? " +
 						" GROUP BY tep.TIPO_ENTIDAD, tep.nombre, te.TIPO_ENTIDAD, te.nombre, ec.ENTIDAD_COMPRADORA, ec.nombre, uc.UNIDAD_COMPRADORA, uc.nombre, c.nog_concurso, c.descripcion, c.fecha_publicacion, month(c.fecha_publicacion), year(c.fecha_publicacion), m.MODALIDAD, m.nombre, esc.ESTATUS_CONCURSO, esc.nombre, a.fecha_adjudicacion");
 				pstm.setInt(1, ejercicio);
