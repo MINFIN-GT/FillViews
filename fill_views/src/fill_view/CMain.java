@@ -33,6 +33,8 @@ public class CMain {
 		options.addOption("eph", "ejecucion-presupuestaria-historia", true, "cargar historia ejecucion presupuestaria");
 		options.addOption("ef", "ejecucion-fisica", false, "cargar ejecucion fisica");
 		options.addOption("ei", "ejecucion-ingresos", false, "cargar ingresos");
+		options.addOption("ing_ra", "ing_ra", true, "cargar ingresos recurso auxiliar por año");
+		options.addOption("ing_r", "ing_r", true, "cargar ingresos recurso por año");
 		options.addOption("sn", "snips", false, "cargar snips");
 		options.addOption("egc", "eventos-guatecompras", true, "cargar eventos guatecompras");
 		options.addOption("egch", "eventos-guatecompras-historia", true, "cargar historia de eventos guatecompras");
@@ -163,6 +165,20 @@ public class CMain {
 						 Integer.parseInt(cline.getOptionValue("egch")) : start.getYear();
 				 if(CEventoGuatecompras.loadEventosGC(conn, ejercicio))
 					 CLogger.writeConsole("Datos historia de eventos de Guatecompras cargados con exito");
+			 }
+			 else if(cline.hasOption("ing_ra")){
+				 CLogger.writeConsole("Inicio carga de ingresos por recurso y auxiliar");
+				 Integer ejercicio = cline.getOptionValue("ing_ra")!=null && cline.getOptionValue("ing_ra").length()>0 ? 
+						 Integer.parseInt(cline.getOptionValue("ing_ra")) : start.getYear();
+				 if(CIngreso.loadIngresosRecursoAuxiliar(conn, ejercicio))
+					 CLogger.writeConsole("Datos de ingresos por recurso y auxiliar cargados con exito");
+			 }
+			 else if(cline.hasOption("ing_r")){
+				 CLogger.writeConsole("Inicio carga de ingresos por recurso");
+				 Integer ejercicio = cline.getOptionValue("ing_r")!=null && cline.getOptionValue("ing_r").length()>0 ? 
+						 Integer.parseInt(cline.getOptionValue("ing_r")) : start.getYear();
+				 if(CIngreso.loadIngresosRecurso(conn, ejercicio))
+					 CLogger.writeConsole("Datos de ingresos por recurso cargados con exito");
 			 }
 			 else if(cline.hasOption("help")){
 				 HelpFormatter formater = new HelpFormatter();

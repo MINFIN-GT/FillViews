@@ -2,6 +2,7 @@ package fill_view;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 import utilities.CLogger;
 
@@ -132,4 +133,201 @@ public class CIngreso {
 		}
 		return ret;
 	}
+	
+	
+	public static boolean loadIngresosRecursoAuxiliar(Connection conn, Integer ejercicio){
+		boolean ret = true;
+		try{
+			CLogger.writeConsole("CIngresos");
+			CLogger.writeConsole("Elminiando la data actual de MV_INGRESO_RECURSO_AUXILIAR");
+			PreparedStatement pstm;
+			pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_ingreso_recurso_auxiliar");
+			pstm.executeUpdate();
+			pstm.close();
+			CLogger.writeConsole("Copiando historia:");
+			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ingreso_recurso_auxiliar SELECT * FROM dashboard_historia.mv_ingreso_recurso_auxiliar WHERE ejercicio < ?");
+			pstm.setInt(1, ejercicio);
+			pstm.executeUpdate();
+			pstm.close();
+			
+			CLogger.writeConsole("Insertando valores a MV_INGRESO_RECURSO_AUXILIAR");
+			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ingreso_recurso_auxiliar "+
+					"SELECT recurso, recurso_nombre, recurso_auxiliar, recurso_auxiliar_nombre, ejercicio, "
+					+ "sum(case when fec_aprobado_mes=1 then monto_ingreso else 0 end) m1, "
+					+ "sum(case when fec_aprobado_mes=2 then monto_ingreso else 0 end) m2, "
+					+ "sum(case when fec_aprobado_mes=3 then monto_ingreso else 0 end) m3, "
+					+ "sum(case when fec_aprobado_mes=4 then monto_ingreso else 0 end) m4, "
+					+ "sum(case when fec_aprobado_mes=5 then monto_ingreso else 0 end) m5, "
+					+ "sum(case when fec_aprobado_mes=6 then monto_ingreso else 0 end) m6, "
+					+ "sum(case when fec_aprobado_mes=7 then monto_ingreso else 0 end) m7, "
+					+ "sum(case when fec_aprobado_mes=8 then monto_ingreso else 0 end) m8, "
+					+ "sum(case when fec_aprobado_mes=9 then monto_ingreso else 0 end) m9, "
+					+ "sum(case when fec_aprobado_mes=10 then monto_ingreso else 0 end) m10, "
+					+ "sum(case when fec_aprobado_mes=11 then monto_ingreso else 0 end) m11, "
+					+ "sum(case when fec_aprobado_mes=12 then monto_ingreso else 0 end) m12 "
+					+ "from dashboard.mv_ingreso "
+					+ "where ejercicio = ? "
+					+ "group by recurso, recurso_nombre, recurso_auxiliar, recurso_auxiliar_nombre, ejercicio ");
+			pstm.setInt(1, ejercicio);
+			pstm.executeUpdate();
+			pstm.close();
+			
+			boolean bconn =  CMemSQL.connect();
+			CLogger.writeConsole("Cargando datos a cache de MVP_INGRESO_RECURSO_AUXILIAR");
+			if(bconn){
+				ret = true;
+				int rows = 0;
+				boolean first=true;
+				PreparedStatement pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ingreso_recurso_auxiliar(recurso, recurso_nombre, auxiliar, auxiliar_nombre,ejercicio,"
+						+ "m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12) "
+						+ "values (?,?,?,?,?,"
+						+ "?,?,?,?,?,?,?,?,?,?,?,?) ");
+				
+				pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ingreso_recurso_auxiliar where ejercicio = ?");
+				pstm.setInt(1, ejercicio);
+				ResultSet rs = pstm.executeQuery();
+				while(rs.next()){
+					if(first){
+						PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ingreso_recurso_auxiliar where ejercicio =  ? ");
+						pstm2.setInt(1, ejercicio);
+						if (pstm2.executeUpdate()>0)
+							CLogger.writeConsole("Registros eliminados");
+						else
+							CLogger.writeConsole("Sin registros para eliminar");	
+						pstm2.close();
+						first=false;
+					}
+					pstm1.setInt(1, rs.getInt("recurso"));
+					pstm1.setString(2, rs.getString("recurso_nombre"));
+					pstm1.setInt(3, rs.getInt("recurso_auxiliar"));
+					pstm1.setString(4, rs.getString("recurso_auxiliar_nombre"));
+					pstm1.setInt(5, rs.getInt("ejercicio"));
+					pstm1.setDouble(6, rs.getDouble("m1"));
+					pstm1.setDouble(7, rs.getDouble("m2"));
+					pstm1.setDouble(8, rs.getDouble("m3"));
+					pstm1.setDouble(9, rs.getDouble("m4"));
+					pstm1.setDouble(10, rs.getDouble("m5"));
+					pstm1.setDouble(11, rs.getDouble("m6"));
+					pstm1.setDouble(12, rs.getDouble("m7"));
+					pstm1.setDouble(13, rs.getDouble("m8"));
+					pstm1.setDouble(14, rs.getDouble("m9"));
+					pstm1.setDouble(15, rs.getDouble("m10"));
+					pstm1.setDouble(16, rs.getDouble("m11"));
+					pstm1.setDouble(17, rs.getDouble("m12"));
+					
+					pstm1.addBatch();
+					rows++;
+					if((rows % 100) == 0)
+						pstm1.executeBatch();
+				}
+				CLogger.writeConsole("Records escritos: "+rows);
+				pstm1.executeBatch();
+				pstm1.close();
+				rs.close();
+				pstm.close();
+			}
+		}
+		catch(Exception e){
+			CLogger.writeFullConsole("Error 2: CIngreso.class", e);
+			ret=false;
+		}
+		return ret;
+	}
+	
+	public static boolean loadIngresosRecurso(Connection conn, Integer ejercicio){
+		boolean ret = true;
+		try{
+			CLogger.writeConsole("CIngresos");
+			CLogger.writeConsole("Elminiando la data actual de MV_INGRESO_RECURSO");
+			PreparedStatement pstm;
+			pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_ingreso_recurso");
+			pstm.executeUpdate();
+			pstm.close();
+			CLogger.writeConsole("Copiando historia:");
+			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ingreso_recurso SELECT * FROM dashboard_historia.mv_ingreso_recurso WHERE ejercicio < ?");
+			pstm.setInt(1, ejercicio);
+			pstm.executeUpdate();
+			pstm.close();
+			
+			CLogger.writeConsole("Insertando valores a MV_INGRESO_RECURSO");
+			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ingreso_recurso "+
+					"SELECT recurso, recurso_nombre, ejercicio, "
+					+ "sum(case when fec_aprobado_mes=1 then monto_ingreso else 0 end) m1, "
+					+ "sum(case when fec_aprobado_mes=2 then monto_ingreso else 0 end) m2, "
+					+ "sum(case when fec_aprobado_mes=3 then monto_ingreso else 0 end) m3, "
+					+ "sum(case when fec_aprobado_mes=4 then monto_ingreso else 0 end) m4, "
+					+ "sum(case when fec_aprobado_mes=5 then monto_ingreso else 0 end) m5, "
+					+ "sum(case when fec_aprobado_mes=6 then monto_ingreso else 0 end) m6, "
+					+ "sum(case when fec_aprobado_mes=7 then monto_ingreso else 0 end) m7, "
+					+ "sum(case when fec_aprobado_mes=8 then monto_ingreso else 0 end) m8, "
+					+ "sum(case when fec_aprobado_mes=9 then monto_ingreso else 0 end) m9, "
+					+ "sum(case when fec_aprobado_mes=10 then monto_ingreso else 0 end) m10, "
+					+ "sum(case when fec_aprobado_mes=11 then monto_ingreso else 0 end) m11, "
+					+ "sum(case when fec_aprobado_mes=12 then monto_ingreso else 0 end) m12 "
+					+ "from dashboard.mv_ingreso "
+					+ "where ejercicio = ? "
+					+ "group by recurso, recurso_nombre, ejercicio ");
+			pstm.setInt(1, ejercicio);
+			pstm.executeUpdate();
+			pstm.close();
+			
+			boolean bconn =  CMemSQL.connect();
+			CLogger.writeConsole("Cargando datos a cache de MVP_INGRESO_RECURSO");
+			if(bconn){
+				ret = true;
+				int rows = 0;
+				boolean first=true;
+				PreparedStatement pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ingreso_recurso(recurso, recurso_nombre, ejercicio,"
+						+ "m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12) "
+						+ "values (?,?,?,"
+						+ "?,?,?,?,?,?,?,?,?,?,?,?) ");
+				
+				pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ingreso_recurso where ejercicio = ?");
+				pstm.setInt(1, ejercicio);
+				ResultSet rs = pstm.executeQuery();
+				while(rs.next()){
+					if(first){
+						PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ingreso_recurso where ejercicio =  ? ");
+						pstm2.setInt(1, ejercicio);
+						if (pstm2.executeUpdate()>0)
+							CLogger.writeConsole("Registros eliminados");
+						else
+							CLogger.writeConsole("Sin registros para eliminar");	
+						pstm2.close();
+						first=false;
+					}
+					pstm1.setInt(1, rs.getInt("recurso"));
+					pstm1.setString(2, rs.getString("recurso_nombre"));
+					pstm1.setInt(3, rs.getInt("ejercicio"));
+					pstm1.setDouble(4, rs.getDouble("m1"));
+					pstm1.setDouble(5, rs.getDouble("m2"));
+					pstm1.setDouble(6, rs.getDouble("m3"));
+					pstm1.setDouble(7, rs.getDouble("m4"));
+					pstm1.setDouble(8, rs.getDouble("m5"));
+					pstm1.setDouble(9, rs.getDouble("m6"));
+					pstm1.setDouble(10, rs.getDouble("m7"));
+					pstm1.setDouble(11, rs.getDouble("m8"));
+					pstm1.setDouble(12, rs.getDouble("m9"));
+					pstm1.setDouble(13, rs.getDouble("m10"));
+					pstm1.setDouble(14, rs.getDouble("m11"));
+					pstm1.setDouble(15, rs.getDouble("m12"));
+					
+					pstm1.addBatch();
+					rows++;
+					if((rows % 100) == 0)
+						pstm1.executeBatch();
+				}
+				pstm1.executeBatch();
+				pstm1.close();
+				rs.close();
+				pstm.close();
+				CLogger.writeConsole("Records escritos: "+rows);
+			}
+		}
+		catch(Exception e){
+			CLogger.writeFullConsole("Error 3: CIngreso.class", e);
+		}
+		return ret;
+	}
+	
 }

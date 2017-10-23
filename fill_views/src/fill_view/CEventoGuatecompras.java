@@ -129,7 +129,7 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 							if(fecha!=null)
 								pstm1.setDate(19, new java.sql.Date(df.parse(fecha).getTime()));
 							else
-								pstm1.setNull(19, java.sql.Types.DATE);
+								pstm1.setDate(19, new java.sql.Date(0));
 							pstm1.addBatch();
 							rows++;
 							
