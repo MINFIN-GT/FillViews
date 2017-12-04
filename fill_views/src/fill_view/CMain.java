@@ -38,6 +38,7 @@ public class CMain {
 		options.addOption("sn", "snips", false, "cargar snips");
 		options.addOption("egc", "eventos-guatecompras", true, "cargar eventos guatecompras");
 		options.addOption("egch", "eventos-guatecompras-historia", true, "cargar historia de eventos guatecompras");
+		options.addOption( "catalogos", "catalogos", true, "carga multiples catalogos" );
 		options.addOption( "h", "help", false, "muestra este listado de opciones" );
 	}
 	
@@ -179,6 +180,13 @@ public class CMain {
 						 Integer.parseInt(cline.getOptionValue("ing_r")) : start.getYear();
 				 if(CIngreso.loadIngresosRecurso(conn, ejercicio))
 					 CLogger.writeConsole("Datos de ingresos por recurso cargados con exito");
+			 }
+			 else if(cline.hasOption("catalogos")){
+				 CLogger.writeConsole("Inicio carga de catalogos");
+				 Integer ejercicio = cline.getOptionValue("catalogos")!=null && cline.getOptionValue("catalogos").length()>0 ? 
+						 Integer.parseInt(cline.getOptionValue("catalogos")) : start.getYear();
+				 if(CCatalogo.loadCatalogos(conn,ejercicio))
+					 CLogger.writeConsole("Datos de catalogos cargados con éxito");
 			 }
 			 else if(cline.hasOption("help")){
 				 HelpFormatter formater = new HelpFormatter();
