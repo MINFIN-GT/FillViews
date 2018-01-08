@@ -5,8 +5,8 @@
 	<classpathentry kind="lib" path="lib/joda-time-2.9.2.jar"/>
 	<classpathentry kind="lib" path="lib/mysql-connector-java-5.1.38-bin.jar"/>
 	<classpathentry kind="lib" path="lib/protobuf-java-2.5.0.jar"/>
-	<classpathentry kind="lib" path="lib/hive-jdbc-2.1.0-standalone.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/hadoop-common-2.8.0.jar"/>
+	<classpathentry kind="lib" path="lib/hadoop-common-2.9.0.jar"/>
+	<classpathentry kind="lib" path="lib/hive-jdbc-2.1.0-standalone.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

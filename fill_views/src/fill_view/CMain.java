@@ -6,6 +6,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.joda.time.DateTime;
 import org.joda.time.Minutes;
@@ -25,7 +26,9 @@ public class CMain {
 		options.addOption("update_all","update-all",false,"Cargar todas las tablas a MemSQL");
 		options.addOption("eec", "ejecucion-estados-calamidad", false, "cargar ejecucion fisica y financiera de los  estados de calamidad");
 		options.addOption("emp", "ejecucion-metas-presidenciales", false, "cargar ejecucion fisica y financiera de metas presidenciales");
-		options.addOption("dt", "dimension-tiempo", false, "crea la dimension tiempo");
+		//options.addOption("dt", "dimension-tiempo", true, "crea la dimension tiempo");
+		options.addOption(Option.builder("dt").hasArgs().longOpt("dimension-tiempo").desc("<ejercicio_inicio> <ejercicio_fin> crea la dimension tiempo").build());
+		
 		options.addOption("mp", "metas-presidenciales", false, "calcula la vista de metas presidenciales");
 		options.addOption("mp_des", "metas-presidenciales-descentralizadas", false, "calcula la vista de metas presidenciales");
 		options.addOption("efp", "ejecucion-financiera-prestamos", false, "cargar ejecucion financiera de Prestamos");
@@ -104,10 +107,6 @@ public class CMain {
 			 }else if (cline.hasOption("update-all")){
 				 CLogger.writeConsole("Inicio de importacion de todos las tablas.");
 				 if(	CFechaActualizacionData.UpdateLoadDate("ejecucionpresupuestaria") &&
-						CTrianguloNorte.loadEjesTrianguloNorte() &&
-						CTrianguloNorte.loadEntidadesTrianguloNorte() &&
-						CTrianguloNorte.loadEstructurasFinanciamiento() &&
-						CFechaActualizacionData.UpdateLoadDate("paptn_ejecucionfinanciera") && 
 						CEjecucionFisica.loadEjeucionHoja(conn, false, false) &&
 						CEjecucionFisica.loadEjecucionDetalle(conn, false, false) &&
 						CUnidadMedida.loadUnidadesMedida(conn, false, false) &&
@@ -117,7 +116,12 @@ public class CMain {
 					CLogger.writeConsole("todas las tablas importadas con exito");
 			 }
 			 else if(cline.hasOption("dimension-tiempo")){
-				 CDimensionTiempo.createDimension(conn, 2017, (new DateTime()).getYear());
+				 String[] argumentos = cline.getOptionValues("dt");
+				 Integer ejercicio_inicio = argumentos!=null && argumentos.length>0 ? 
+						 Integer.parseInt(argumentos[0]) : start.getYear();
+				 Integer ejercicio_fin = argumentos!=null && argumentos.length>1 ? 
+								 Integer.parseInt(argumentos[1]) : start.getYear();
+				 CDimensionTiempo.createDimension(conn, ejercicio_inicio, ejercicio_fin);
 				 CLogger.writeConsole("Se ha creado la dimension tiempo");
 			 }
 			 else if(cline.hasOption("ejecucion-presupuestaria")){
@@ -129,9 +133,12 @@ public class CMain {
 			 }
 			 else if(cline.hasOption("ejecucion-presupuestaria-historia")){
 				 CLogger.writeConsole("Inicio carga de historia de ejecucion presupuestaria");
-				 Integer ejercicio = cline.getOptionValue("eph")!=null && cline.getOptionValue("eph").length()>0 ? 
-						 Integer.parseInt(cline.getOptionValue("eph")) : start.getYear();
-				 if(CEjecucionPresupuestaria.loadEjecucionPresupuestariaHistoria(conn, ejercicio))
+				 String[] argumentos = cline.getOptionValues("eph");
+				 Integer ejercicio_inicio = argumentos!=null && argumentos.length>0 ? 
+						 Integer.parseInt(argumentos[0]) : start.getYear();
+				 Integer ejercicio_fin = argumentos!=null && argumentos.length>1 ? 
+								 Integer.parseInt(argumentos[1]) : start.getYear();
+				 if(CEjecucionPresupuestaria.loadEjecucionPresupuestariaHistoria(conn, ejercicio_inicio, ejercicio_fin))
 					 CLogger.writeConsole("Datos Historicos de ejecucion presupuestaria cargados con exito");
 			 }
 			 else if(cline.hasOption("ejecucion-fisica")){

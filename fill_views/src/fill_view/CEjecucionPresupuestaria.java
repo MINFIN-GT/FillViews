@@ -20,7 +20,7 @@ public class CEjecucionPresupuestaria {
 				CLogger.writeConsole("CEjecucionPresupuestaria Entidades (Ejercicio "+ejercicio+"):");
 				CLogger.writeConsole("Eliminando data actual:");
 				PreparedStatement pstm;
-				List<String> tablas = Arrays.asList("mv_estructura", "mv_cuota","mv_gasto", "mv_anticipo","mv_vigente", "mv_ejecucion_presupuestaria","mv_ejecucion_presupuestaria_geografico","mv_ejecucion_presupuestaria_mensualizada");
+				List<String> tablas = Arrays.asList("mv_entidad", "mv_estructura", "mv_cuota","mv_gasto", "mv_anticipo","mv_vigente", "mv_ejecucion_presupuestaria","mv_ejecucion_presupuestaria_geografico","mv_ejecucion_presupuestaria_mensualizada");
 				
 				CLogger.writeConsole("Copiando historia:");
 				for(String tabla:tablas){
@@ -34,6 +34,15 @@ public class CEjecucionPresupuestaria {
 					pstm.close();
 				}
 				
+				CLogger.writeConsole("Insertando valores a MV_ENTIDAD");
+				pstm =conn.prepareStatement("insert into table dashboard.mv_entidad "+
+						"select ejercicio, entidad, count(*) unidades_ejecutoras " + 
+						"from sicoinprod.cg_entidades " + 
+						"where ejercicio= ? "+
+						"group by ejercicio, entidad");
+				pstm.setInt(1, ejercicio);
+				pstm.executeUpdate();
+				pstm.close();
 				
 				CLogger.writeConsole("Insertando valores a MV_ESTRUCTURA");
 				pstm = conn.prepareStatement("insert into table dashboard.mv_estructura "+
@@ -83,7 +92,7 @@ public class CEjecucionPresupuestaria {
 						"and ((e.entidad between 11130000 and 11130020) OR e.entidad = 11140021)   " + 
 						"and mve.entidad = e.entidad  " + 
 						"and mve.ejercicio = e.ejercicio  " + 
-						"and ((ue.unidad_ejecutora = 0 and mve.unidades_ejecutoras=1) or (ue.unidad_ejecutora>0 and mve.unidades_ejecutoras>1))  " + 
+						"and ((ue.ejercicio=mve.ejercicio and ue.unidad_ejecutora = 0 and mve.unidades_ejecutoras=1) or (ue.ejercicio=mve.ejercicio and ue.unidad_ejecutora>0 and mve.unidades_ejecutoras>1))  " + 
 						"and es.entidad = e.entidad");
 				pstm.setInt(1, ejercicio);
 				pstm.executeUpdate();
@@ -260,9 +269,7 @@ public class CEjecucionPresupuestaria {
 						"							md.geografico,   " + 
 						"							sum(md.monto_aprobado) modificaciones   " + 
 						"								from sicoinprod.eg_modificaciones_hoja mh left outer join    " + 
-						"								(select ejercicio, entidad, count(*) ues   " + 
-						"								from sicoinprod.cg_entidades   " + 
-						"								group by ejercicio, entidad) num_ues on (mh.entidad=num_ues.entidad and mh.ejercicio = num_ues.ejercicio), sicoinprod.eg_modificaciones_detalle md   " + 
+						"								dashboard.mv_entidad num_ues on (mh.entidad=num_ues.entidad and mh.ejercicio = num_ues.ejercicio), sicoinprod.eg_modificaciones_detalle md   " + 
 						"								where md.ejercicio = mh.ejercicio   " + 
 						"								and num_ues.ejercicio = mh.ejercicio   " + 
 						"								and num_ues.entidad = mh.entidad   " + 
@@ -271,7 +278,7 @@ public class CEjecucionPresupuestaria {
 						"								and md.unidad_ejecutora = mh.unidad_ejecutora   " + 
 						"								and md.entidad = mh.entidad   " + 
 						"								and mh.APROBADO = 'S'   " + 
-						"								and ((mh.unidad_ejecutora>0 and num_ues.ues>0) OR (mh.unidad_ejecutora=0 and num_ues.ues=1))   " + 
+						"								and ((mh.unidad_ejecutora>0 and num_ues.unidades_ejecutoras>0) OR (mh.unidad_ejecutora=0 and num_ues.unidades_ejecutoras=1))   " + 
 						"								and md.ejercicio = mh.ejercicio " + 
 						"								group by mh.ejercicio, month(mh.fec_aprobado), md.mes_modificacion, md.entidad,  md.unidad_ejecutora,  md.programa,  md.subprograma,  md.proyecto,  md.actividad,  md.obra,     " + 
 						"								md.renglon, md.fuente, md.geografico  " + 
@@ -320,22 +327,22 @@ public class CEjecucionPresupuestaria {
 						"																		 c.aprobado aprobado_cuota       " + 
 						"																		 from (      " + 
 						"																		 	select " +
-						"																			v.ejercicio, "+	
-						"																			v.mes,       " + 
-						"																		 	v.entidad,      " + 
-						"																		 	v.unidad_ejecutora,      " + 
-						"																		 	v.programa,      " + 
-						"																		 	v.subprograma,      " + 
-						"																		 	v.proyecto,      " + 
-						"																		 	v.actividad,      " + 
-						"																		 	v.obra,      " + 
-						"																		 	v.fuente,      " + 
-						"																		 	v.grupo,      " + 
-						"																		 	v.grupo_nombre,      " + 
-						"																		 	v.subgrupo,      " + 
-						"																		 	v.subgrupo_nombre,      " + 
-						"																		 	v.renglon,      " + 
-						"																		 	v.renglon_nombre,      " + 
+						"																			nvl(v.ejercicio,g.ejercicio) ejercicio, "+	
+						"																			nvl(v.mes,g.mes) mes,       " + 
+						"																		 	nvl(v.entidad,g.entidad) entidad,      " + 
+						"																		 	nvl(v.unidad_ejecutora, g.unidad_ejecutora) unidad_ejecutora,      " + 
+						"																		 	nvl(v.programa,g.programa) programa,      " + 
+						"																		 	nvl(v.subprograma, g.subprograma) subprograma,      " + 
+						"																		 	nvl(v.proyecto, g.proyecto) proyecto,      " + 
+						"																		 	nvl(v.actividad, g.actividad) actividad,      " + 
+						"																		 	nvl(v.obra, g.obra) obra,      " + 
+						"																		 	nvl(v.fuente, g.fuente) fuente,      " + 
+						"																		 	nvl(v.grupo, g.grupo) grupo,      " + 
+						"																		 	nvl(v.grupo_nombre, g.grupo_nombre) grupo_nombre,      " + 
+						"																		 	nvl(v.subgrupo, g.subgrupo) subgrupo,      " + 
+						"																		 	nvl(v.subgrupo_nombre, g.subgrupo_nombre) subgrupo_nombre,      " + 
+						"																		 	nvl(v.renglon, g.renglon) renglon,      " + 
+						"																		 	nvl(v.renglon_nombre, g.renglon_nombre) renglon_nombre,      " + 
 						"																			g.ano_1 ano_1, g.ano_2 ano_2, g.ano_3 ano_3, g.ano_4 ano_4, g.ano_5 ano_5, g.ano_actual ano_actual,      " + 
 						"																		 	v.asignado asignado, v.vigente vigente      " + 
 						"																		 	from  (	select ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, grupo, grupo_nombre, " + 
@@ -343,14 +350,14 @@ public class CEjecucionPresupuestaria {
 						"																			   from dashboard.mv_vigente " + 
 						"																			   where ejercicio = ? " + 
 						"																			   group by ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, grupo, grupo_nombre, subgrupo, subgrupo_nombre, renglon, renglon_nombre, fuente " + 
-						"																			) v left outer join   (" + 
-						"																		 		select g1.mes, g1.entidad, g1.unidad_ejecutora, g1.programa, g1.subprograma, g1.proyecto, g1.actividad, g1.obra, g1.fuente," + 
+						"																			) v full outer join   (" + 
+						"																		 		select g1.ejercicio, g1.mes, g1.entidad, g1.unidad_ejecutora, g1.programa, g1.subprograma, g1.proyecto, g1.actividad, g1.obra, g1.fuente," + 
 						"																		 		g1.grupo, g1.grupo_nombre, g1.subgrupo, g1.subgrupo_nombre, g1.renglon, g1.renglon_nombre," + 
 						"																		 		sum(g1.ano_1) ano_1, sum(g1.ano_2) ano_2, sum(g1.ano_3) ano_3, sum(g1.ano_4) ano_4, sum(g1.ano_5) ano_5," + 
 						"																		 		sum(g1.ano_actual) ano_actual" + 
 						"																		 		from dashboard.mv_gasto g1 " +
 						"																				where g1.ejercicio = ? " +		
-						"																		 		group by g1.mes, g1.entidad, g1.unidad_ejecutora, g1.programa, g1.subprograma, g1.proyecto, g1.actividad, g1.obra, g1.fuente, " + 
+						"																		 		group by g1.ejercicio, g1.mes, g1.entidad, g1.unidad_ejecutora, g1.programa, g1.subprograma, g1.proyecto, g1.actividad, g1.obra, g1.fuente, " + 
 						"																		 		g1.grupo, g1.grupo_nombre, g1.subgrupo, g1.subgrupo_nombre, g1.renglon, g1.renglon_nombre" + 
 						"																		 	) g "+
 						"																		 	on(       " + 
@@ -364,6 +371,7 @@ public class CEjecucionPresupuestaria {
 						"																		 		and g.renglon = v.renglon      " + 
 						"																		 		and g.fuente = v.fuente      " + 
 						"																		 		and g.mes = v.mes      " + 
+						"																				and g.ejercicio = v.ejercicio " +
 						"																		 	  )    " + 
 						"																		 ) t1    " + 
 						"																		 left outer join dashboard.mv_cuota c   " + 
@@ -468,6 +476,7 @@ public class CEjecucionPresupuestaria {
 				boolean bconn =  CMemSQL.connect();
 				CLogger.writeConsole("Cargando datos a cache de MV_EJECUCION_PRESUPUESTARIA");
 				if(bconn){
+					CMemSQL.getConnection().setAutoCommit(false);
 					ret = true;
 					int rows = 0;
 					int rows_total=0;
@@ -536,8 +545,10 @@ public class CEjecucionPresupuestaria {
 							pstm1.setDouble(27, rs.getDouble("vigente"));
 							pstm1.addBatch();
 							rows++;
-							if((rows % 10000) == 0)
+							if((rows % 10000) == 0){
 								pstm1.executeBatch();
+								CMemSQL.getConnection().commit();
+							}
 						}
 						CLogger.writeConsole("Records escritos: "+rows+" - mes: "+i);
 						pstm1.executeBatch();
@@ -545,6 +556,7 @@ public class CEjecucionPresupuestaria {
 						rows=0;
 						rs.close();
 						pstm.close();
+						CMemSQL.getConnection().commit();
 					}
 					
 					CLogger.writeConsole("Records escritos Totales: "+rows_total);
@@ -595,8 +607,10 @@ public class CEjecucionPresupuestaria {
 							pstm1.setDouble(17, rs.getDouble("vigente"));
 							pstm1.addBatch();
 							rows++;
-							if((rows % 10000) == 0)
+							if((rows % 10000) == 0){
 								pstm1.executeBatch();
+								CMemSQL.getConnection().commit();
+							}
 						}
 						CLogger.writeConsole("Records escritos: "+rows+" - mes: "+i);
 						pstm1.executeBatch();
@@ -604,6 +618,7 @@ public class CEjecucionPresupuestaria {
 						rows=0;
 						rs.close();
 						pstm.close();
+						CMemSQL.getConnection().commit();
 					}
 					
 					CLogger.writeConsole("Records escritos Totales: "+rows_total);
@@ -650,12 +665,15 @@ public class CEjecucionPresupuestaria {
 						pstm1.setString(15, rs.getString("actividad_obra_nombre"));
 						pstm1.addBatch();
 						rows++;
-						if((rows % 10000) == 0)
+						if((rows % 10000) == 0){
 							pstm1.executeBatch();
+							CMemSQL.getConnection().commit();
+						}
 					}
 					pstm1.executeBatch();
 					rs.close();
 					pstm.close();
+					CMemSQL.getConnection().commit();
 					
 					
 					CLogger.writeConsole("Cargando datos a cache de MV_EJECUCION_PRESUPUESTARIA_MENSUALIZADA");
@@ -705,13 +723,15 @@ public class CEjecucionPresupuestaria {
 						pstm1.setDouble(22, rs.getDouble("m12"));
 						pstm1.addBatch();
 						rows++;
-						if((rows % 10000) == 0)
+						if((rows % 10000) == 0){
 							pstm1.executeBatch();
+							CMemSQL.getConnection().commit();
+						}
 					}
 					pstm1.executeBatch();
 					rs.close();
 					pstm.close();
-					
+					CMemSQL.getConnection().commit();
 					
 					CLogger.writeConsole("Records escritos Totales: "+rows);
 					pstm1.close(); 
@@ -729,14 +749,14 @@ public class CEjecucionPresupuestaria {
 		return ret;
 	}
 	
-public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integer ejercicio){
+public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integer ejercicio_inicio, Integer ejercicio_fin){
 		
 		boolean ret = false;
 		try{
 			if( !conn.isClosed() && CMemSQL.connect()){
 				ret = true;
 
-				CLogger.writeConsole("CEjecucionPresupuestaria Entidades Historia (Ejercicio "+ejercicio+"):");
+				CLogger.writeConsole("CEjecucionPresupuestaria Entidades Historia (Ejercicios "+ejercicio_inicio+" a "+ejercicio_fin+"):");
 				CLogger.writeConsole("Eliminando data actual:");
 				PreparedStatement pstm;
 				List<String> tablas = Arrays.asList("mv_estructura", "mv_cuota", "mv_gasto", "mv_anticipo","mv_vigente", "mv_ejecucion_presupuestaria","mv_ejecucion_presupuestaria_geografico", "mv_ejecucion_presupuestaria_mensualizada");
@@ -745,14 +765,19 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 					pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard_historia."+tabla+"_temp PURGE");
 					pstm.executeUpdate();
 					pstm.close();
-					pstm = conn.prepareStatement("CREATE TABLE dashboard_historia."+tabla+"_temp AS SELECT * FROM dashboard_historia."+tabla+" WHERE ejercicio<>?");
-					pstm.setInt(1, ejercicio);
+					pstm = conn.prepareStatement("CREATE TABLE dashboard_historia."+tabla+"_temp AS SELECT * FROM dashboard_historia."+tabla+" WHERE ejercicio between ? and ?");
+					pstm.setInt(1, ejercicio_inicio);
+					pstm.setInt(2, ejercicio_fin);
 					pstm.executeUpdate();
 					pstm.close();
-					pstm = conn.prepareStatement("TRUNCATE TABLE dashboard_historia."+tabla);
+					pstm = conn.prepareStatement("DELETE FROM dashboard_historia."+tabla+" WHERE ejercicio between ? and ?");
+					pstm.setInt(1, ejercicio_inicio);
+					pstm.setInt(2, ejercicio_fin);
 					pstm.executeUpdate();
 					pstm.close();
-					pstm = conn.prepareStatement("INSERT INTO dashboard_historia."+tabla+" SELECT * FROM dashboard_historia."+tabla+"_temp");
+					pstm = conn.prepareStatement("INSERT INTO dashboard_historia."+tabla+" SELECT * FROM dashboard_historia."+tabla+"_temp WHERE ejercicio between ? and ?");
+					pstm.setInt(1, ejercicio_inicio);
+					pstm.setInt(2, ejercicio_fin);
 					pstm.executeUpdate();
 					pstm.close();
 					pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard_historia."+tabla+"_temp PURGE");
@@ -800,7 +825,7 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 						"and ao.proyecto = pr.proyecto  " + 
 						"and ao.nivel_estructura = 5 " + 
 						"), dashboard.mv_entidad mve, dashboard.entidad_sigla es  " + 
-						"where e.ejercicio = ?  " + 
+						"where e.ejercicio between ? and ? " + 
 						"and ue.ejercicio = e.ejercicio  " + 
 						"and e.restrictiva = 'N'  " + 
 						"and ue.restrictiva = 'N'  " + 
@@ -811,50 +836,53 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 						"and mve.ejercicio = e.ejercicio  " + 
 						"and ((ue.unidad_ejecutora = 0 and mve.unidades_ejecutoras=1) or (ue.unidad_ejecutora>0 and mve.unidades_ejecutoras>1))  " + 
 						"and es.entidad = e.entidad");
-				pstm.setInt(1, ejercicio);
+				pstm.setInt(1, ejercicio_inicio);
+				pstm.setInt(2, ejercicio_fin);
 				pstm.executeUpdate();
 				pstm.close();
 				
 				CLogger.writeConsole("Insertando valores a MV_GASTO");
 				///Actualiza la vista de gasto
-				pstm = conn.prepareStatement("insert into table dashboard_historia.mv_gasto "
-						+"select "+ejercicio+" ejercicio,month(gh.fec_aprobado) mes, gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma, gd.proyecto, gd.actividad, gd.obra, gd.renglon, r.nombre renglon_nombre, gd.fuente,     " + 
-						"						 						 	gd.renglon - (gd.renglon%100) grupo, gg.nombre grupo_nombre, gd.renglon - (gd.renglon%10) subgrupo, sg.nombre subgrupo_nombre, gd.geografico,      " + 
-						"						 						 	sum( case when gh.ejercicio = (? - 5) then gd.monto_renglon else 0 end) ano_1,      " + 
-						"						 						 	sum( case when gh.ejercicio = (? - 4) then gd.monto_renglon else 0 end) ano_2,      " + 
-						"						 						 	sum( case when gh.ejercicio = (? - 3) then gd.monto_renglon else 0 end) ano_3,      " + 
-						"						 						 	sum( case when gh.ejercicio = (? - 2) then gd.monto_renglon else 0 end) ano_4,      " + 
-						"						 						 	sum( case when gh.ejercicio = (? - 1) then gd.monto_renglon else 0 end) ano_5,      " + 
-						"						 						 	sum( case when gh.ejercicio = ? then gd.monto_renglon else 0 end) ano_actual      " + 
-						"						 						 				from sicoinprod.eg_gastos_hoja gh, sicoinprod.eg_gastos_detalle gd,      " + 
-						"						 										sicoinprod.cp_grupos_gasto gg, sicoinprod.cp_objetos_gasto sg, sicoinprod.cp_objetos_gasto r  		 " + 
-						"						 						 				where gh.ejercicio = gd.ejercicio         " + 
-						"						 						 				and gh.entidad = gd.entidad       " + 
-						"						 						 				and gh.unidad_ejecutora = gd.unidad_ejecutora       " + 
-						"						 						 				and gh.no_cur = gd.no_cur       " + 
-						"						 						 				and gh.clase_registro IN ('DEV', 'CYD', 'RDP', 'REG')       " + 
-						"						 						 				and gh.estado = 'APROBADO'       " + 
-						"						 						 				and gh.ejercicio > ( ? - 6 )       " + 
-						"						  										and gg.ejercicio =  ? " + 
-						"		 				  										and gg.grupo_gasto = (gd.renglon-(gd.renglon%100))   " + 
-						"		 				  										and sg.ejercicio = ?    " + 
-						"		 				  										and sg.renglon = (gd.renglon - (gd.renglon%10))        " + 
-						"		 				  										and r.ejercicio = ?   " + 
-						"		 				  										and r.renglon = gd.renglon   " + 
-						"						 						 				group by month(gh.fec_aprobado), gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma,       " + 
-						"						 						 				gd.proyecto, gd.actividad, gd.obra, gg.nombre, sg.nombre, r.nombre, gd.renglon, gd.fuente, gd.geografico  ");
-				pstm.setInt(1, ejercicio);
-				pstm.setInt(2, ejercicio);
-				pstm.setInt(3, ejercicio);
-				pstm.setInt(4, ejercicio);
-				pstm.setInt(5, ejercicio);
-				pstm.setInt(6, ejercicio);
-				pstm.setInt(7, ejercicio);
-				pstm.setInt(8, ejercicio);
-				pstm.setInt(9, ejercicio);
-				pstm.setInt(10, ejercicio);
- 				pstm.executeUpdate();
-				pstm.close();
+				for(int i=ejercicio_inicio; i<=ejercicio_fin ; i++){
+					pstm = conn.prepareStatement("insert into table dashboard_historia.mv_gasto "
+							+"select "+i+" ejercicio,month(gh.fec_aprobado) mes, gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma, gd.proyecto, gd.actividad, gd.obra, gd.renglon, r.nombre renglon_nombre, gd.fuente,     " + 
+							"						 						 	gd.renglon - (gd.renglon%100) grupo, gg.nombre grupo_nombre, gd.renglon - (gd.renglon%10) subgrupo, sg.nombre subgrupo_nombre, gd.geografico,      " + 
+							"						 						 	sum( case when gh.ejercicio = (? - 5) then gd.monto_renglon else 0 end) ano_1,      " + 
+							"						 						 	sum( case when gh.ejercicio = (? - 4) then gd.monto_renglon else 0 end) ano_2,      " + 
+							"						 						 	sum( case when gh.ejercicio = (? - 3) then gd.monto_renglon else 0 end) ano_3,      " + 
+							"						 						 	sum( case when gh.ejercicio = (? - 2) then gd.monto_renglon else 0 end) ano_4,      " + 
+							"						 						 	sum( case when gh.ejercicio = (? - 1) then gd.monto_renglon else 0 end) ano_5,      " + 
+							"						 						 	sum( case when gh.ejercicio = ? then gd.monto_renglon else 0 end) ano_actual      " + 
+							"						 						 				from sicoinprod.eg_gastos_hoja gh, sicoinprod.eg_gastos_detalle gd,      " + 
+							"						 										sicoinprod.cp_grupos_gasto gg, sicoinprod.cp_objetos_gasto sg, sicoinprod.cp_objetos_gasto r  		 " + 
+							"						 						 				where gh.ejercicio = gd.ejercicio         " + 
+							"						 						 				and gh.entidad = gd.entidad       " + 
+							"						 						 				and gh.unidad_ejecutora = gd.unidad_ejecutora       " + 
+							"						 						 				and gh.no_cur = gd.no_cur       " + 
+							"						 						 				and gh.clase_registro IN ('DEV', 'CYD', 'RDP', 'REG')       " + 
+							"						 						 				and gh.estado = 'APROBADO'       " + 
+							"						 						 				and gh.ejercicio > ( ? - 6 )       " + 
+							"						  										and gg.ejercicio =  ? " + 
+							"		 				  										and gg.grupo_gasto = (gd.renglon-(gd.renglon%100))   " + 
+							"		 				  										and sg.ejercicio = ?    " + 
+							"		 				  										and sg.renglon = (gd.renglon - (gd.renglon%10))        " + 
+							"		 				  										and r.ejercicio = ?   " + 
+							"		 				  										and r.renglon = gd.renglon   " + 
+							"						 						 				group by month(gh.fec_aprobado), gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma,       " + 
+							"						 						 				gd.proyecto, gd.actividad, gd.obra, gg.nombre, sg.nombre, r.nombre, gd.renglon, gd.fuente, gd.geografico  ");
+					pstm.setInt(1, i);
+					pstm.setInt(2, i);
+					pstm.setInt(3, i);
+					pstm.setInt(4, i);
+					pstm.setInt(5, i);
+					pstm.setInt(6, i);
+					pstm.setInt(7, i);
+					pstm.setInt(8, i);
+					pstm.setInt(9, i);
+					pstm.setInt(10, i);
+	 				pstm.executeUpdate();
+					pstm.close();
+				}
 				
 				CLogger.writeConsole("Insertando valores a MV_CUOTA");
 				///Actualiza la vista de cuota
@@ -893,7 +921,7 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 						"                   end ) aprobado " + 
 						"                   FROM sicoinprod.EG_FINANCIERO_DETALLE_4 D,  " + 
 						"                   sicoinprod.eg_financiero_hoja_4 H1, dashboard.tiempo t  " + 
-						"                   WHERE  h1.ejercicio = ?   " + 
+						"                   WHERE  h1.ejercicio between ? and ?   " + 
 						"                   and h1.ejercicio = d.ejercicio " + 
 						"                    and t.ejercicio = h1.ejercicio " + 
 						"                    and t.dia = 1 " + 
@@ -909,7 +937,8 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 						"                    d.unidad_ejecutora,  " + 
 						"                    d.fuente "
 						);	
-				pstm.setInt(1, ejercicio);
+				pstm.setInt(1, ejercicio_inicio);
+				pstm.setInt(2, ejercicio_fin);
 				pstm.executeUpdate();
 				pstm.close();
 				
@@ -926,7 +955,7 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 						"	          sicoinprod.eg_anticipo_detalle d, " + 
 						"	          dashboard.tiempo t   " + 
 						"	    WHERE h.ejercicio = d.ejercicio   " + 
-						"	    AND h.ejercicio= ? " + 
+						"	    AND h.ejercicio between ? and ? " + 
 						"	    and t.ejercicio = h.ejercicio " + 
 						"	    and t.dia = 1 " + 
 						"	    and d.cuatrimestre = ceil(t.mes/4) " + 
@@ -938,7 +967,8 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 						"	    AND   h.clase_registro IN ('PRG','RPG')   " + 
 						"	    group by d.ejercicio, t.mes, d.entidad, d.unidad_ejecutora, d.fuente"
 						);	
-				pstm.setInt(1, ejercicio);
+				pstm.setInt(1, ejercicio_inicio);
+				pstm.setInt(2, ejercicio_fin);
 				pstm.executeUpdate();
 				pstm.close();
 				
@@ -969,7 +999,7 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 						"													left outer join      " + 
 						"													(select a.ejercicio, a.entidad, a.unidad_ejecutora, a.programa, a.subprograma, a.proyecto, a.actividad, a.obra, a.fuente,      " + 
 						"														a.renglon, a.geografico, a.asignado      " + 
-						"														from sicoinprod.eg_f6_partidas a) a on (a.ejercicio = t.ejercicio and t.dia=1 and t.ejercicio=?)    " + 
+						"														from sicoinprod.eg_f6_partidas a) a on (a.ejercicio = t.ejercicio and t.dia=1 and t.ejercicio between ? and ?)    " + 
 						"														left outer join (   " + 
 						"															select ejercicio, entidad, count(*) ues    " + 
 						"															from sicoinprod.cg_entidades   " + 
@@ -1001,7 +1031,7 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 						"								and md.ejercicio = mh.ejercicio " + 
 						"								group by mh.ejercicio, month(mh.fec_aprobado), md.mes_modificacion, md.entidad,  md.unidad_ejecutora,  md.programa,  md.subprograma,  md.proyecto,  md.actividad,  md.obra,     " + 
 						"								md.renglon, md.fuente, md.geografico  " + 
-						"							) m on (t.ejercicio = m.ejercicio and t.dia=1 and t.ejercicio = ?)  " + 
+						"							) m on (t.ejercicio = m.ejercicio and t.dia=1 and t.ejercicio between ? and ?)  " + 
 						"							group by t.ejercicio, t.mes, m.entidad, m.unidad_ejecutora, m.programa, m.subprograma, m.proyecto, m.actividad, m.obra, m.fuente, m.renglon, m.geografico  " + 
 						"						) vigente   " + 
 						"						on (asignado.ejercicio = vigente.ejercicio   " + 
@@ -1024,8 +1054,10 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 						"						and r.renglon = asignado.renglon " + 
 						"						group by asignado.ejercicio, asignado.mes, asignado.entidad, asignado.unidad_ejecutora, asignado.programa, asignado.subprograma, asignado.proyecto, asignado.actividad, asignado.obra,    " + 
 						"						asignado.fuente, asignado.grupo, gg.nombre, asignado.subgrupo, sg.nombre, asignado.renglon, r.nombre, asignado.geografico  ");
-				pstm.setInt(1, ejercicio);
-				pstm.setInt(2, ejercicio);
+				pstm.setInt(1, ejercicio_inicio);
+				pstm.setInt(2, ejercicio_fin);
+				pstm.setInt(3, ejercicio_inicio);
+				pstm.setInt(4, ejercicio_fin);
 				pstm.executeUpdate();
 				pstm.close();
 				
@@ -1046,37 +1078,37 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 						"																		 c.aprobado aprobado_cuota       " + 
 						"																		 from (      " + 
 						"																		 	select " +
-						"																			v.ejercicio, "+	
-						"																			v.mes,       " + 
-						"																		 	v.entidad,      " + 
-						"																		 	v.unidad_ejecutora,      " + 
-						"																		 	v.programa,      " + 
-						"																		 	v.subprograma,      " + 
-						"																		 	v.proyecto,      " + 
-						"																		 	v.actividad,      " + 
-						"																		 	v.obra,      " + 
-						"																		 	v.fuente,      " + 
-						"																		 	v.grupo,      " + 
-						"																		 	v.grupo_nombre,      " + 
-						"																		 	v.subgrupo,      " + 
-						"																		 	v.subgrupo_nombre,      " + 
-						"																		 	v.renglon,      " + 
-						"																		 	v.renglon_nombre,      " + 
+						"																			nvl(v.ejercicio,g.ejercicio) ejercicio, "+	
+						"																			nvl(v.mes,g.mes) mes,       " + 
+						"																		 	nvl(v.entidad,g.entidad) entidad,      " + 
+						"																		 	nvl(v.unidad_ejecutora,g.unidad_ejecutora) unidad_ejecutora,     " + 
+						"																		 	nvl(v.programa,g.programa) programa,      " + 
+						"																		 	nvl(v.subprograma,g.subprograma) subprograma,      " + 
+						"																		 	nvl(v.proyecto, g.proyecto) proyecto,     " + 
+						"																		 	nvl(v.actividad,g.actividad) actividad,      " + 
+						"																		 	nvl(v.obra,g.obra) obra,      " + 
+						"																		 	nvl(v.fuente,g.fuente) fuente,      " + 
+						"																		 	nvl(v.grupo,g.grupo) grupo,      " + 
+						"																		 	nvl(v.grupo_nombre,g.grupo_nombre) grupo_nombre,      " + 
+						"																		 	nvl(v.subgrupo, g.subgrupo) subgrupo,     " + 
+						"																		 	nvl(v.subgrupo_nombre,g.subgrupo_nombre) subgrupo_nombre,    " + 
+						"																		 	nvl(v.renglon,g.renglon) renglon,      " + 
+						"																		 	nvl(v.renglon_nombre g.renglon_nombre) renglon_nombre,      " + 
 						"																			g.ano_1 ano_1, g.ano_2 ano_2, g.ano_3 ano_3, g.ano_4 ano_4, g.ano_5 ano_5, g.ano_actual ano_actual,      " + 
 						"																		 	v.asignado asignado, v.vigente vigente      " + 
 						"																		 	from  (	select ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, grupo, grupo_nombre, " + 
 						"								    										   subgrupo, subgrupo_nombre, renglon, renglon_nombre, fuente, sum(asignado) asignado, sum(vigente) vigente " + 
 						"																			   from dashboard_historia.mv_vigente " + 
-						"																			   where ejercicio = ? " + 
+						"																			   where ejercicio between ? and ? " + 
 						"																			   group by ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, grupo, grupo_nombre, subgrupo, subgrupo_nombre, renglon, renglon_nombre, fuente " + 
-						"																			) v left outer join   (" + 
-						"																		 		select g1.mes, g1.entidad, g1.unidad_ejecutora, g1.programa, g1.subprograma, g1.proyecto, g1.actividad, g1.obra, g1.fuente," + 
+						"																			) v full outer join   (" + 
+						"																		 		select g1.ejercicio, g1.mes, g1.entidad, g1.unidad_ejecutora, g1.programa, g1.subprograma, g1.proyecto, g1.actividad, g1.obra, g1.fuente," + 
 						"																		 		g1.grupo, g1.grupo_nombre, g1.subgrupo, g1.subgrupo_nombre, g1.renglon, g1.renglon_nombre," + 
 						"																		 		sum(g1.ano_1) ano_1, sum(g1.ano_2) ano_2, sum(g1.ano_3) ano_3, sum(g1.ano_4) ano_4, sum(g1.ano_5) ano_5," + 
 						"																		 		sum(g1.ano_actual) ano_actual" + 
 						"																		 		from dashboard_historia.mv_gasto g1 " +
-						"																				where g1.ejercicio = ? " +		
-						"																		 		group by g1.mes, g1.entidad, g1.unidad_ejecutora, g1.programa, g1.subprograma, g1.proyecto, g1.actividad, g1.obra, g1.fuente, " + 
+						"																				where g1.ejercicio between ? and ? " +		
+						"																		 		group by g1.ejercicio, g1.mes, g1.entidad, g1.unidad_ejecutora, g1.programa, g1.subprograma, g1.proyecto, g1.actividad, g1.obra, g1.fuente, " + 
 						"																		 		g1.grupo, g1.grupo_nombre, g1.subgrupo, g1.subgrupo_nombre, g1.renglon, g1.renglon_nombre" + 
 						"																		 	) g "+
 						"																		 	on(       " + 
@@ -1090,6 +1122,7 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 						"																		 		and g.renglon = v.renglon      " + 
 						"																		 		and g.fuente = v.fuente      " + 
 						"																		 		and g.mes = v.mes      " + 
+						"																		 		and g.ejercicio = v.ejercicio      " + 
 						"																		 	  )    " + 
 						"																		 ) t1    " + 
 						"																		 left outer join dashboard_historia.mv_cuota c   " + 
@@ -1108,8 +1141,10 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 						"																		 	and a.fuente = t1.fuente  " + 
 						"																		 	and a.mes = t1.mes  " + 
 						"																		 ) " );
-				pstm.setInt(1, ejercicio);
-				pstm.setInt(2, ejercicio);
+				pstm.setInt(1, ejercicio_inicio);
+				pstm.setInt(2, ejercicio_fin);
+				pstm.setInt(3, ejercicio_inicio);
+				pstm.setInt(4, ejercicio_fin);
 				pstm.executeUpdate();
 				pstm.close();
 				
@@ -1134,11 +1169,11 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 						"sum(v.asignado) asignado, sum(v.vigente) vigente     " + 
 						"from ( select ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, fuente, grupo, subgrupo, renglon, geografico, " +
 						"sum(asignado) asignado, sum(vigente) vigente from dashboard_historia.mv_vigente " +
-						"where ejercicio = ? " +
+						"where ejercicio between ? and ? " +
 						"group by ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, fuente, grupo, subgrupo, renglon, geografico " +
 						") v left outer join ( select ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, fuente, grupo, subgrupo, renglon, geografico, " +
 						"sum(ano_actual) ano_actual from dashboard_historia.mv_gasto " +
-						"where ejercicio= ? " +
+						"where ejercicio between ? and ? " +
 						"group by  ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, fuente, grupo, subgrupo, renglon, geografico " +
 						") g  " + 
 						"on(  g.ejercicio = v.ejercicio " +
@@ -1156,14 +1191,17 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 						"and g.subgrupo = v.subgrupo  " + 
 						"and g.renglon = v.renglon  " + 
 						"and g.geografico = v.geografico   " + 
-						"and g.ejercicio = ?) " +
+						"and g.ejercicio between ? and ?) " +
 						"group by v.ejercicio, v.mes, v.entidad, " + 
 						"v.unidad_ejecutora, v.programa, v.subprograma, " + 
 						"v.proyecto, v.actividad, v.obra, v.fuente, " + 
 						"v.grupo, v.subgrupo, v.renglon,  v.geografico " );
-				pstm.setInt(1, ejercicio);
-				pstm.setInt(2, ejercicio);
-				pstm.setInt(3, ejercicio);
+				pstm.setInt(1, ejercicio_inicio);
+				pstm.setInt(2, ejercicio_fin);
+				pstm.setInt(3, ejercicio_inicio);
+				pstm.setInt(4, ejercicio_fin);
+				pstm.setInt(5, ejercicio_inicio);
+				pstm.setInt(6, ejercicio_fin);
 				pstm.executeUpdate();
 				pstm.close(); 
 				
@@ -1185,9 +1223,10 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 						"sum(case when ep.mes=11 then ep.ano_actual else 0 end), " + 
 						"sum(case when ep.mes=12 then ep.ano_actual else 0 end) " + 
 						"from dashboard_historia.mv_ejecucion_presupuestaria ep " +
-						"where ep.ejercicio = ? "+
+						"where ep.ejercicio between ? and ? "+
 						"group by ep.ejercicio, ep.entidad, ep.unidad_ejecutora, ep.programa, ep.subprograma, ep.proyecto, ep.actividad, ep.obra, ep.fuente, ep.renglon" );
-				pstm.setInt(1, ejercicio);
+				pstm.setInt(1, ejercicio_inicio);
+				pstm.setInt(2, ejercicio_fin);
 				pstm.executeUpdate();
 				pstm.close(); 
 				
@@ -1205,15 +1244,17 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 							+ "?,?,?,?,?,?,?,?,?,?,"
 							+ "?,?,?,?,?,?,?) ");
 					for(int i=1; i<13; i++){
-						pstm = conn.prepareStatement("SELECT * FROM dashboard_historia.mv_ejecucion_presupuestaria where mes = ? and ejercicio = ?");
+						pstm = conn.prepareStatement("SELECT * FROM dashboard_historia.mv_ejecucion_presupuestaria where mes = ? and ejercicio between ? and ?");
 						pstm.setInt(1, i);
-						pstm.setInt(2, ejercicio);
+						pstm.setInt(2, ejercicio_inicio);
+						pstm.setInt(3, ejercicio_fin);
 						pstm.setFetchSize(10000);
 						ResultSet rs = pstm.executeQuery();
 						while(rs!=null && rs.next()){
 							if(first){
-								PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ejecucion_presupuestaria where ejercicio =  ? ");
-								pstm2.setInt(1, ejercicio);
+								PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ejecucion_presupuestaria where ejercicio between  ? and ? ");
+								pstm2.setInt(1, ejercicio_inicio);
+								pstm2.setInt(2, ejercicio_fin);
 								if (pstm2.executeUpdate()>0)
 									CLogger.writeConsole("Registros eliminados");
 								else
@@ -1286,15 +1327,17 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 							+ "values (?,?,?,?,?,?,?,?,?,?,"
 							+ "?,?,?,?,?,?,?) ");
 					for(int i=1; i<13; i++){
-						pstm = conn.prepareStatement("SELECT * FROM dashboard_historia.mv_ejecucion_presupuestaria_geografico where mes = ? and ejercicio = ? ");
+						pstm = conn.prepareStatement("SELECT * FROM dashboard_historia.mv_ejecucion_presupuestaria_geografico where mes = ? and ejercicio between ? and ? ");
 						pstm.setInt(1, i);
-						pstm.setInt(2, ejercicio);
+						pstm.setInt(2, ejercicio_inicio);
+						pstm.setInt(3, ejercicio_fin);
 						pstm.setFetchSize(10000);
 						ResultSet rs = pstm.executeQuery();
 						while(rs!=null && rs.next()){
 							if(first){
 								PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ejecucion_presupuestaria_geografico where ejercicio = ? ");
-								pstm2.setInt(1, ejercicio);
+								pstm2.setInt(1, ejercicio_inicio);
+								pstm2.setInt(1, ejercicio_fin);
 								if (pstm2.executeUpdate()>0)
 									CLogger.writeConsole("Registros eliminados");
 								else
@@ -1344,14 +1387,16 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 							+ "actividad, obra, actividad_obra_nombre) "
 							+ "values (?,?,?,?,?,?,?,?,?,?,"
 							+ "?,?,?,?,?) ");
-					pstm = conn.prepareStatement("SELECT * FROM dashboard_historia.mv_estructura where ejercicio = ? ");
-					pstm.setInt(1, ejercicio);
+					pstm = conn.prepareStatement("SELECT * FROM dashboard_historia.mv_estructura where ejercicio between ? and ? ");
+					pstm.setInt(1, ejercicio_inicio);
+					pstm.setInt(2, ejercicio_fin);
 					pstm.setFetchSize(10000);
 					ResultSet rs = pstm.executeQuery();
 					while(rs!=null && rs.next()){
 						if(first){
-							PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_estructura where ejercicio = ? ");
-							pstm2.setInt(1, ejercicio);
+							PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_estructura where ejercicio between ? and ? ");
+							pstm2.setInt(1, ejercicio_inicio);
+							pstm2.setInt(2, ejercicio_fin);
 							if (pstm2.executeUpdate()>0)
 								CLogger.writeConsole("Registros eliminados");
 							else
@@ -1391,14 +1436,16 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 							+ "programa, subprograma, proyecto,actividad, obra, fuente, renglon, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12) "
 							+ "values (?,?,?,?,?,?,?,?,?,?,?,"
 							+ "?,?,?,?,?,?,?,?,?,?,?) ");
-					pstm = conn.prepareStatement("SELECT * FROM dashboard_historia.mv_ejecucion_presupuestaria_mensualizada where ejercicio = ? ");
-					pstm.setInt(1, ejercicio);
+					pstm = conn.prepareStatement("SELECT * FROM dashboard_historia.mv_ejecucion_presupuestaria_mensualizada where ejercicio between ? and ? ");
+					pstm.setInt(1, ejercicio_inicio);
+					pstm.setInt(2, ejercicio_fin);
 					pstm.setFetchSize(10000);
 					rs = pstm.executeQuery();
 					while(rs!=null && rs.next()){
 						if(first){
-							PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ejecucion_presupuestaria_mensualizada where ejercicio = ? ");
-							pstm2.setInt(1, ejercicio);
+							PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ejecucion_presupuestaria_mensualizada where ejercicio between ? and ? ");
+							pstm2.setInt(1, ejercicio_inicio);
+							pstm2.setInt(2, ejercicio_fin);
 							if (pstm2.executeUpdate()>0)
 								CLogger.writeConsole("Registros eliminados");
 							else
