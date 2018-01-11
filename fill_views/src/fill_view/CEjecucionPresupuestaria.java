@@ -762,20 +762,21 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 				List<String> tablas = Arrays.asList("mv_estructura", "mv_cuota", "mv_gasto", "mv_anticipo","mv_vigente", "mv_ejecucion_presupuestaria","mv_ejecucion_presupuestaria_geografico", "mv_ejecucion_presupuestaria_mensualizada");
 				
 				for(String tabla:tablas){
+					CLogger.writeConsole("Copiando historia - "+tabla);
 					pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard_historia."+tabla+"_temp PURGE");
 					pstm.executeUpdate();
 					pstm.close();
-					pstm = conn.prepareStatement("CREATE TABLE dashboard_historia."+tabla+"_temp AS SELECT * FROM dashboard_historia."+tabla+" WHERE ejercicio between ? and ?");
+					pstm = conn.prepareStatement("CREATE TABLE dashboard_historia."+tabla+"_temp AS SELECT * FROM dashboard_historia."+tabla+" WHERE ejercicio not between ? and ?");
 					pstm.setInt(1, ejercicio_inicio);
 					pstm.setInt(2, ejercicio_fin);
 					pstm.executeUpdate();
 					pstm.close();
-					pstm = conn.prepareStatement("DELETE FROM dashboard_historia."+tabla+" WHERE ejercicio between ? and ?");
+					pstm = conn.prepareStatement("TRUNCATE TABLE dashboard_historia."+tabla);
 					pstm.setInt(1, ejercicio_inicio);
 					pstm.setInt(2, ejercicio_fin);
 					pstm.executeUpdate();
 					pstm.close();
-					pstm = conn.prepareStatement("INSERT INTO dashboard_historia."+tabla+" SELECT * FROM dashboard_historia."+tabla+"_temp WHERE ejercicio between ? and ?");
+					pstm = conn.prepareStatement("INSERT INTO dashboard_historia."+tabla+" SELECT * FROM dashboard_historia."+tabla+"_temp");
 					pstm.setInt(1, ejercicio_inicio);
 					pstm.setInt(2, ejercicio_fin);
 					pstm.executeUpdate();
@@ -1093,7 +1094,7 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 						"																		 	nvl(v.subgrupo, g.subgrupo) subgrupo,     " + 
 						"																		 	nvl(v.subgrupo_nombre,g.subgrupo_nombre) subgrupo_nombre,    " + 
 						"																		 	nvl(v.renglon,g.renglon) renglon,      " + 
-						"																		 	nvl(v.renglon_nombre g.renglon_nombre) renglon_nombre,      " + 
+						"																		 	nvl(v.renglon_nombre, g.renglon_nombre) renglon_nombre,      " + 
 						"																			g.ano_1 ano_1, g.ano_2 ano_2, g.ano_3 ano_3, g.ano_4 ano_4, g.ano_5 ano_5, g.ano_actual ano_actual,      " + 
 						"																		 	v.asignado asignado, v.vigente vigente      " + 
 						"																		 	from  (	select ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, grupo, grupo_nombre, " + 
