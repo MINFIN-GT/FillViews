@@ -26,15 +26,17 @@ public class CMain {
 		options.addOption("update_all","update-all",false,"Cargar todas las tablas a MemSQL");
 		options.addOption("eec", "ejecucion-estados-calamidad", false, "cargar ejecucion fisica y financiera de los  estados de calamidad");
 		options.addOption("emp", "ejecucion-metas-presidenciales", false, "cargar ejecucion fisica y financiera de metas presidenciales");
-		//options.addOption("dt", "dimension-tiempo", true, "crea la dimension tiempo");
 		options.addOption(Option.builder("dt").hasArgs().longOpt("dimension-tiempo").desc("<ejercicio_inicio> <ejercicio_fin> crea la dimension tiempo").build());
 		
 		options.addOption("mp", "metas-presidenciales", false, "calcula la vista de metas presidenciales");
 		options.addOption("mp_des", "metas-presidenciales-descentralizadas", false, "calcula la vista de metas presidenciales");
 		options.addOption("efp", "ejecucion-financiera-prestamos", false, "cargar ejecucion financiera de Prestamos");
 		options.addOption("ep", "ejecucion-presupuestaria", true, "cargar ejecucion presupuestaria");
-		options.addOption("eph", "ejecucion-presupuestaria-historia", true, "cargar historia ejecucion presupuestaria");
-		options.addOption("ef", "ejecucion-fisica", false, "cargar ejecucion fisica");
+		options.addOption("epl", "ejecucion-presupuestaria-load", true, "cargar de cache de ejecucion presupuestaria");
+		options.addOption(Option.builder("eph").hasArgs().longOpt("ejecucion-presupuestaria-historia").desc("cargar historia ejecucion presupuestaria").build());
+		options.addOption("ef", "ejecucion-fisica", true, "cargar ejecucion fisica");
+		options.addOption("efh", "ejecucion-fisica-historia", true, "cargar historia ejecucion fisica");
+		options.addOption("eff", "ejecucion-financiera-fisica", false, "actualiza vista de financiera-fisica");
 		options.addOption("ei", "ejecucion-ingresos", false, "cargar ingresos");
 		options.addOption("ing_ra", "ing_ra", true, "cargar ingresos recurso auxiliar por año");
 		options.addOption("ing_r", "ing_r", true, "cargar ingresos recurso por año");
@@ -42,6 +44,7 @@ public class CMain {
 		options.addOption("egc", "eventos-guatecompras", true, "cargar eventos guatecompras");
 		options.addOption("egch", "eventos-guatecompras-historia", true, "cargar historia de eventos guatecompras");
 		options.addOption( "catalogos", "catalogos", true, "carga multiples catalogos" );
+		options.addOption("deuda", "deuda", false, "actualiza vista de deuda");
 		options.addOption( "h", "help", false, "muestra este listado de opciones" );
 	}
 	
@@ -128,7 +131,14 @@ public class CMain {
 				 CLogger.writeConsole("Inicio carga de ejecucion presupuestaria");
 				 Integer ejercicio = cline.getOptionValue("ep")!=null && cline.getOptionValue("ep").length()>0 ? 
 						 Integer.parseInt(cline.getOptionValue("ep")) : start.getYear();
-				 if(CEjecucionPresupuestaria.loadEjecucionPresupuestaria(conn, ejercicio))
+				 if(CEjecucionPresupuestaria.loadEjecucionPresupuestaria(conn, ejercicio, true))
+					 CLogger.writeConsole("Datos de ejecucion presupuestaria cargados con exito");
+			 }
+			 else if(cline.hasOption("ejecucion-presupuestaria-load")){
+				 CLogger.writeConsole("Inicio carga de cache de ejecucion presupuestaria");
+				 Integer ejercicio = cline.getOptionValue("ep")!=null && cline.getOptionValue("ep").length()>0 ? 
+						 Integer.parseInt(cline.getOptionValue("ep")) : start.getYear();
+				 if(CEjecucionPresupuestaria.loadEjecucionPresupuestaria(conn, ejercicio, false))
 					 CLogger.writeConsole("Datos de ejecucion presupuestaria cargados con exito");
 			 }
 			 else if(cline.hasOption("ejecucion-presupuestaria-historia")){
@@ -137,7 +147,7 @@ public class CMain {
 				 Integer ejercicio_inicio = argumentos!=null && argumentos.length>0 ? 
 						 Integer.parseInt(argumentos[0]) : start.getYear();
 				 Integer ejercicio_fin = argumentos!=null && argumentos.length>1 ? 
-								 Integer.parseInt(argumentos[1]) : ejercicio_inicio;
+								 Integer.parseInt(argumentos[1]) : start.getYear();
 				 if(CEjecucionPresupuestaria.loadEjecucionPresupuestariaHistoria(conn, ejercicio_inicio, ejercicio_fin))
 					 CLogger.writeConsole("Datos Historicos de ejecucion presupuestaria cargados con exito");
 			 }
@@ -147,6 +157,26 @@ public class CMain {
 						 Integer.parseInt(cline.getOptionValue("ef")) : start.getYear();
 				 if(CEjecucionFisica.loadEjeucionFisica(conn, ejercicio))
 					 CLogger.writeConsole("Datos de ejecucion fisica cargados con exito");
+			 }
+			 else if(cline.hasOption("ejecucion-fisica-historia")){
+				 CLogger.writeConsole("Inicio carga de historia de ejecucion fisica");
+				 String[] argumentos = cline.getOptionValues("efh");
+				 Integer ejercicio_inicio = argumentos!=null && argumentos.length>0 ? 
+						 Integer.parseInt(argumentos[0]) : start.getYear();
+				 Integer ejercicio_fin = argumentos!=null && argumentos.length>1 ? 
+								 Integer.parseInt(argumentos[1]) : ejercicio_inicio;
+				 if(CEjecucionFisica.loadEjeucionFisicaHistoria(conn, ejercicio_inicio, ejercicio_fin))
+					 CLogger.writeConsole("Datos Historicos de ejecucion fisica cargados con exito");
+			 }
+			 else if(cline.hasOption("ejecucion-financiera-fisica")){
+				 CLogger.writeConsole("Inicio de actualización de la vista financiera-fisica");
+				 if(CEjecucionFinacieraFisica.updateFinancieraFisica(conn))
+					 CLogger.writeConsole("Vista financiera-fisica actualizada con exito");
+			 }
+			 else if(cline.hasOption("deuda")){
+				 CLogger.writeConsole("Inicio de actualización de la vista mv_deuda");
+				 if(CEjecucionFinacieraFisica.updateDeuda(conn))
+					 CLogger.writeConsole("Vista mv_deuda actualizada con exito");
 			 }
 			 else if(cline.hasOption("ejecucion-ingresos")){
 				 CLogger.writeConsole("Inicio carga de ingresos");
