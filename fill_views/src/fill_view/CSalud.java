@@ -19,8 +19,8 @@ public class CSalud {
 			
 			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_hospitales " +
 					"select t.ejercicio,h.unidad_ejecutora, h.nombre, r.rubro, r.nombre nombre_rubro, r.orden, r.nivel, d.nombre_departamento, d.codigo_departamento,   " + 
-					"  sum(asignado) asignado, sum(ano_actual) ejecucion, sum(vigente) vigente " + 
-					"  from observatorio.hospitales h cross join observatorio.hospitales_rubro r left outer join " + 
+					"  sum(case when ep.mes = 1 then asignado end) asignado, sum(ano_actual) ejecucion, sum(case when ep.mes=12 then vigente end) vigente " + 
+					"  from observatorio.hospitales_tercer_nivel h cross join observatorio.hospitales_rubro r left outer join " + 
 					"  observatorio.hospitales_rubro_renglon rr on (r.rubro == rr.rubro) cross join dashboard.tiempo t left outer join " + 
 					"  dashboard.mv_ejecucion_presupuestaria ep on ( " + 
 					"    ep.ejercicio = t.ejercicio " + 
@@ -28,7 +28,7 @@ public class CSalud {
 					"    and ep.entidad = 11130009 " + 
 					"    and ep.renglon = rr.renglon  " + 
 					"  ), sicoinprod.cg_departamentos d " + 
-					"  where t.ejercicio between 2014 and year(current_timestamp) " + 
+					"  where t.ejercicio between year(current_timestamp)-4 and year(current_timestamp) " + 
 					"  and t.mes = 1 " + 
 					"  and t.dia = 1 " + 
 					"  and d.codigo_departamento = h.departamento " + 
@@ -111,7 +111,7 @@ public class CSalud {
 			
 			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_centros_salud " +
 					"select t.ejercicio,m.codigo_municipio, m.nombre_municipio, d.nombre_departamento, d.codigo_departamento, r.rubro, r.nombre nombre_rubro, r.orden, r.nivel,  " + 
-					"					 sum(asignado) asignado, sum(ano_actual) ejecucion, sum(vigente) vigente   " + 
+					"					 sum(case when epg.mes = 1 then asignado end) asignado, sum(ano_actual) ejecucion, sum(case when epg.mes = 12 then vigente end) vigente   " + 
 					"					 from (select codigo_departamento, codigo_municipio, cast(concat(codigo_departamento,lpad(codigo_municipio,2,'0')) as int) geografico, " + 
 					"              nombre_municipio  from sicoinprod.cg_municipios) m cross join observatorio.hospitales_rubro r left outer join   " + 
 					"					 observatorio.hospitales_rubro_renglon rr on (r.rubro == rr.rubro) cross join dashboard.tiempo t left outer join   " + 
@@ -119,8 +119,10 @@ public class CSalud {
 					"					 epg.ejercicio = t.ejercicio   " + 
 					"					 and epg.geografico = m.geografico   " + 
 					"					 and epg.entidad = 11130009   " + 
-					"					 and epg.programa in (13,16,17) " + 
-					"					 and epg.renglon = rr.renglon    " + 
+					"					 and epg.programa in (13,16,17,NULL) " + 
+					"					 and epg.renglon = rr.renglon    " +
+					"					 and (epg.unidad_ejecutora not in (227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,250,252,253,254,255,259,260,261,262,263,264,285)) " +
+					"					 and (epg.unidad_ejecutora not in (201,272, 273, 274, 275, 276, 277, 279, 280, 281)) " +
 					"					 ), sicoinprod.cg_departamentos d  " + 
 					"					 where t.ejercicio between year(current_timestamp)-4 and year(current_timestamp)   " + 
 					"					 and t.mes = 1   " + 
@@ -205,7 +207,7 @@ public class CSalud {
 			
 			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_puestos_salud " +
 					"select t.ejercicio,m.codigo_municipio, m.nombre_municipio, d.nombre_departamento, d.codigo_departamento, r.rubro, r.nombre nombre_rubro, r.orden, r.nivel,  " + 
-					"					 sum(asignado) asignado, sum(ano_actual) ejecucion, sum(vigente) vigente   " + 
+					"					 sum(case when epg.mes = 1 then asignado end) asignado, sum(ano_actual) ejecucion, sum(case when epg.mes = 12 then vigente end) vigente   " + 
 					"					 from (select codigo_departamento, codigo_municipio, cast(concat(codigo_departamento,lpad(codigo_municipio,2,'0')) as int) geografico, " + 
 					"              nombre_municipio  from sicoinprod.cg_municipios) m cross join observatorio.hospitales_rubro r left outer join   " + 
 					"					 observatorio.hospitales_rubro_renglon rr on (r.rubro == rr.rubro) cross join dashboard.tiempo t left outer join   " + 
@@ -213,8 +215,10 @@ public class CSalud {
 					"					 epg.ejercicio = t.ejercicio   " + 
 					"					 and epg.geografico = m.geografico   " + 
 					"					 and epg.entidad = 11130009   " + 
-					"					 and epg.programa in (12,14,15) " + 
+					"					 and epg.programa in (12,14,15,NULL) " + 
 					"					 and epg.renglon = rr.renglon    " + 
+					"					 and (epg.unidad_ejecutora not in (227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,250,252,253,254,255,259,260,261,262,263,264,285)) " +
+					"					 and (epg.unidad_ejecutora not in (201,272, 273, 274, 275, 276, 277, 279, 280, 281) or (epg.unidad_ejecutora=201 and epg.programa in (14,15) and epg.renglon=266)) "+
 					"					 ), sicoinprod.cg_departamentos d  " + 
 					"					 where t.ejercicio between year(current_timestamp)-4 and year(current_timestamp)   " + 
 					"					 and t.mes = 1   " + 

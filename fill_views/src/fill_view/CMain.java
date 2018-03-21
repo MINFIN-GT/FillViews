@@ -45,6 +45,9 @@ public class CMain {
 		options.addOption("egch", "eventos-guatecompras-historia", true, "cargar historia de eventos guatecompras");
 		options.addOption( "catalogos", "catalogos", true, "carga multiples catalogos" );
 		options.addOption("deuda", "deuda", false, "actualiza vista de deuda");
+		options.addOption("hospitales", "hospitales", false, "actualiza vista de hospitales");
+		options.addOption("centros", "centros", false, "actualiza vista de centros");
+		options.addOption("puestos", "puestos", false, "actualiza vista de puestos");
 		options.addOption( "h", "help", false, "muestra este listado de opciones" );
 	}
 	
@@ -136,8 +139,8 @@ public class CMain {
 			 }
 			 else if(cline.hasOption("ejecucion-presupuestaria-load")){
 				 CLogger.writeConsole("Inicio carga de cache de ejecucion presupuestaria");
-				 Integer ejercicio = cline.getOptionValue("ep")!=null && cline.getOptionValue("ep").length()>0 ? 
-						 Integer.parseInt(cline.getOptionValue("ep")) : start.getYear();
+				 Integer ejercicio = cline.getOptionValue("epl")!=null && cline.getOptionValue("epl").length()>0 ? 
+						 Integer.parseInt(cline.getOptionValue("epl")) : start.getYear();
 				 if(CEjecucionPresupuestaria.loadEjecucionPresupuestaria(conn, ejercicio, false))
 					 CLogger.writeConsole("Datos de ejecucion presupuestaria cargados con exito");
 			 }
@@ -225,6 +228,21 @@ public class CMain {
 				 if(CCatalogo.loadCatalogos(conn,ejercicio))
 					 CLogger.writeConsole("Datos de catalogos cargados con éxito");
 			 }
+			 else if(cline.hasOption("hospitales")){
+				 CLogger.writeConsole("Inicio de actualización de la vista mv_hospitales");
+				 if(CSalud.updateHospitales(conn))
+					 CLogger.writeConsole("Vista mv_hospitales actualizada con exito");
+			 }
+			 else if(cline.hasOption("centros")){
+				 CLogger.writeConsole("Inicio de actualización de la vista mv_centros_salud");
+				 if(CSalud.updateCentros(conn))
+					 CLogger.writeConsole("Vista mv_centros_salud actualizada con exito");
+			 }
+			 else if(cline.hasOption("puestos")){
+				 CLogger.writeConsole("Inicio de actualización de la vista mv_puestos_salud");
+				 if(CSalud.updatePuestos(conn))
+					 CLogger.writeConsole("Vista mv_puestos_salud actualizada con exito");
+			 }
 			 else if(cline.hasOption("help")){
 				 HelpFormatter formater = new HelpFormatter();
 				 formater.printHelp(80,"Utilitario para carga de informacion a MemSQL", "", options,"");
@@ -235,6 +253,7 @@ public class CMain {
 				 CLogger.writeConsole("Tiempo total: " + Minutes.minutesBetween(start, now).getMinutes() + " minutos " + (Seconds.secondsBetween(start, now).getSeconds() % 60) + " segundos " +
 				 (now.getMillis()%10) + " milisegundos ");
 			 }
+			 
 			 CHive.close(conn);
 		 }
 	 }			 
