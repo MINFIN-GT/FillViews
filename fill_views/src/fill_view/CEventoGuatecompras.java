@@ -50,8 +50,6 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 						"	   esc.ESTATUS_CONCURSO					 estatus_concurso, " + 
 						"       esc.nombre                             estatus_concurso_nombre, " + 
 						"       a.fecha_adjudicacion, " +
-						"		a.nit, "+
-						"		a.nombre_proveedor, "+	
 						"		sum(a.monto)						 monto "+
 						"  FROM guatecompras.gc_entidad                 ec, " + 
 						"       guatecompras.gc_entidad                 uc, " + 
@@ -70,7 +68,8 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 						"       AND tep.tipo_entidad = te.tipo_entidad_padre " + 
 						"       AND esc.estatus_concurso = c.estatus_concurso " + 
 						"		AND YEAR(c.fecha_publicacion) = ? "+
-						" GROUP BY tep.TIPO_ENTIDAD, tep.nombre, te.TIPO_ENTIDAD, te.nombre, ec.ENTIDAD_COMPRADORA, ec.nombre, uc.UNIDAD_COMPRADORA, uc.nombre, c.nog_concurso, c.descripcion, c.fecha_publicacion, month(c.fecha_publicacion), year(c.fecha_publicacion), m.MODALIDAD, m.nombre, esc.ESTATUS_CONCURSO, esc.nombre, a.fecha_adjudicacion, a.nit, a.nombre_proveedor");
+						" GROUP BY tep.TIPO_ENTIDAD, tep.nombre, te.TIPO_ENTIDAD, te.nombre, ec.ENTIDAD_COMPRADORA, ec.nombre, uc.UNIDAD_COMPRADORA, uc.nombre, c.nog_concurso, c.descripcion, c.fecha_publicacion, " +
+						" month(c.fecha_publicacion), year(c.fecha_publicacion), m.MODALIDAD, m.nombre, esc.ESTATUS_CONCURSO, esc.nombre, a.fecha_adjudicacion");
 				pstm.setInt(1, ejercicio);
 				pstm.executeUpdate();
 				pstm.close();
@@ -84,9 +83,9 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 					PreparedStatement pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_evento_gc(tipo_entidad_padre, tipo_entidad_padre_nombre, "
 							+ "tipo_entidad, tipo_entidad_nombre, entidad_compradora, entidad_compradora_nombre, unidad_compradora, unidad_compradora_nombre, " + 
 							"nog_concurso, descripcion, fecha_publicacion, mes_publicacion, ano_publicacion, modalidad, modalidad_nombre, estatus_concurso, estatus_concurso_nombre," + 
-							"monto, fecha_adjudicacion, nit, nombre_proveedor) "
+							"monto, fecha_adjudicacion) "
 							+ "values (?,?,?,?,?,?,?,?,?,?,"
-							+ "?,?,?,?,?,?,?,?,?,?,?) ");
+							+ "?,?,?,?,?,?,?,?,?) ");
 					
 					pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_evento_gc where ano_publicacion = ?");
 						pstm.setInt(1, ejercicio);
@@ -132,8 +131,6 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 								pstm1.setDate(19, new java.sql.Date(df.parse(fecha).getTime()));
 							else
 								pstm1.setDate(19, new java.sql.Date(0));
-							pstm1.setString(20, rs.getString("nit"));
-							pstm1.setString(21, rs.getString("nombre_proveedor"));
 							pstm1.addBatch();
 							rows++;
 							
@@ -283,22 +280,23 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 		return ret;
 	}
 
-	public static boolean loadEventosGCHistoria(Connection conn, Integer ejercicio){
+	public static boolean loadEventosGCHistoria(Connection conn, Integer ejercicio_inicio, Integer ejercicio_fin){
 		
 		boolean ret = false;
 		try{
 			if( !conn.isClosed() && CMemSQL.connect()){
 				ret = true;
 	
-				CLogger.writeConsole("CEventosGuatecompras Historia (Ejercicio "+ejercicio+"):");
+				CLogger.writeConsole("CEventosGuatecompras Historia (Ejercicios entre "+ejercicio_inicio+" y "+ejercicio_fin+"):");
 				CLogger.writeConsole("Eliminando data actual:");
 				PreparedStatement pstm;
 				
 				pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard_historia.mv_eventos_gc_temp PURGE");
 				pstm.executeUpdate();
 				pstm.close();
-				pstm = conn.prepareStatement("CREATE TABLE dashboard_historia.mv_eventos_gc_temp AS SELECT * FROM dashboard_historia.mv_eventos_gc WHERE YEAR(fecha_publicacion)<>?");
-				pstm.setInt(1, ejercicio);
+				pstm = conn.prepareStatement("CREATE TABLE dashboard_historia.mv_eventos_gc_temp AS SELECT * FROM dashboard_historia.mv_eventos_gc WHERE NOT BETWEEN ? AND ?");
+				pstm.setInt(1, ejercicio_inicio);
+				pstm.setInt(2, ejercicio_fin);
 				pstm.executeUpdate();
 				pstm.close();
 				pstm = conn.prepareStatement("TRUNCATE TABLE dashboard_historia.mv_eventos_gc");
@@ -350,12 +348,14 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 						"       AND m.modalidad = c.modalidad " + 
 						"       AND tep.tipo_entidad = te.tipo_entidad_padre " + 
 						"       AND esc.estatus_concurso = c.estatus_concurso " + 
-						"		AND YEAR(c.fecha_publicacion) = ? " +
-						" GROUP BY tep.TIPO_ENTIDAD, tep.nombre, te.TIPO_ENTIDAD, te.nombre, ec.ENTIDAD_COMPRADORA, ec.nombre, uc.UNIDAD_COMPRADORA, uc.nombre, c.nog_concurso, c.descripcion, c.fecha_publicacion, month(c.fecha_publicacion), year(c.fecha_publicacion), m.MODALIDAD, m.nombre, esc.ESTATUS_CONCURSO, esc.nombre, a.fecha_adjudicacion");
-				pstm.setInt(1, ejercicio);
+						"		AND YEAR(c.fecha_publicacion) between ? and ? " +
+						" GROUP BY tep.TIPO_ENTIDAD, tep.nombre, te.TIPO_ENTIDAD, te.nombre, ec.ENTIDAD_COMPRADORA, ec.nombre, uc.UNIDAD_COMPRADORA, " +
+						"uc.nombre, c.nog_concurso, c.descripcion, c.fecha_publicacion, month(c.fecha_publicacion), year(c.fecha_publicacion), m.MODALIDAD, m.nombre, " +
+						"esc.ESTATUS_CONCURSO, esc.nombre, a.fecha_adjudicacion");
+				pstm.setInt(1, ejercicio_inicio);
+				pstm.setInt(2, ejercicio_fin);
 				pstm.executeUpdate();
 				pstm.close();
-				
 				
 				boolean bconn =  CMemSQL.connect();
 				CLogger.writeConsole("Cargando datos a cache de MV_EVENTO_GC");
@@ -370,16 +370,18 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 							+ "values (?,?,?,?,?,?,?,?,?,?,"
 							+ "?,?,?,?,?,?,?,?,?) ");
 					
-					pstm = conn.prepareStatement("SELECT * FROM dashboard_historia.mv_evento_gc where ejercicio = ?");
-						pstm.setInt(1, ejercicio);
+					pstm = conn.prepareStatement("SELECT * FROM dashboard_historia.mv_evento_gc where ejercicio between ? and ?");
+						pstm.setInt(1, ejercicio_inicio);
+						pstm.setInt(2, ejercicio_fin);
 						pstm.setFetchSize(10000);
 						ResultSet rs = pstm.executeQuery();
 						DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 						String fecha = null;
 						while(rs!=null && rs.next()){
 							if(first){
-								PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_evento_gc where YEAR(fecha_publicacion) =  ? ");
-								pstm2.setInt(1, ejercicio);
+								PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_evento_gc where YEAR(fecha_publicacion) between  ? and ? ");
+								pstm2.setInt(1, ejercicio_inicio);
+								pstm2.setInt(1, ejercicio_fin);
 								if (pstm2.executeUpdate()>0)
 									CLogger.writeConsole("Registros eliminados");
 								else
@@ -414,7 +416,6 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 								pstm1.setDate(19, new java.sql.Date( df.parse(fecha).getTime()));
 							else
 								pstm1.setDate(19, null);
-							
 							pstm1.addBatch();
 							rows++;
 							
@@ -433,8 +434,7 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 					pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard_historia.mv_eventos_gc_group_temp PURGE");
 					pstm.executeUpdate();
 					pstm.close();
-					pstm = conn.prepareStatement("CREATE TABLE dashboard_historia.mv_eventos_gc_group_temp AS SELECT * FROM dashboard_historia.mv_eventos_gc_group WHERE ano_publicacion between "+ejercicio+" and "+(ejercicio-2)+")");
-					pstm.setInt(1, ejercicio);
+					pstm = conn.prepareStatement("CREATE TABLE dashboard_historia.mv_eventos_gc_group_temp AS SELECT * FROM dashboard_historia.mv_eventos_gc_group WHERE ano_publicacion not between "+ejercicio_inicio+" and "+(ejercicio_fin)+")");
 					pstm.executeUpdate();
 					pstm.close();
 					pstm = conn.prepareStatement("TRUNCATE TABLE dashboard_historia.mv_eventos_gc_group");
@@ -448,54 +448,56 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 					pstm.close();
 					
 					CLogger.writeConsole("Insertando valores a MV_EVENTOS_GC_GROUP");
-					pstm = conn.prepareStatement("insert into table dashboard_historia.mv_eventos_group_gc "+
-							"select "+ejercicio+" ano_publicacion, entidad_compradora, entidad_compradora_nombre, " + 
-							"sum(case when mes_publicacion=1 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_1_ano_1, " + 
-							"sum(case when mes_publicacion=1 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_1_ano_2, " + 
-							"sum(case when mes_publicacion=1 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_1_ano_actual, " + 
-							"sum(case when mes_publicacion=2 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_2_ano_1, " + 
-							"sum(case when mes_publicacion=2 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_2_ano_2, " + 
-							"sum(case when mes_publicacion=2 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_2_ano_actual, " + 
-							"sum(case when mes_publicacion=3 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_3_ano_1, " + 
-							"sum(case when mes_publicacion=3 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_3_ano_2, " + 
-							"sum(case when mes_publicacion=3 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_3_ano_actual, " + 
-							"sum(case when mes_publicacion=4 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_4_ano_1, " + 
-							"sum(case when mes_publicacion=4 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_4_ano_2, " + 
-							"sum(case when mes_publicacion=4 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_4_ano_actual, " + 
-							"sum(case when mes_publicacion=5 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_5_ano_1, " + 
-							"sum(case when mes_publicacion=5 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_5_ano_2, " + 
-							"sum(case when mes_publicacion=5 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_5_ano_actual, " + 
-							"sum(case when mes_publicacion=6 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_6_ano_1, " + 
-							"sum(case when mes_publicacion=6 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_6_ano_2, " + 
-							"sum(case when mes_publicacion=6 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_6_ano_actual, " + 
-							"sum(case when mes_publicacion=7 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_7_ano_1, " + 
-							"sum(case when mes_publicacion=7 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_7_ano_2, " + 
-							"sum(case when mes_publicacion=7 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_7_ano_actual, " + 
-							"sum(case when mes_publicacion=8 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_8_ano_1, " + 
-							"sum(case when mes_publicacion=8 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_8_ano_2, " + 
-							"sum(case when mes_publicacion=8 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_8_ano_actual, " + 
-							"sum(case when mes_publicacion=9 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_9_ano_1, " + 
-							"sum(case when mes_publicacion=9 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_9_ano_2, " + 
-							"sum(case when mes_publicacion=9 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_9_ano_actual, " + 
-							"sum(case when mes_publicacion=10 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_10_ano_1, " + 
-							"sum(case when mes_publicacion=10 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_10_ano_2, " + 
-							"sum(case when mes_publicacion=10 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_10_ano_actual, " + 
-							"sum(case when mes_publicacion=11 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_11_ano_1, " + 
-							"sum(case when mes_publicacion=11 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_11_ano_2, " + 
-							"sum(case when mes_publicacion=11 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_11_ano_actual, " + 
-							"sum(case when mes_publicacion=12 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_12_ano_1, " + 
-							"sum(case when mes_publicacion=12 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_12_ano_2, " + 
-							"sum(case when mes_publicacion=12 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_12_ano_actual " + 
-							"from ( " + 
-							"select ano_publicacion, mes_publicacion, entidad_compradora, entidad_compradora_nombre, nog_concurso, sum(monto) " + 
-							"from mv_evento_gc " + 
-							"where tipo_entidad = 4 " + 
-							"and ano_publicacion between "+(ejercicio-2)+" and "+(ejercicio)+" "+ 
-							"group by ano_publicacion, mes_publicacion, entidad_compradora, entidad_compradora_nombre, nog_concurso " + 
-							") t1 " + 
-							"group by entidad_compradora, entidad_compradora_nombre");
-					pstm.executeUpdate();
-					pstm.close();
+					for(int ejercicio=ejercicio_inicio; ejercicio<=ejercicio_fin; ejercicio++){
+						pstm = conn.prepareStatement("insert into table dashboard_historia.mv_eventos_group_gc "+
+								"select "+ejercicio+" ano_publicacion, entidad_compradora, entidad_compradora_nombre, " + 
+								"sum(case when mes_publicacion=1 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_1_ano_1, " + 
+								"sum(case when mes_publicacion=1 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_1_ano_2, " + 
+								"sum(case when mes_publicacion=1 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_1_ano_actual, " + 
+								"sum(case when mes_publicacion=2 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_2_ano_1, " + 
+								"sum(case when mes_publicacion=2 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_2_ano_2, " + 
+								"sum(case when mes_publicacion=2 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_2_ano_actual, " + 
+								"sum(case when mes_publicacion=3 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_3_ano_1, " + 
+								"sum(case when mes_publicacion=3 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_3_ano_2, " + 
+								"sum(case when mes_publicacion=3 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_3_ano_actual, " + 
+								"sum(case when mes_publicacion=4 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_4_ano_1, " + 
+								"sum(case when mes_publicacion=4 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_4_ano_2, " + 
+								"sum(case when mes_publicacion=4 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_4_ano_actual, " + 
+								"sum(case when mes_publicacion=5 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_5_ano_1, " + 
+								"sum(case when mes_publicacion=5 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_5_ano_2, " + 
+								"sum(case when mes_publicacion=5 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_5_ano_actual, " + 
+								"sum(case when mes_publicacion=6 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_6_ano_1, " + 
+								"sum(case when mes_publicacion=6 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_6_ano_2, " + 
+								"sum(case when mes_publicacion=6 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_6_ano_actual, " + 
+								"sum(case when mes_publicacion=7 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_7_ano_1, " + 
+								"sum(case when mes_publicacion=7 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_7_ano_2, " + 
+								"sum(case when mes_publicacion=7 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_7_ano_actual, " + 
+								"sum(case when mes_publicacion=8 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_8_ano_1, " + 
+								"sum(case when mes_publicacion=8 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_8_ano_2, " + 
+								"sum(case when mes_publicacion=8 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_8_ano_actual, " + 
+								"sum(case when mes_publicacion=9 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_9_ano_1, " + 
+								"sum(case when mes_publicacion=9 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_9_ano_2, " + 
+								"sum(case when mes_publicacion=9 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_9_ano_actual, " + 
+								"sum(case when mes_publicacion=10 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_10_ano_1, " + 
+								"sum(case when mes_publicacion=10 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_10_ano_2, " + 
+								"sum(case when mes_publicacion=10 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_10_ano_actual, " + 
+								"sum(case when mes_publicacion=11 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_11_ano_1, " + 
+								"sum(case when mes_publicacion=11 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_11_ano_2, " + 
+								"sum(case when mes_publicacion=11 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_11_ano_actual, " + 
+								"sum(case when mes_publicacion=12 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_12_ano_1, " + 
+								"sum(case when mes_publicacion=12 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_12_ano_2, " + 
+								"sum(case when mes_publicacion=12 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_12_ano_actual " + 
+								"from ( " + 
+								"select ano_publicacion, mes_publicacion, entidad_compradora, entidad_compradora_nombre, nog_concurso, sum(monto) " + 
+								"from mv_evento_gc " + 
+								"where tipo_entidad = 4 " + 
+								"and ano_publicacion between "+(ejercicio-2)+" and "+(ejercicio)+" "+ 
+								"group by ano_publicacion, mes_publicacion, entidad_compradora, entidad_compradora_nombre, nog_concurso " + 
+								") t1 " + 
+								"group by entidad_compradora, entidad_compradora_nombre");
+						pstm.executeUpdate();
+						pstm.close();
+					}
 					
 					ret = true;
 					rows = 0;
@@ -509,14 +511,16 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 							+ "?,?,?,?,?,?,?,?,?,?,?,?,"
 							+ "?,?,?,?,?,?,?,?,?,?,?,?) ");
 					
-					pstm = conn.prepareStatement("SELECT * FROM dashboard_historia.mv_evento_gc_group where ano_publicacion = ?");
-						pstm.setInt(1, ejercicio);
+					pstm = conn.prepareStatement("SELECT * FROM dashboard_historia.mv_evento_gc_group where ano_publicacion between ? and ?");
+						pstm.setInt(1, ejercicio_inicio);
+						pstm.setInt(2, ejercicio_fin);
 						pstm.setFetchSize(10000);
 						rs = pstm.executeQuery();
 						while(rs!=null && rs.next()){
 							if(first){
-								PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_evento_gc_group where ano_publicacion =  ? ");
-								pstm2.setInt(1, ejercicio);
+								PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_evento_gc_group where ano_publicacion between  ? and ? ");
+								pstm2.setInt(1, ejercicio_inicio);
+								pstm2.setInt(2, ejercicio_fin);
 								if (pstm2.executeUpdate()>0)
 									CLogger.writeConsole("Registros eliminados");
 								else

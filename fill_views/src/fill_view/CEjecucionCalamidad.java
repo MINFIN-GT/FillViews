@@ -131,12 +131,13 @@ public class CEjecucionCalamidad {
 						pstm.setDouble(24, rs.getDouble("meta_avanzado"));
 						pstm.addBatch();
 						rows++;
-						if((rows % 10) == 0){
+						if((rows % 100) == 0){
 							ret = ret & pstm.executeBatch().length>0;
 							CLogger.writeConsole(String.join("Records escritos: ",String.valueOf(rows)));
 						}
 					}
 					ret = ret & pstm.executeBatch().length>0;
+					CLogger.writeConsole(String.join("Total de records escritos: ",String.valueOf(rows)));
 					pstm.close();
 				}
 				pstm0.close();

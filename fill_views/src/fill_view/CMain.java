@@ -81,9 +81,10 @@ public class CMain {
 			else if(cline.hasOption("ejecucion-estados-calamidad")){
 				 CLogger.writeConsole("Inicio registro avance fisico y financiero de estados de calamidad...");
 				 if(     CEjecucionCalamidad.loadEjecucionFisicaFinanciera(false) && 
-						 CEjecucionCalamidad.loadEjecucionFisicaFinanciera(true) &&
-						 CEjecucionCalamidad.loadActividadesPresupuestarias(false, 94) &&
-						 CEjecucionCalamidad.loadActividadesPresupuestarias(true, 94))
+						 CEjecucionCalamidad.loadEjecucionFisicaFinanciera(true) //&&
+						 //CEjecucionCalamidad.loadActividadesPresupuestarias(false, 94) &&
+						 //CEjecucionCalamidad.loadActividadesPresupuestarias(true, 94)
+					)
 					 CLogger.writeConsole("Datos de calamidad importadas con exito");
 			 }
 			 else if(cline.hasOption("ejecucion-fisica-calamidad")){
@@ -202,9 +203,12 @@ public class CMain {
 			 }
 			 else if(cline.hasOption("eventos-guatecompras-historia")){
 				 CLogger.writeConsole("Inicio carga historia de eventos de Guatecompras");
-				 Integer ejercicio = cline.getOptionValue("egch")!=null && cline.getOptionValue("egch").length()>0 ? 
-						 Integer.parseInt(cline.getOptionValue("egch")) : start.getYear();
-				 if(CEventoGuatecompras.loadEventosGC(conn, ejercicio))
+				 String[] argumentos = cline.getOptionValues("egch");
+				 Integer ejercicio_inicio = argumentos!=null && argumentos.length>0 ? 
+						 Integer.parseInt(argumentos[0]) : start.getYear();
+				 Integer ejercicio_fin = argumentos!=null && argumentos.length>1 ? 
+								 Integer.parseInt(argumentos[1]) : start.getYear();
+				 if(CEventoGuatecompras.loadEventosGCHistoria(conn, ejercicio_inicio, ejercicio_fin))
 					 CLogger.writeConsole("Datos historia de eventos de Guatecompras cargados con exito");
 			 }
 			 else if(cline.hasOption("ing_ra")){
