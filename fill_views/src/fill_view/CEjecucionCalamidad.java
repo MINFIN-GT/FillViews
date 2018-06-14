@@ -51,7 +51,8 @@ public class CEjecucionCalamidad {
        "     on(metas.ejercicio=avance.ejercicio and metas.entidad=avance.entidad and metas.unidad_ejecutora=avance.unidad_ejecutora "+
        "     and metas.programa=avance.programa and metas.subprograma=avance.subprograma and metas.proyecto=avance.proyecto and metas.obra=avance.obra "+
        "     and metas.actividad=avance.actividad and metas.codigo_meta=avance.codigo_meta) "+
-       ","+esquema+".cg_entidades e, "+esquema+".cg_entidades ue, "+esquema+".cp_estructuras prog, "+esquema+".cp_estructuras subp, "+esquema+".cp_estructuras proy, "+esquema+".cp_estructuras act, "+esquema+".cp_objetos_gasto r, "+esquema+".fp_unidad_medida um "+
+       "left join "+esquema+".fp_unidad_medida um  on ( um.ejercicio=metas.ejercicio and um.codigo=metas.unidad_medida ) "+
+       ","+esquema+".cg_entidades e, "+esquema+".cg_entidades ue, "+esquema+".cp_estructuras prog, "+esquema+".cp_estructuras subp, "+esquema+".cp_estructuras proy, "+esquema+".cp_estructuras act, "+esquema+".cp_objetos_gasto r "+
        "where (p2.entidad is null or p.unidad_ejecutora>0)  "+
        "and p.ejercicio <= "+date.getYear()+" and p.programa = 94  "+
        "and e.ejercicio=p.ejercicio and e.entidad=p.entidad and e.unidad_ejecutora = 0 "+
@@ -61,7 +62,6 @@ public class CEjecucionCalamidad {
        "and proy.ejercicio=p.ejercicio and proy.entidad=p.entidad and proy.unidad_ejecutora=p.unidad_ejecutora and proy.programa=p.programa and proy.subprograma=p.subprograma and proy.proyecto=p.proyecto and proy.nivel_estructura=4 "+
        "and act.ejercicio=p.ejercicio and act.entidad=p.entidad and act.unidad_ejecutora=p.unidad_ejecutora and act.programa=p.programa and act.subprograma=p.subprograma and act.proyecto=p.proyecto and act.obra=p.obra and act.actividad=p.actividad and act.nivel_estructura=5 "+
        "and r.ejercicio=p.ejercicio and r.renglon=p.renglon "+
-       "and um.ejercicio=metas.ejercicio and um.codigo=metas.unidad_medida "+
        "group by p.ejercicio,p.entidad, e.nombre, p.unidad_ejecutora, ue.nombre,  p.programa, prog.nom_estructura, "+
        "p.subprograma, subp.nom_estructura, p.proyecto, proy.nom_estructura, p.actividad, p.obra, act.nom_estructura, "+
        "p.RENGLON, r.nombre, metas.codigo_meta, metas.descripcion  , metas.unidad_medida, um.nombre, "+
