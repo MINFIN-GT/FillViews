@@ -69,12 +69,12 @@ public class CEjecucionCalamidad {
        "order by p.ejercicio,p.entidad, p.unidad_ejecutora, p.programa,  p.subprograma, "+ 
        "p.proyecto, p.actividad, p.obra, p.RENGLON "+
        ",metas.codigo_meta";
-		boolean ret = false;		
+		boolean ret = false;
 		try{
-			Connection conn = descentralizadas ? CHive.openConnectiondes() : CHive.openConnection();			
-			if(!conn.isClosed()&&CMemSQL.connect()){
+			Connection conn = descentralizadas ? CHive.openConnectiondes() : CHive.openConnection();	
+			if(!conn.isClosed() && CMemSQL.connect()){
 				PreparedStatement pstm0 = conn.prepareStatement(query);
-				pstm0.setFetchSize(100);
+				pstm0.setFetchSize(1000);
 				ResultSet rs = pstm0.executeQuery();
 				if(rs!=null){
 					int rows = 0;
@@ -111,9 +111,24 @@ public class CEjecucionCalamidad {
 						pstm.setInt(4, rs.getInt("unidad_ejecutora"));
 						pstm.setString(5, rs.getString("unidad_ejecutora_nombre"));
 						pstm.setInt(6, rs.getInt("programa"));
-						pstm.setString(7, rs.getString("programa_nombre"));
+						
+						PreparedStatement pstm3 = CMemSQL.getConnection().prepareStatement("select * from seg_estructura " + 
+									"where programa = 94 " + 
+									"and subprograma = ? ");
+						pstm3.setInt(1, rs.getInt("subprograma"));
+						ResultSet rs3 = pstm3.executeQuery();
+						if(rs3.next()){
+							pstm.setString(7, rs3.getString("nombre_programa")); 
+							pstm.setString(9, rs3.getString("nombre_subprograma"));
+						}
+						else{
+							pstm.setString(7, rs.getString("programa_nombre")); 
+							pstm.setString(9, rs.getString("subprograma_nombre"));
+						}
+						rs3.close();
+						pstm3.close();
+						
 						pstm.setInt(8, rs.getInt("subprograma"));
-						pstm.setString(9, rs.getString("subprograma_nombre"));
 						pstm.setInt(10,rs.getInt("proyecto"));
 						pstm.setString(11, rs.getString("proyecto_nombre"));
 						pstm.setInt(12,rs.getInt("actividad"));
@@ -131,7 +146,7 @@ public class CEjecucionCalamidad {
 						pstm.setDouble(24, rs.getDouble("meta_avanzado"));
 						pstm.addBatch();
 						rows++;
-						if((rows % 100) == 0){
+						if((rows % 1000) == 0){
 							ret = ret & pstm.executeBatch().length>0;
 							CLogger.writeConsole(String.join("Records escritos: ",String.valueOf(rows)));
 						}
