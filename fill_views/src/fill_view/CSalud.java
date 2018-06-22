@@ -119,7 +119,7 @@ public class CSalud {
 					"					 epg.ejercicio = t.ejercicio   " + 
 					"					 and epg.geografico = m.geografico   " + 
 					"					 and epg.entidad = 11130009   " + 
-					"					 and epg.programa in (13,16,17,NULL) " + 
+					"					 and epg.programa in (13,16,17) " + 
 					"					 and epg.renglon = rr.renglon    " +
 					"					 and (epg.unidad_ejecutora not in (227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,250,252,253,254,255,259,260,261,262,263,264,285)) " +
 					"					 and (epg.unidad_ejecutora not in (201,272, 273, 274, 275, 276, 277, 279, 280, 281)) " +
@@ -215,7 +215,7 @@ public class CSalud {
 					"					 epg.ejercicio = t.ejercicio   " + 
 					"					 and epg.geografico = m.geografico   " + 
 					"					 and epg.entidad = 11130009   " + 
-					"					 and epg.programa in (12,14,15,NULL) " + 
+					"					 and epg.programa in (12,14,15) " + 
 					"					 and epg.renglon = rr.renglon    " + 
 					"					 and (epg.unidad_ejecutora not in (227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,250,252,253,254,255,259,260,261,262,263,264,285)) " +
 					"					 and (epg.unidad_ejecutora not in (201,272, 273, 274, 275, 276, 277, 279, 280, 281) or (epg.unidad_ejecutora=201 and epg.programa in (14,15) and epg.renglon=266)) "+

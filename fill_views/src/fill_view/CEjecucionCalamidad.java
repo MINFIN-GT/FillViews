@@ -82,6 +82,155 @@ public class CEjecucionCalamidad {
 					PreparedStatement pstm=null;		
 					boolean first=true;
 					ret=true;
+					pstm = CMemSQL.getConnection().prepareStatement("Insert INTO estados_excepcion.calamidad_ejecucion (ejercicio,entidad,entidad_nombre,unidad_ejecutora,"
+							+ " unidad_ejecutora_nombre,programa,programa_nombre "+
+						       ",subprograma,subprograma_nombre,proyecto,proyecto_nombre,actividad,obra,actividad_nombre, "+
+						       "RENGLON,renglon_nombre,codigo_meta,meta_nombre,unidad_medida,unidad_medida_nombre, "+
+						       "vigente, "+
+						       "ejecutado,meta,meta_avanzado,tipo) "+
+								"values (?,?,?,?,?,"
+									  + "?,?,?,?,?,"
+									  + "?,?,?,?,?,"
+									  + "?,?,?,?,?,"
+									  + "?,?,?,?,?) ");
+					while(rs.next()){
+						if (first){
+							first=false;							
+							PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from estados_excepcion.calamidad_ejecucion "
+									+" where ejercicio <=" + date.getYear() + " and tipo = " + (descentralizadas ? 2 : 1))  ;
+							if (pstm2.executeUpdate()>0)
+								CLogger.writeConsole("Registros eliminados");
+							else
+								CLogger.writeConsole("Sin registros para eliminar");	
+							pstm2.close();
+						}
+						
+						pstm.setInt(1, rs.getInt("ejercicio"));
+						pstm.setInt(2, rs.getInt("entidad"));
+						pstm.setString(3, rs.getString("entidad_nombre"));
+						pstm.setInt(4, rs.getInt("unidad_ejecutora"));
+						pstm.setString(5, rs.getString("unidad_ejecutora_nombre"));
+						pstm.setInt(6, rs.getInt("programa"));
+						
+						PreparedStatement pstm3 = CMemSQL.getConnection().prepareStatement("select * from seg_estructura " + 
+									"where programa = 94 " + 
+									"and subprograma = ? ");
+						pstm3.setInt(1, rs.getInt("subprograma"));
+						ResultSet rs3 = pstm3.executeQuery();
+						if(rs3.next()){
+							pstm.setString(7, rs3.getString("nombre_programa")); 
+							pstm.setString(9, rs3.getString("nombre_subprograma"));
+						}
+						else{
+							pstm.setString(7, rs.getString("programa_nombre")); 
+							pstm.setString(9, rs.getString("subprograma_nombre"));
+						}
+						rs3.close();
+						pstm3.close();
+						
+						pstm.setInt(8, rs.getInt("subprograma"));
+						pstm.setInt(10,rs.getInt("proyecto"));
+						pstm.setString(11, rs.getString("proyecto_nombre"));
+						pstm.setInt(12,rs.getInt("actividad"));
+						pstm.setInt(13,rs.getInt("obra"));
+						pstm.setString(14, rs.getString("actividad_nombre"));
+						pstm.setInt(15,rs.getInt("renglon"));
+						pstm.setString(16, rs.getString("renglon_nombre"));
+						pstm.setInt(17,rs.getInt("codigo_meta"));
+						pstm.setString(18, rs.getString("meta_nombre"));
+						pstm.setInt(19,rs.getInt("unidad_medida"));
+						pstm.setString(20, rs.getString("unidad_medida_nombre"));
+						pstm.setDouble(21, rs.getDouble("vigente"));
+						pstm.setDouble(22, rs.getDouble("ejecutado"));
+						pstm.setDouble(23, rs.getDouble("meta"));
+						pstm.setDouble(24, rs.getDouble("meta_avanzado"));
+						pstm.setDouble(25, descentralizadas ? 2 : 1 );
+						pstm.addBatch();
+						rows++;
+						if((rows % 1000) == 0){
+							ret = ret & pstm.executeBatch().length>0;
+							CLogger.writeConsole(String.join("Records escritos: ",String.valueOf(rows)));
+						}
+					}
+					ret = ret & pstm.executeBatch().length>0;
+					CLogger.writeConsole(String.join("Total de records escritos: ",String.valueOf(rows)));
+					pstm.close();
+				}
+				pstm0.close();
+			}
+			
+			conn.close();
+		}
+		catch(Exception e){
+			CLogger.writeFullConsole("Error 1: CEjecucionCalamidad.class", e);
+		}
+		finally{
+			CMemSQL.close();
+			ret=true;
+		}
+		return ret;
+	}
+	
+	public static void loadEjecucionFisicaFinancieraCURs(){
+		/*DateTime date = new DateTime();
+		try{
+			if(CHive.connect() && CMemSQL.connect()) { //Carga los CURs de MemSQL a Hive
+				Connection ch = CHive.getConnection();
+				Connection cm = CMemSQL.getConnection();
+				ch.prepareStatement("DELETE FROM dashboard.estado_excepcion_cur").executeUpdate();
+				ResultSet rs = cm.prepareStatement("SELECT * FROM estados_excepcion.seg_cur").executeQuery();
+				PreparedStatement pstm = ch.prepareStatement("INSERT INTO dashboard.estado_excepcion_cur(programa, subprograma, ejercicio, entidad, unidad_ejecutora, cur) VALUES(?,?,?,?,?,?)");
+				int rows = 0;
+				while(rs.next()) {
+					pstm.setInt(1,rs.getInt("programa"));
+					pstm.setInt(2,rs.getInt("subprograma"));
+					pstm.setInt(3,rs.getInt("ejercicio"));
+					pstm.setInt(4,rs.getInt("entidad"));
+					pstm.setInt(5,rs.getInt("unidad_ejecutora"));
+					pstm.setInt(6,rs.getInt("cur"));
+					pstm.addBatch();
+				}
+				pstm.executeBatch();
+				rs.close();
+				pstm.close();
+				ch.close();
+				cm.close();
+			}
+		
+			String esquema =  "sicoinprod";
+			String query = "select d.ejercicio, d.entidad, d.unidad_ejecutora, d.programa, d.subprograma, d.proyecto, d.obra, d.actividad, d.renglon, d.monto_renglon  "+
+	       "     from "+esquema+".eg_gastos_hoja h, "+esquema+".eg_gastos_detalle d, dashboard.estado_excepcion_cur cu  "+
+	       ","+esquema+".cg_entidades e, "+esquema+".cg_entidades ue, "+esquema+".cp_estructuras prog, "+esquema+".cp_estructuras subp, "+esquema+".cp_estructuras proy, "+esquema+".cp_estructuras act, "+esquema+".cp_objetos_gasto r "+
+	       "     where h.ejercicio=d.ejercicio and h.entidad=d.entidad and h.unidad_ejecutora=d.unidad_ejecutora and h.no_cur=d.no_cur "+
+	       "     and h.estado='APROBADO' and h.clase_registro in ('DEV','CYD','REG','RDP') and d.ejercicio = cu.ejercicio and d.entidad = cu.entidad " +
+	       "	 and d.unidad_ejecutora = cu.unidad_ejecutora and d.no_cur = cu.cur " +
+	       "	 and gh.ejercicio <= " + date.getYear() +
+	       "	 and e.ejercicio=gh.ejercicio and e.entidad=gh.entidad and e.unidad_ejecutora = 0 "+
+	       "	 and ue.ejercicio=gh.ejercicio and ue.entidad=gh.entidad and ue.unidad_ejecutora=gh.unidad_ejecutora "+
+	       "	 and prog.ejercicio=gh.ejercicio and prog.entidad=gh.entidad and prog.unidad_ejecutora=gh.unidad_ejecutora and prog.programa=gd.programa and prog.nivel_estructura=2 "+
+	       "	 and subp.ejercicio=gh.ejercicio and subp.entidad=gh.entidad and subp.unidad_ejecutora=gh.unidad_ejecutora and subp.programa=gd.programa and subp.subprograma=gd.subprograma and subp.nivel_estructura=3 "+
+	       "	 and proy.ejercicio=gh.ejercicio and proy.entidad=gh.entidad and proy.unidad_ejecutora=gh.unidad_ejecutora and proy.programa=gd.programa and proy.subprograma=gd.subprograma and proy.proyecto=gd.proyecto and proy.nivel_estructura=4 "+
+	       "	 and act.ejercicio=gh.ejercicio and act.entidad=gh.entidad and act.unidad_ejecutora=gh.unidad_ejecutora and act.programa=gd.programa and act.subprograma=gd.subprograma and act.proyecto=gd.proyecto and act.obra=gd.obra and act.actividad=gd.actividad and act.nivel_estructura=5 "+
+	       "	 and r.ejercicio=gh.ejercicio and r.renglon=gd.renglon "+
+	       "group by gh.ejercicio,gh.entidad, e.nombre, gh.unidad_ejecutora, ue.nombre,  gd.programa, prog.nom_estructura, "+
+	       "gd.subprograma, subp.nom_estructura, gd.proyecto, proy.nom_estructura, gd.actividad, gd.obra, act.nom_estructura, "+
+	       "gd.RENGLON, r.nombre "+
+	       "order by gh.ejercicio,gh.entidad, gh.unidad_ejecutora, gd.programa,  gd.subprograma, "+ 
+	       "gd.proyecto, gd.actividad, gd.obra, p.RENGLON "+
+	       ",metas.codigo_meta";
+		boolean ret = false;
+		
+			Connection conn =  CHive.openConnection();	
+			if(!conn.isClosed() && CMemSQL.connect()){
+				PreparedStatement pstm0 = conn.prepareStatement(query);
+				pstm0.setFetchSize(1000);
+				ResultSet rs = pstm0.executeQuery();
+				if(rs!=null){
+					int rows = 0;
+					CLogger.writeConsole("CEjecucionCalamidad (loadEjecucionFisica Centralizadas):");
+					PreparedStatement pstm=null;		
+					boolean first=true;
+					ret=true;
 					pstm = CMemSQL.getConnection().prepareStatement("Insert INTO calamidad_ejecucion (ejercicio,entidad,entidad_nombre,unidad_ejecutora,"
 							+ " unidad_ejecutora_nombre,programa,programa_nombre "+
 						       ",subprograma,subprograma_nombre,proyecto,proyecto_nombre,actividad,obra,actividad_nombre, "+
@@ -94,7 +243,7 @@ public class CEjecucionCalamidad {
 									  + "?,?,?,?,?,"
 									  + "?,?,?,?) ");
 					while(rs.next()){
-						if (first && !descentralizadas){
+						if (first){
 							first=false;							
 							PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from calamidad_ejecucion "
 									+" where ejercicio <=" + date.getYear())  ;
@@ -167,8 +316,8 @@ public class CEjecucionCalamidad {
 			CMemSQL.close();
 			ret=true;
 		}
-		return ret;
-	}	
+		return ret;*/
+	}
 	
 	public static boolean loadActividadesPresupuestarias(boolean descentralizadas,int programa){
 		boolean ret=false;
@@ -303,5 +452,56 @@ public class CEjecucionCalamidad {
 			CMemSQL.close();
 		}
 		return ret&act>0;
+	}
+	
+	public static boolean actualizarEventosGuatecompras(int subprograma) {
+		boolean ret = false;
+		try {
+			if(CMemSQL.connect()) {
+				PreparedStatement ps = CMemSQL.getConnection().prepareStatement("select * from estados_excepcion.estado_de_calamidad where programa = 94 and subprograma = ?");
+				ps.setInt(1, subprograma);
+				ResultSet rs = ps.executeQuery();
+				if(rs.next()) {
+					int estado_calamidad_guatecompras = rs.getInt("estado_calamidad_guatecompras");
+					PreparedStatement ps1 = CMemSQL.getConnection().prepareStatement("select * from minfin.mv_evento_gc where estado_calamidad=?");
+					ps1.setInt(1, estado_calamidad_guatecompras);
+					ResultSet rs1 = ps1.executeQuery();
+					boolean first = true;
+					PreparedStatement ps2 = CMemSQL.getConnection().prepareStatement("INSERT INTO estados_excepcion.seg_compra(entidad,unidad,programa,subprograma,nog,fecha_creacion, usuario_creacion, es_manual) "
+							+ "values(?,?,?,?,?,?,?,?)");
+					int rows=0;
+					while(rs1.next()) {
+						if(first) {
+							CMemSQL.getConnection().prepareStatement("delete from estados_excepcion.seg_compra where programa=94 and subprograma="+subprograma+" and es_manual=0").executeUpdate();
+							first=false;
+						}
+						ps2.setInt(1, rs1.getInt("entidad_compradora"));
+						ps2.setInt(2, rs1.getInt("unidad_compradora"));
+						ps2.setInt(3,94);
+						ps2.setInt(4, subprograma);
+						ps2.setInt(5, rs1.getInt("nog_concurso"));
+						ps2.setTimestamp(6, new Timestamp(DateTime.now().getMillis()));
+						ps2.setString(7, "Sistema");
+						ps2.setInt(8, 0);
+						ps2.addBatch();
+						rows++;
+					}
+					ps2.executeBatch();
+					CLogger.writeConsole(String.join("Total de records escritos: ",String.valueOf(rows)));
+					ps2.close();
+					ps1.close();
+					rs1.close();
+				}
+				rs.close();
+				ps.close();
+			}
+		}
+		catch(Exception e) {
+			CLogger.writeFullConsole("Error 3: CEjecucionCalamidad.class", e);
+		}
+		finally {
+			CMemSQL.close();
+		}
+		return ret;
 	}
 }

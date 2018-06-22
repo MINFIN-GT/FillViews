@@ -50,6 +50,7 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 						"	   esc.ESTATUS_CONCURSO					 estatus_concurso, " + 
 						"       esc.nombre                             estatus_concurso_nombre, " + 
 						"       a.fecha_adjudicacion, " +
+						"		c.estado_calamidad, "+
 						"		sum(a.monto)						 monto "+
 						"  FROM guatecompras.gc_entidad                 ec, " + 
 						"       guatecompras.gc_entidad                 uc, " + 
@@ -67,9 +68,9 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 						"       AND m.modalidad = c.modalidad " + 
 						"       AND tep.tipo_entidad = te.tipo_entidad_padre " + 
 						"       AND esc.estatus_concurso = c.estatus_concurso " + 
-						"		AND YEAR(c.fecha_publicacion) = ? "+
+						"		AND YEAR(c.fecha_publicacion) between  YEAR(CURRENT_TIMESTAMP)-3 AND YEAR(CURRENT_TIMESTAMP) "+
 						" GROUP BY tep.TIPO_ENTIDAD, tep.nombre, te.TIPO_ENTIDAD, te.nombre, ec.ENTIDAD_COMPRADORA, ec.nombre, uc.UNIDAD_COMPRADORA, uc.nombre, c.nog_concurso, c.descripcion, c.fecha_publicacion, " +
-						" month(c.fecha_publicacion), year(c.fecha_publicacion), m.MODALIDAD, m.nombre, esc.ESTATUS_CONCURSO, esc.nombre, a.fecha_adjudicacion");
+						" month(c.fecha_publicacion), year(c.fecha_publicacion), m.MODALIDAD, m.nombre, esc.ESTATUS_CONCURSO, esc.nombre, a.fecha_adjudicacion, c.estado_calamidad");
 				pstm.setInt(1, ejercicio);
 				pstm.executeUpdate();
 				pstm.close();
@@ -83,9 +84,9 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 					PreparedStatement pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_evento_gc(tipo_entidad_padre, tipo_entidad_padre_nombre, "
 							+ "tipo_entidad, tipo_entidad_nombre, entidad_compradora, entidad_compradora_nombre, unidad_compradora, unidad_compradora_nombre, " + 
 							"nog_concurso, descripcion, fecha_publicacion, mes_publicacion, ano_publicacion, modalidad, modalidad_nombre, estatus_concurso, estatus_concurso_nombre," + 
-							"monto, fecha_adjudicacion) "
+							"monto, fecha_adjudicacion, estado_calamidad) "
 							+ "values (?,?,?,?,?,?,?,?,?,?,"
-							+ "?,?,?,?,?,?,?,?,?) ");
+							+ "?,?,?,?,?,?,?,?,?,?) ");
 					
 					pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_evento_gc where ano_publicacion = ?");
 						pstm.setInt(1, ejercicio);
@@ -131,6 +132,7 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 								pstm1.setDate(19, new java.sql.Date(df.parse(fecha).getTime()));
 							else
 								pstm1.setDate(19, new java.sql.Date(0));
+							pstm1.setInt(20, rs.getInt("estado_calamidad"));
 							pstm1.addBatch();
 							rows++;
 							
@@ -331,6 +333,7 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 						"	   esc.ESTATUS_CONCURSO					 estatus_concurso, " + 
 						"       esc.nombre                             estatus_concurso_nombre, " + 
 						"       a.fecha_adjudicacion, " +
+						"		c.estado_calamidad, " +	
 						"		sum(a.monto)						 monto "+ 
 						"  FROM guatecompras.gc_entidad                 ec, " + 
 						"       guatecompras.gc_entidad                 uc, " + 
@@ -351,7 +354,7 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 						"		AND YEAR(c.fecha_publicacion) between ? and ? " +
 						" GROUP BY tep.TIPO_ENTIDAD, tep.nombre, te.TIPO_ENTIDAD, te.nombre, ec.ENTIDAD_COMPRADORA, ec.nombre, uc.UNIDAD_COMPRADORA, " +
 						"uc.nombre, c.nog_concurso, c.descripcion, c.fecha_publicacion, month(c.fecha_publicacion), year(c.fecha_publicacion), m.MODALIDAD, m.nombre, " +
-						"esc.ESTATUS_CONCURSO, esc.nombre, a.fecha_adjudicacion");
+						"esc.ESTATUS_CONCURSO, esc.nombre, a.fecha_adjudicacion, c.estado_calamidad");
 				pstm.setInt(1, ejercicio_inicio);
 				pstm.setInt(2, ejercicio_fin);
 				pstm.executeUpdate();
@@ -366,9 +369,9 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 					PreparedStatement pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_evento_gc(tipo_entidad_padre, tipo_entidad_padre_nombre, "
 							+ "tipo_entidad, tipo_entidad_nombre, entidad_compradora, entidad_compradora_nombre, unidad_compradora, unidad_compradora_nombre, " + 
 							"nog_concurso, descripcion, fecha_publicacion, mes_publicacion, ano_publicacion, modalidad, modalidad_nombre, estatus_concurso, estatus_concurso_nombre," + 
-							"monto, fecha_adjudicacion) "
+							"monto, fecha_adjudicacion, estado_calamidad) "
 							+ "values (?,?,?,?,?,?,?,?,?,?,"
-							+ "?,?,?,?,?,?,?,?,?) ");
+							+ "?,?,?,?,?,?,?,?,?,?) ");
 					
 					pstm = conn.prepareStatement("SELECT * FROM dashboard_historia.mv_evento_gc where ejercicio between ? and ?");
 						pstm.setInt(1, ejercicio_inicio);
@@ -416,6 +419,7 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 								pstm1.setDate(19, new java.sql.Date( df.parse(fecha).getTime()));
 							else
 								pstm1.setDate(19, null);
+							pstm1.setInt(20, rs.getInt("estado_calamidad"));
 							pstm1.addBatch();
 							rows++;
 							

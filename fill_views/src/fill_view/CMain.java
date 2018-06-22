@@ -25,6 +25,7 @@ public class CMain {
 		options.addOption("tn_ef", "tn-estructuras-financieras", false, "calcula las estructuras financieras del TN");
 		options.addOption("update_all","update-all",false,"Cargar todas las tablas a MemSQL");
 		options.addOption("eec", "ejecucion-estados-calamidad", false, "cargar ejecucion fisica y financiera de los  estados de calamidad");
+		options.addOption("eec_gc", "actualizar-eventos-gc-est-calamidad", true, "actualiza eventos de guatecompras para un estado de calamidad");
 		options.addOption("emp", "ejecucion-metas-presidenciales", false, "cargar ejecucion fisica y financiera de metas presidenciales");
 		options.addOption(Option.builder("dt").hasArgs().longOpt("dimension-tiempo").desc("<ejercicio_inicio> <ejercicio_fin> crea la dimension tiempo").build());
 		
@@ -91,6 +92,13 @@ public class CMain {
 				 CLogger.writeConsole("Inicio registro avance fisico de estados de calamidad...");
 				 if(CEjecucionCalamidad.loadEjecucionFisicaFinanciera(false)&&CEjecucionCalamidad.loadEjecucionFisicaFinanciera(true))
 					 CLogger.writeConsole("Datos de metas fisicas calamidad importadas con exito");
+			 }
+			 else if(cline.hasOption("actualizar-eventos-gc-est-calamidad")) {
+				 CLogger.writeConsole("Inicio de actualizacion de eventos guatecompras para el estado de calamidad para el subprograma indicado");
+				 Integer subprograma = cline.getOptionValue("eec_gc")!=null && cline.getOptionValue("eec_gc").length()>0 ? 
+						 Integer.parseInt(cline.getOptionValue("eec_gc")) : 0;
+				 if(CEjecucionCalamidad.actualizarEventosGuatecompras(subprograma))
+					 CLogger.writeConsole("Eventos de Guatecompras del estado de calamidad en el subprograma actualizados con éxito");
 			 }
 			 else if(cline.hasOption("ejecucion-metas-presidenciales")){
 				 CLogger.writeConsole("Inicio registro avance fisico y financiero de metas presidenciales...");
