@@ -125,7 +125,6 @@ public class CMain {
 						CEjecucionFisica.loadEjeucionHoja(conn, false, false) &&
 						CEjecucionFisica.loadEjecucionDetalle(conn, false, false) &&
 						CUnidadMedida.loadUnidadesMedida(conn, false, false) &&
-						CEjecucionCalamidad.loadEjecucionFisicaFinanciera(false)&&CEjecucionCalamidad.loadEjecucionFisicaFinanciera(true) &&
 						CEjecucionPrestamos.loadEjecucionFinanciera()
 					)
 					CLogger.writeConsole("todas las tablas importadas con exito");

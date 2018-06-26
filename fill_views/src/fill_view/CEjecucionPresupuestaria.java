@@ -233,7 +233,7 @@ public class CEjecucionPresupuestaria {
 							"select asignado.ejercicio, asignado.mes, asignado.entidad, asignado.unidad_ejecutora, asignado.programa, asignado.subprograma, asignado.proyecto, asignado.actividad, asignado.obra,    " + 
 							"						asignado.fuente, asignado.grupo, gg.nombre grupo_nombre, asignado.subgrupo,  sg.nombre subgrupo_nombre, " + 
 							"						asignado.renglon, r.nombre renglon_nombre, asignado.geografico,   " + 
-							"						sum(asignado.asignado) asignado, sum(asignado.asignado)+nvl(sum(vigente.modificaciones),0) vigente   " + 
+							"						sum(asignado.asignado) asignado, sum(asignado.asignado)+nvl(sum(vigente.modificaciones),0) vigente, sum(asignado.compromiso) compromiso   " + 
 							"						from (   " + 
 							"							select t.ejercicio,      " + 
 							"													t.mes,      " + 
@@ -249,11 +249,12 @@ public class CEjecucionPresupuestaria {
 							"													(a.renglon-a.renglon%10) subgrupo,      " + 
 							"													a.renglon,      " + 
 							"													a.geografico,      " + 
-							"													sum(a.asignado) asignado      " + 
+							"													sum(a.asignado) asignado,      " +
+							"													sum(a.compromiso) compromiso,  " +	
 							"													from dashboard.tiempo t      " + 
 							"													left outer join      " + 
 							"													(select a.ejercicio, a.entidad, a.unidad_ejecutora, a.programa, a.subprograma, a.proyecto, a.actividad, a.obra, a.fuente,      " + 
-							"														a.renglon, a.geografico, a.asignado      " + 
+							"														a.renglon, a.geografico, a.asignado, a.compromiso      " + 
 							"														from sicoinprod.eg_f6_partidas a) a on (a.ejercicio = t.ejercicio and t.dia=1 and t.ejercicio=?)    " + 
 							"														left outer join (   " + 
 							"															select ejercicio, entidad, count(*) ues    " + 
@@ -326,7 +327,8 @@ public class CEjecucionPresupuestaria {
 							"												t1.actividad,    " + 
 							"												t1.obra,    " + 
 							"												t1.mes, t1.fuente, t1.grupo, t1.grupo_nombre, t1.subgrupo, t1.subgrupo_nombre, t1.renglon, t1.renglon_nombre,     " + 
-							"																		 t1.ano_1, t1.ano_2, t1.ano_3, t1.ano_4, t1.ano_5, t1.ano_actual, t1.asignado, t1.vigente, a.anticipo anticipo_cuota, c.solicitado solicitado_cuota,      " + 
+							"																		 t1.ano_1, t1.ano_2, t1.ano_3, t1.ano_4, t1.ano_5, t1.ano_actual, t1.asignado, t1.vigente, t1.compromiso,  " +
+							"																		 a.anticipo anticipo_cuota, c.solicitado solicitado_cuota,      " + 
 							"																		 c.aprobado aprobado_cuota       " + 
 							"																		 from (      " + 
 							"																		 	select " +
@@ -347,9 +349,9 @@ public class CEjecucionPresupuestaria {
 							"																		 	nvl(v.renglon, g.renglon) renglon,      " + 
 							"																		 	nvl(v.renglon_nombre, g.renglon_nombre) renglon_nombre,      " + 
 							"																			g.ano_1 ano_1, g.ano_2 ano_2, g.ano_3 ano_3, g.ano_4 ano_4, g.ano_5 ano_5, g.ano_actual ano_actual,      " + 
-							"																		 	v.asignado asignado, v.vigente vigente      " + 
+							"																		 	v.asignado asignado, v.vigente vigente, v.compromiso compromiso      " + 
 							"																		 	from  (	select ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, grupo, grupo_nombre, " + 
-							"								    										   subgrupo, subgrupo_nombre, renglon, renglon_nombre, fuente, sum(asignado) asignado, sum(vigente) vigente " + 
+							"								    										   subgrupo, subgrupo_nombre, renglon, renglon_nombre, fuente, sum(asignado) asignado, sum(vigente) vigente, sum(compromiso) compromiso " + 
 							"																			   from dashboard.mv_vigente " + 
 							"																			   where ejercicio = ? " + 
 							"																			   group by ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, grupo, grupo_nombre, subgrupo, subgrupo_nombre, renglon, renglon_nombre, fuente " + 
@@ -416,9 +418,9 @@ public class CEjecucionPresupuestaria {
 							"v.renglon,  " + 
 							"v.geografico,   " + 
 							"sum(g.ano_actual) ano_actual,  " + 
-							"sum(v.asignado) asignado, sum(v.vigente) vigente     " + 
+							"sum(v.asignado) asignado, sum(v.vigente) vigente, sum(v.compromiso) compromiso     " + 
 							"from ( select ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, fuente, grupo, subgrupo, renglon, geografico, " +
-							"sum(asignado) asignado, sum(vigente) vigente from dashboard.mv_vigente " +
+							"sum(asignado) asignado, sum(vigente) vigente, sum(compromiso) compromiso from dashboard.mv_vigente " +
 							"where ejercicio = ? " +
 							"group by ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, fuente, grupo, subgrupo, renglon, geografico " +
 							") v left outer join ( select ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, fuente, grupo, subgrupo, renglon, geografico, " +
@@ -487,10 +489,10 @@ public class CEjecucionPresupuestaria {
 					boolean first=true;
 					PreparedStatement pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ejecucion_presupuestaria(ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, " + 
 							"proyecto, actividad, obra, renglon, renglon_nombre, subgrupo, subgrupo_nombre, grupo," + 
-							"grupo_nombre, fuente, ano_1, ano_2, ano_3, ano_4, ano_5, ano_actual, solicitado, aprobado, anticipo, asignado, vigente) "
+							"grupo_nombre, fuente, ano_1, ano_2, ano_3, ano_4, ano_5, ano_actual, solicitado, aprobado, anticipo, asignado, vigente, compromiso) "
 							+ "values (?,?,?,?,?,?,?,?,?,?,"
 							+ "?,?,?,?,?,?,?,?,?,?,"
-							+ "?,?,?,?,?,?,?) ");
+							+ "?,?,?,?,?,?,?,?) ");
 					for(int i=1; i<13; i++){
 						pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ejecucion_presupuestaria where mes = ? and ejercicio = ?");
 						pstm.setInt(1, i);
@@ -547,6 +549,7 @@ public class CEjecucionPresupuestaria {
 								pstm1.setObject(25, null);
 							pstm1.setDouble(26, rs.getDouble("asignado"));
 							pstm1.setDouble(27, rs.getDouble("vigente"));
+							pstm1.setDouble(28, rs.getDouble("compromiso"));
 							pstm1.addBatch();
 							rows++;
 							if((rows % 10000) == 0){
@@ -572,9 +575,9 @@ public class CEjecucionPresupuestaria {
 					first=true;
 					pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ejecucion_presupuestaria_geografico(ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, " + 
 							"proyecto, actividad, obra, renglon, subgrupo, grupo," + 
-							"fuente, geografico, ano_actual, asignado, vigente) "
+							"fuente, geografico, ano_actual, asignado, vigente, compromiso) "
 							+ "values (?,?,?,?,?,?,?,?,?,?,"
-							+ "?,?,?,?,?,?,?) ");
+							+ "?,?,?,?,?,?,?,?) ");
 					for(int i=1; i<13; i++){
 						pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ejecucion_presupuestaria_geografico where mes = ? and ejercicio = ? ");
 						pstm.setInt(1, i);
@@ -609,6 +612,7 @@ public class CEjecucionPresupuestaria {
 							pstm1.setDouble(15, rs.getDouble("ano_actual"));
 							pstm1.setDouble(16, rs.getDouble("asignado"));
 							pstm1.setDouble(17, rs.getDouble("vigente"));
+							pstm1.setDouble(18, rs.getDouble("compromiso"));
 							pstm1.addBatch();
 							rows++;
 							if((rows % 10000) == 0){
@@ -979,7 +983,7 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 						"select asignado.ejercicio, asignado.mes, asignado.entidad, asignado.unidad_ejecutora, asignado.programa, asignado.subprograma, asignado.proyecto, asignado.actividad, asignado.obra,    " + 
 						"						asignado.fuente, asignado.grupo, gg.nombre grupo_nombre, asignado.subgrupo,  sg.nombre subgrupo_nombre, " + 
 						"						asignado.renglon, r.nombre renglon_nombre, asignado.geografico,   " + 
-						"						sum(asignado.asignado) asignado, sum(asignado.asignado)+nvl(sum(vigente.modificaciones),0) vigente   " + 
+						"						sum(asignado.asignado) asignado, sum(asignado.asignado)+nvl(sum(vigente.modificaciones),0) vigente, sum(asignado.compromiso) compromiso   " + 
 						"						from (   " + 
 						"							select t.ejercicio,      " + 
 						"													t.mes,      " + 
@@ -995,11 +999,12 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 						"													(a.renglon-a.renglon%10) subgrupo,      " + 
 						"													a.renglon,      " + 
 						"													a.geografico,      " + 
-						"													sum(a.asignado) asignado      " + 
+						"													sum(a.asignado) asignado,      " + 
+						"													sum(a.compromiso) compromiso      " + 
 						"													from dashboard.tiempo t      " + 
 						"													left outer join      " + 
 						"													(select a.ejercicio, a.entidad, a.unidad_ejecutora, a.programa, a.subprograma, a.proyecto, a.actividad, a.obra, a.fuente,      " + 
-						"														a.renglon, a.geografico, a.asignado      " + 
+						"														a.renglon, a.geografico, a.asignado, a.compromiso      " + 
 						"														from sicoinprod.eg_f6_partidas a) a on (a.ejercicio = t.ejercicio and t.dia=1 and t.ejercicio between ? and ?)    " + 
 						"														left outer join (   " + 
 						"															select ejercicio, entidad, count(*) ues    " + 
@@ -1098,9 +1103,9 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 						"																		 	nvl(v.renglon,g.renglon) renglon,      " + 
 						"																		 	nvl(v.renglon_nombre, g.renglon_nombre) renglon_nombre,      " + 
 						"																			g.ano_1 ano_1, g.ano_2 ano_2, g.ano_3 ano_3, g.ano_4 ano_4, g.ano_5 ano_5, g.ano_actual ano_actual,      " + 
-						"																		 	v.asignado asignado, v.vigente vigente      " + 
+						"																		 	v.asignado asignado, v.vigente vigente, v.compromiso compromiso      " + 
 						"																		 	from  (	select ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, grupo, grupo_nombre, " + 
-						"								    										   subgrupo, subgrupo_nombre, renglon, renglon_nombre, fuente, sum(asignado) asignado, sum(vigente) vigente " + 
+						"								    										   subgrupo, subgrupo_nombre, renglon, renglon_nombre, fuente, sum(asignado) asignado, sum(vigente) vigente, sum(compromiso) compromiso " + 
 						"																			   from dashboard_historia.mv_vigente " + 
 						"																			   where ejercicio between ? and ? " + 
 						"																			   group by ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, grupo, grupo_nombre, subgrupo, subgrupo_nombre, renglon, renglon_nombre, fuente " + 
@@ -1169,9 +1174,10 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 						"v.renglon,  " + 
 						"v.geografico,   " + 
 						"sum(g.ano_actual) ano_actual,  " + 
-						"sum(v.asignado) asignado, sum(v.vigente) vigente     " + 
+						"sum(v.asignado) asignado, sum(v.vigente) vigente,     " + 
+						"sum(v.compromiso) compromiso " +
 						"from ( select ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, fuente, grupo, subgrupo, renglon, geografico, " +
-						"sum(asignado) asignado, sum(vigente) vigente from dashboard_historia.mv_vigente " +
+						"sum(asignado) asignado, sum(vigente) vigente, sum(compromiso) compromiso from dashboard_historia.mv_vigente " +
 						"where ejercicio between ? and ? " +
 						"group by ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, fuente, grupo, subgrupo, renglon, geografico " +
 						") v left outer join ( select ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, fuente, grupo, subgrupo, renglon, geografico, " +
@@ -1242,10 +1248,10 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 					boolean first=true;
 					PreparedStatement pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ejecucion_presupuestaria(ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, " + 
 							"proyecto, actividad, obra, renglon, renglon_nombre, subgrupo, subgrupo_nombre, grupo," + 
-							"grupo_nombre, fuente, ano_1, ano_2, ano_3, ano_4, ano_5, ano_actual, solicitado, aprobado, anticipo, asignado, vigente) "
+							"grupo_nombre, fuente, ano_1, ano_2, ano_3, ano_4, ano_5, ano_actual, solicitado, aprobado, anticipo, asignado, vigente, compromiso) "
 							+ "values (?,?,?,?,?,?,?,?,?,?,"
 							+ "?,?,?,?,?,?,?,?,?,?,"
-							+ "?,?,?,?,?,?,?) ");
+							+ "?,?,?,?,?,?,?,?) ");
 					for(int i=1; i<13; i++){
 						pstm = conn.prepareStatement("SELECT * FROM dashboard_historia.mv_ejecucion_presupuestaria where mes = ? and ejercicio between ? and ?");
 						pstm.setInt(1, i);
@@ -1304,6 +1310,7 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 								pstm1.setObject(25, null);
 							pstm1.setDouble(26, rs.getDouble("asignado"));
 							pstm1.setDouble(27, rs.getDouble("vigente"));
+							pstm1.setDouble(28, rs.getDouble("compromiso"));
 							pstm1.addBatch();
 							rows++;
 							if((rows % 10000) == 0)
@@ -1326,9 +1333,9 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 					first=true;
 					pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ejecucion_presupuestaria_geografico(ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, " + 
 							"proyecto, actividad, obra, renglon, subgrupo, grupo," + 
-							"fuente, geografico, ano_actual, asignado, vigente) "
+							"fuente, geografico, ano_actual, asignado, vigente, compromiso) "
 							+ "values (?,?,?,?,?,?,?,?,?,?,"
-							+ "?,?,?,?,?,?,?) ");
+							+ "?,?,?,?,?,?,?,?) ");
 					for(int i=1; i<13; i++){
 						pstm = conn.prepareStatement("SELECT * FROM dashboard_historia.mv_ejecucion_presupuestaria_geografico where mes = ? and ejercicio between ? and ? ");
 						pstm.setInt(1, i);
@@ -1365,6 +1372,7 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 							pstm1.setDouble(15, rs.getDouble("ano_actual"));
 							pstm1.setDouble(16, rs.getDouble("asignado"));
 							pstm1.setDouble(17, rs.getDouble("vigente"));
+							pstm1.setDouble(18, rs.getDouble("compromiso"));
 							pstm1.addBatch();
 							rows++;
 							if((rows % 10000) == 0)
