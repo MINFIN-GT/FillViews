@@ -32,7 +32,7 @@ public class CMain {
 		options.addOption("mp", "metas-presidenciales", false, "calcula la vista de metas presidenciales");
 		options.addOption("mp_des", "metas-presidenciales-descentralizadas", false, "calcula la vista de metas presidenciales");
 		options.addOption("efp", "ejecucion-financiera-prestamos", false, "cargar ejecucion financiera de Prestamos");
-		options.addOption("ep", "ejecucion-presupuestaria", true, "cargar ejecucion presupuestaria");
+		options.addOption(Option.builder("ep").hasArgs().longOpt("ejecucion-presupuestaria").desc("cargar ejecucion presupuestaria").build());
 		options.addOption("epl", "ejecucion-presupuestaria-load", true, "cargar de cache de ejecucion presupuestaria");
 		options.addOption(Option.builder("eph").hasArgs().longOpt("ejecucion-presupuestaria-historia").desc("cargar historia ejecucion presupuestaria").build());
 		options.addOption("ef", "ejecucion-fisica", true, "cargar ejecucion fisica");
@@ -140,16 +140,18 @@ public class CMain {
 			 }
 			 else if(cline.hasOption("ejecucion-presupuestaria")){
 				 CLogger.writeConsole("Inicio carga de ejecucion presupuestaria");
-				 Integer ejercicio = cline.getOptionValue("ep")!=null && cline.getOptionValue("ep").length()>0 ? 
-						 Integer.parseInt(cline.getOptionValue("ep")) : start.getYear();
-				 if(CEjecucionPresupuestaria.loadEjecucionPresupuestaria(conn, ejercicio, true))
+				 String[] argumentos = cline.getOptionValues("ep");
+				 Integer ejercicio =  argumentos!=null && argumentos.length>0 ? 
+						 Integer.parseInt(argumentos[0]) : start.getYear();
+				 boolean con_historia = argumentos!=null && argumentos.length>1 ? argumentos[1]=="true" : true;		 
+				 if(CEjecucionPresupuestaria.loadEjecucionPresupuestaria(conn, ejercicio, true, con_historia))
 					 CLogger.writeConsole("Datos de ejecucion presupuestaria cargados con exito");
 			 }
 			 else if(cline.hasOption("ejecucion-presupuestaria-load")){
 				 CLogger.writeConsole("Inicio carga de cache de ejecucion presupuestaria");
 				 Integer ejercicio = cline.getOptionValue("epl")!=null && cline.getOptionValue("epl").length()>0 ? 
 						 Integer.parseInt(cline.getOptionValue("epl")) : start.getYear();
-				 if(CEjecucionPresupuestaria.loadEjecucionPresupuestaria(conn, ejercicio, false))
+				 if(CEjecucionPresupuestaria.loadEjecucionPresupuestaria(conn, ejercicio, false, false))
 					 CLogger.writeConsole("Datos de ejecucion presupuestaria cargados con exito");
 			 }
 			 else if(cline.hasOption("ejecucion-presupuestaria-historia")){

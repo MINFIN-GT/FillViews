@@ -25,7 +25,12 @@ public class CEjecucionCalamidad {
        "case when (metas.codigo_meta=1 or metas.codigo_meta is null) "+
        " then sum(gasto.monto_renglon) "+
        " else null "+
-       "end ejecutado, metas.meta, sum(avance.meta_avanzado) meta_avanzado "+
+       "end ejecutado, "+
+       "case  when (metas.codigo_meta=1 or metas.codigo_meta is null) "+
+       " then (sum(p.compromiso)) "+ 
+       " else null "+
+       "end compromiso, "+
+       "metas.meta, sum(avance.meta_avanzado) meta_avanzado "+
        "from "+esquema+".EG_F6_PARTIDAS p  "+
        "left join (select distinct p3.ejercicio, p3.entidad from "+esquema+".eg_f6_partidas p3 where p3.unidad_ejecutora > 0 and p3.ejercicio <= "+date.getYear()+") p2 on ( p2.entidad = p.entidad and p2.ejercicio = p.ejercicio) "+ 
        "left join (select d.ejercicio, d.entidad, d.unidad_ejecutora, d.programa, d.subprograma, d.proyecto, d.obra, d.actividad, d.renglon, d.monto_renglon  "+
@@ -87,12 +92,12 @@ public class CEjecucionCalamidad {
 						       ",subprograma,subprograma_nombre,proyecto,proyecto_nombre,actividad,obra,actividad_nombre, "+
 						       "RENGLON,renglon_nombre,codigo_meta,meta_nombre,unidad_medida,unidad_medida_nombre, "+
 						       "vigente, "+
-						       "ejecutado,meta,meta_avanzado,tipo) "+
+						       "ejecutado,meta,meta_avanzado,tipo,compromiso) "+
 								"values (?,?,?,?,?,"
 									  + "?,?,?,?,?,"
 									  + "?,?,?,?,?,"
 									  + "?,?,?,?,?,"
-									  + "?,?,?,?,?) ");
+									  + "?,?,?,?,?,?) ");
 					while(rs.next()){
 						if (first){
 							first=false;							
@@ -145,6 +150,7 @@ public class CEjecucionCalamidad {
 						pstm.setDouble(23, rs.getDouble("meta"));
 						pstm.setDouble(24, rs.getDouble("meta_avanzado"));
 						pstm.setDouble(25, descentralizadas ? 2 : 1 );
+						pstm.setDouble(26, rs.getDouble("compromiso"));
 						pstm.addBatch();
 						rows++;
 						if((rows % 1000) == 0){

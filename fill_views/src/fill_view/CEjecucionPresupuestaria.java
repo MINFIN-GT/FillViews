@@ -10,7 +10,7 @@ import utilities.CLogger;
 
 public class CEjecucionPresupuestaria {
 	
-	public static boolean loadEjecucionPresupuestaria(Connection conn, Integer ejercicio, Boolean calcular){
+	public static boolean loadEjecucionPresupuestaria(Connection conn, Integer ejercicio, Boolean calcular, Boolean con_historia){
 		
 		boolean ret = false;
 		try{
@@ -23,16 +23,18 @@ public class CEjecucionPresupuestaria {
 					CLogger.writeConsole("Eliminando data actual:");
 					List<String> tablas = Arrays.asList("mv_entidad", "mv_estructura", "mv_cuota","mv_gasto", "mv_anticipo","mv_vigente", "mv_ejecucion_presupuestaria","mv_ejecucion_presupuestaria_geografico","mv_ejecucion_presupuestaria_mensualizada");
 					
-					CLogger.writeConsole("Copiando historia:");
-					for(String tabla:tablas){
-						CLogger.writeConsole("Copiando historia - "+tabla);
-						pstm = conn.prepareStatement("TRUNCATE TABLE dashboard."+tabla);
-						pstm.executeUpdate();
-						pstm.close();
-						pstm = conn.prepareStatement("INSERT INTO dashboard."+tabla+" SELECT * FROM dashboard_historia."+tabla+" where ejercicio <> ?");
-						pstm.setInt(1, ejercicio);
-						pstm.executeUpdate();
-						pstm.close();
+					if(con_historia) {
+						CLogger.writeConsole("Copiando historia:");
+						for(String tabla:tablas){
+							CLogger.writeConsole("Copiando historia - "+tabla);
+							pstm = conn.prepareStatement("TRUNCATE TABLE dashboard."+tabla);
+							pstm.executeUpdate();
+							pstm.close();
+							pstm = conn.prepareStatement("INSERT INTO dashboard."+tabla+" SELECT * FROM dashboard_historia."+tabla+" where ejercicio <> ?");
+							pstm.setInt(1, ejercicio);
+							pstm.executeUpdate();
+							pstm.close();
+						}
 					}
 					
 					CLogger.writeConsole("Insertando valores a MV_ENTIDAD");
@@ -250,7 +252,7 @@ public class CEjecucionPresupuestaria {
 							"													a.renglon,      " + 
 							"													a.geografico,      " + 
 							"													sum(a.asignado) asignado,      " +
-							"													sum(a.compromiso) compromiso,  " +	
+							"													sum(a.compromiso) compromiso  " +	
 							"													from dashboard.tiempo t      " + 
 							"													left outer join      " + 
 							"													(select a.ejercicio, a.entidad, a.unidad_ejecutora, a.programa, a.subprograma, a.proyecto, a.actividad, a.obra, a.fuente,      " + 
@@ -493,145 +495,146 @@ public class CEjecucionPresupuestaria {
 							+ "values (?,?,?,?,?,?,?,?,?,?,"
 							+ "?,?,?,?,?,?,?,?,?,?,"
 							+ "?,?,?,?,?,?,?,?) ");
-					for(int i=1; i<13; i++){
-						pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ejecucion_presupuestaria where mes = ? and ejercicio = ?");
-						pstm.setInt(1, i);
-						pstm.setInt(2, ejercicio);
-						pstm.setFetchSize(10000);
-						ResultSet rs = pstm.executeQuery();
-						while(rs!=null && rs.next()){
-							if(first){
-								PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ejecucion_presupuestaria where ejercicio =  ? ");
-								pstm2.setInt(1, ejercicio);
-								if (pstm2.executeUpdate()>0)
-									CLogger.writeConsole("Registros eliminados");
+					if(calcular) {
+						for(int i=1; i<13; i++){
+							pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ejecucion_presupuestaria where mes = ? and ejercicio = ?");
+							pstm.setInt(1, i);
+							pstm.setInt(2, ejercicio);
+							pstm.setFetchSize(10000);
+							ResultSet rs = pstm.executeQuery();
+							while(rs!=null && rs.next()){
+								if(first){
+									PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ejecucion_presupuestaria where ejercicio =  ? ");
+									pstm2.setInt(1, ejercicio);
+									if (pstm2.executeUpdate()>0)
+										CLogger.writeConsole("Registros eliminados");
+									else
+										CLogger.writeConsole("Sin registros para eliminar");	
+									pstm2.close();
+									first=false;
+								}
+								pstm1.setInt(1, rs.getInt("ejercicio"));
+								pstm1.setInt(2, rs.getInt("mes"));
+								pstm1.setInt(3, rs.getInt("entidad"));
+								pstm1.setInt(4, rs.getInt("unidad_ejecutora"));
+								pstm1.setInt(5, rs.getInt("programa"));
+								pstm1.setInt(6, rs.getInt("subprograma"));
+								pstm1.setInt(7, rs.getInt("proyecto"));
+								pstm1.setInt(8, rs.getInt("actividad"));
+								pstm1.setInt(9, rs.getInt("obra"));
+								pstm1.setInt(10, rs.getInt("renglon"));
+								pstm1.setString(11, rs.getString("renglon_nombre"));
+								pstm1.setInt(12, rs.getInt("subgrupo"));
+								pstm1.setString(13, rs.getString("subgrupo_nombre"));
+								pstm1.setInt(14, rs.getInt("grupo"));
+								pstm1.setString(15, rs.getString("grupo_nombre"));
+								pstm1.setInt(16, rs.getInt("fuente"));
+								pstm1.setDouble(17, rs.getDouble("ano_1"));
+								pstm1.setDouble(18, rs.getDouble("ano_2"));
+								pstm1.setDouble(19, rs.getDouble("ano_3"));
+								pstm1.setDouble(20, rs.getDouble("ano_4"));
+								pstm1.setDouble(21, rs.getDouble("ano_5"));
+								pstm1.setDouble(22, rs.getDouble("ano_actual"));
+								Double solicitado_cuota=rs.getDouble("solicitado_cuota");
+								if(!rs.wasNull())
+									pstm1.setDouble(23, solicitado_cuota);
 								else
-									CLogger.writeConsole("Sin registros para eliminar");	
-								pstm2.close();
-								first=false;
-							}
-							pstm1.setInt(1, rs.getInt("ejercicio"));
-							pstm1.setInt(2, rs.getInt("mes"));
-							pstm1.setInt(3, rs.getInt("entidad"));
-							pstm1.setInt(4, rs.getInt("unidad_ejecutora"));
-							pstm1.setInt(5, rs.getInt("programa"));
-							pstm1.setInt(6, rs.getInt("subprograma"));
-							pstm1.setInt(7, rs.getInt("proyecto"));
-							pstm1.setInt(8, rs.getInt("actividad"));
-							pstm1.setInt(9, rs.getInt("obra"));
-							pstm1.setInt(10, rs.getInt("renglon"));
-							pstm1.setString(11, rs.getString("renglon_nombre"));
-							pstm1.setInt(12, rs.getInt("subgrupo"));
-							pstm1.setString(13, rs.getString("subgrupo_nombre"));
-							pstm1.setInt(14, rs.getInt("grupo"));
-							pstm1.setString(15, rs.getString("grupo_nombre"));
-							pstm1.setInt(16, rs.getInt("fuente"));
-							pstm1.setDouble(17, rs.getDouble("ano_1"));
-							pstm1.setDouble(18, rs.getDouble("ano_2"));
-							pstm1.setDouble(19, rs.getDouble("ano_3"));
-							pstm1.setDouble(20, rs.getDouble("ano_4"));
-							pstm1.setDouble(21, rs.getDouble("ano_5"));
-							pstm1.setDouble(22, rs.getDouble("ano_actual"));
-							Double solicitado_cuota=rs.getDouble("solicitado_cuota");
-							if(!rs.wasNull())
-								pstm1.setDouble(23, solicitado_cuota);
-							else
-								pstm1.setObject(23, null);
-							Double aprobado_cuota=rs.getDouble("aprobado_cuota");
-							if(!rs.wasNull())
-								pstm1.setDouble(24, aprobado_cuota);
-							else
-								pstm1.setObject(24, null);
-							Double anticipo_cuota=rs.getDouble("anticipo_cuota");
-							if(!rs.wasNull())
-								pstm1.setDouble(25, anticipo_cuota);
-							else
-								pstm1.setObject(25, null);
-							pstm1.setDouble(26, rs.getDouble("asignado"));
-							pstm1.setDouble(27, rs.getDouble("vigente"));
-							pstm1.setDouble(28, rs.getDouble("compromiso"));
-							pstm1.addBatch();
-							rows++;
-							if((rows % 10000) == 0){
-								pstm1.executeBatch();
-								CMemSQL.getConnection().commit();
-							}
-						}
-						CLogger.writeConsole("Records escritos: "+rows+" - mes: "+i);
-						pstm1.executeBatch();
-						rows_total += rows;
-						rows=0;
-						rs.close();
-						pstm.close();
-						CMemSQL.getConnection().commit();
-					}
-					
-					CLogger.writeConsole("Records escritos Totales: "+rows_total);
-					pstm1.close();
-					
-					CLogger.writeConsole("Cargando datos a cache de MV_EJECUCION_PRESUPUESTARIA_GEOGRAFICO");
-					ret = true;
-					rows = 0;
-					first=true;
-					pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ejecucion_presupuestaria_geografico(ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, " + 
-							"proyecto, actividad, obra, renglon, subgrupo, grupo," + 
-							"fuente, geografico, ano_actual, asignado, vigente, compromiso) "
-							+ "values (?,?,?,?,?,?,?,?,?,?,"
-							+ "?,?,?,?,?,?,?,?) ");
-					for(int i=1; i<13; i++){
-						pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ejecucion_presupuestaria_geografico where mes = ? and ejercicio = ? ");
-						pstm.setInt(1, i);
-						pstm.setInt(2, ejercicio);
-						pstm.setFetchSize(10000);
-						ResultSet rs = pstm.executeQuery();
-						while(rs!=null && rs.next()){
-							if(first){
-								PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ejecucion_presupuestaria_geografico where ejercicio = ? ");
-								pstm2.setInt(1, ejercicio);
-								if (pstm2.executeUpdate()>0)
-									CLogger.writeConsole("Registros eliminados");
+									pstm1.setObject(23, null);
+								Double aprobado_cuota=rs.getDouble("aprobado_cuota");
+								if(!rs.wasNull())
+									pstm1.setDouble(24, aprobado_cuota);
 								else
-									CLogger.writeConsole("Sin registros para eliminar");	
-								pstm2.close();
-								first=false;
+									pstm1.setObject(24, null);
+								Double anticipo_cuota=rs.getDouble("anticipo_cuota");
+								if(!rs.wasNull())
+									pstm1.setDouble(25, anticipo_cuota);
+								else
+									pstm1.setObject(25, null);
+								pstm1.setDouble(26, rs.getDouble("asignado"));
+								pstm1.setDouble(27, rs.getDouble("vigente"));
+								pstm1.setDouble(28, rs.getDouble("compromiso"));
+								pstm1.addBatch();
+								rows++;
+								if((rows % 10000) == 0){
+									pstm1.executeBatch();
+									CMemSQL.getConnection().commit();
+								}
 							}
-							pstm1.setInt(1, rs.getInt("ejercicio"));
-							pstm1.setInt(2, rs.getInt("mes"));
-							pstm1.setInt(3, rs.getInt("entidad"));
-							pstm1.setInt(4, rs.getInt("unidad_ejecutora"));
-							pstm1.setInt(5, rs.getInt("programa"));
-							pstm1.setInt(6, rs.getInt("subprograma"));
-							pstm1.setInt(7, rs.getInt("proyecto"));
-							pstm1.setInt(8, rs.getInt("actividad"));
-							pstm1.setInt(9, rs.getInt("obra"));
-							pstm1.setInt(10, rs.getInt("renglon"));
-							pstm1.setInt(11, rs.getInt("subgrupo"));
-							pstm1.setInt(12, rs.getInt("grupo"));
-							pstm1.setInt(13, rs.getInt("fuente"));
-							pstm1.setInt(14, rs.getInt("geografico"));
-							pstm1.setDouble(15, rs.getDouble("ano_actual"));
-							pstm1.setDouble(16, rs.getDouble("asignado"));
-							pstm1.setDouble(17, rs.getDouble("vigente"));
-							pstm1.setDouble(18, rs.getDouble("compromiso"));
-							pstm1.addBatch();
-							rows++;
-							if((rows % 10000) == 0){
-								pstm1.executeBatch();
-								CMemSQL.getConnection().commit();
-							}
+							CLogger.writeConsole("Records escritos: "+rows+" - mes: "+i);
+							pstm1.executeBatch();
+							rows_total += rows;
+							rows=0;
+							rs.close();
+							pstm.close();
+							CMemSQL.getConnection().commit();
 						}
-						CLogger.writeConsole("Records escritos: "+rows+" - mes: "+i);
-						pstm1.executeBatch();
-						rows_total += rows;
-						rows=0;
-						rs.close();
-						pstm.close();
-						CMemSQL.getConnection().commit();
+						
+						CLogger.writeConsole("Records escritos Totales: "+rows_total);
+						pstm1.close();
+						
+						CLogger.writeConsole("Cargando datos a cache de MV_EJECUCION_PRESUPUESTARIA_GEOGRAFICO");
+						ret = true;
+						rows = 0;
+						first=true;
+						pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ejecucion_presupuestaria_geografico(ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, " + 
+								"proyecto, actividad, obra, renglon, subgrupo, grupo," + 
+								"fuente, geografico, ano_actual, asignado, vigente, compromiso) "
+								+ "values (?,?,?,?,?,?,?,?,?,?,"
+								+ "?,?,?,?,?,?,?,?) ");
+						for(int i=1; i<13; i++){
+							pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ejecucion_presupuestaria_geografico where mes = ? and ejercicio = ? ");
+							pstm.setInt(1, i);
+							pstm.setInt(2, ejercicio);
+							pstm.setFetchSize(10000);
+							ResultSet rs = pstm.executeQuery();
+							while(rs!=null && rs.next()){
+								if(first){
+									PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ejecucion_presupuestaria_geografico where ejercicio = ? ");
+									pstm2.setInt(1, ejercicio);
+									if (pstm2.executeUpdate()>0)
+										CLogger.writeConsole("Registros eliminados");
+									else
+										CLogger.writeConsole("Sin registros para eliminar");	
+									pstm2.close();
+									first=false;
+								}
+								pstm1.setInt(1, rs.getInt("ejercicio"));
+								pstm1.setInt(2, rs.getInt("mes"));
+								pstm1.setInt(3, rs.getInt("entidad"));
+								pstm1.setInt(4, rs.getInt("unidad_ejecutora"));
+								pstm1.setInt(5, rs.getInt("programa"));
+								pstm1.setInt(6, rs.getInt("subprograma"));
+								pstm1.setInt(7, rs.getInt("proyecto"));
+								pstm1.setInt(8, rs.getInt("actividad"));
+								pstm1.setInt(9, rs.getInt("obra"));
+								pstm1.setInt(10, rs.getInt("renglon"));
+								pstm1.setInt(11, rs.getInt("subgrupo"));
+								pstm1.setInt(12, rs.getInt("grupo"));
+								pstm1.setInt(13, rs.getInt("fuente"));
+								pstm1.setInt(14, rs.getInt("geografico"));
+								pstm1.setDouble(15, rs.getDouble("ano_actual"));
+								pstm1.setDouble(16, rs.getDouble("asignado"));
+								pstm1.setDouble(17, rs.getDouble("vigente"));
+								pstm1.setDouble(18, rs.getDouble("compromiso"));
+								pstm1.addBatch();
+								rows++;
+								if((rows % 10000) == 0){
+									pstm1.executeBatch();
+									CMemSQL.getConnection().commit();
+								}
+							}
+							CLogger.writeConsole("Records escritos: "+rows+" - mes: "+i);
+							pstm1.executeBatch();
+							rows_total += rows;
+							rows=0;
+							rs.close();
+							pstm.close();
+							CMemSQL.getConnection().commit();
+						}
+						
+						CLogger.writeConsole("Records escritos Totales: "+rows_total);
+						pstm1.close();
 					}
-					
-					CLogger.writeConsole("Records escritos Totales: "+rows_total);
-					pstm1.close();
-					
 					CLogger.writeConsole("Cargando datos a cache de MV_ESTRUCTURA");
 					ret = true;
 					rows = 0;
@@ -769,27 +772,26 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 				PreparedStatement pstm;
 				List<String> tablas = Arrays.asList("mv_estructura", "mv_cuota", "mv_gasto", "mv_anticipo","mv_vigente", "mv_ejecucion_presupuestaria","mv_ejecucion_presupuestaria_geografico", "mv_ejecucion_presupuestaria_mensualizada");
 				
-				for(String tabla:tablas){
-					CLogger.writeConsole("Copiando historia - "+tabla);
-					pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard_historia."+tabla+"_temp PURGE");
-					pstm.executeUpdate();
-					pstm.close();
-					pstm = conn.prepareStatement("CREATE TABLE dashboard_historia."+tabla+"_temp AS SELECT * FROM dashboard_historia."+tabla+" WHERE ejercicio not between ? and ?");
-					pstm.setInt(1, ejercicio_inicio);
-					pstm.setInt(2, ejercicio_fin);
-					pstm.executeUpdate();
-					pstm.close();
-					pstm = conn.prepareStatement("TRUNCATE TABLE dashboard_historia."+tabla);
-					pstm.executeUpdate();
-					pstm.close();
-					pstm = conn.prepareStatement("INSERT INTO dashboard_historia."+tabla+" SELECT * FROM dashboard_historia."+tabla+"_temp");
-					pstm.executeUpdate();
-					pstm.close();
-					pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard_historia."+tabla+"_temp PURGE");
-					pstm.executeUpdate();
-					pstm.close();
-				}
-				
+					for(String tabla:tablas){
+						CLogger.writeConsole("Copiando historia - "+tabla);
+						pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard_historia."+tabla+"_temp PURGE");
+						pstm.executeUpdate();
+						pstm.close();
+						pstm = conn.prepareStatement("CREATE TABLE dashboard_historia."+tabla+"_temp AS SELECT * FROM dashboard_historia."+tabla+" WHERE ejercicio not between ? and ?");
+						pstm.setInt(1, ejercicio_inicio);
+						pstm.setInt(2, ejercicio_fin);
+						pstm.executeUpdate();
+						pstm.close();
+						pstm = conn.prepareStatement("TRUNCATE TABLE dashboard_historia."+tabla);
+						pstm.executeUpdate();
+						pstm.close();
+						pstm = conn.prepareStatement("INSERT INTO dashboard_historia."+tabla+" SELECT * FROM dashboard_historia."+tabla+"_temp");
+						pstm.executeUpdate();
+						pstm.close();
+						pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard_historia."+tabla+"_temp PURGE");
+						pstm.executeUpdate();
+						pstm.close();
+					}
 				
 				CLogger.writeConsole("Insertando valores a MV_ESTRUCTURA");
 				pstm = conn.prepareStatement("insert into table dashboard_historia.mv_estructura "+
