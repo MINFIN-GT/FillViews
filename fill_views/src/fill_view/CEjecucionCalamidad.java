@@ -33,10 +33,11 @@ public class CEjecucionCalamidad {
        "metas.meta, sum(avance.meta_avanzado) meta_avanzado "+
        "from "+esquema+".EG_F6_PARTIDAS p  "+
        "left join (select distinct p3.ejercicio, p3.entidad from "+esquema+".eg_f6_partidas p3 where p3.unidad_ejecutora > 0 and p3.ejercicio <= "+date.getYear()+") p2 on ( p2.entidad = p.entidad and p2.ejercicio = p.ejercicio) "+ 
-       "left join (select d.ejercicio, d.entidad, d.unidad_ejecutora, d.programa, d.subprograma, d.proyecto, d.obra, d.actividad, d.renglon, d.monto_renglon  "+
+       "left join (select d.ejercicio, d.entidad, d.unidad_ejecutora, d.programa, d.subprograma, d.proyecto, d.obra, d.actividad, d.renglon, sum(d.monto_renglon) monto_renglon  "+
        "     from "+esquema+".eg_gastos_hoja h, "+esquema+".eg_gastos_detalle d  "+
        "     where h.ejercicio=d.ejercicio and h.entidad=d.entidad and h.unidad_ejecutora=d.unidad_ejecutora and h.no_cur=d.no_cur "+
        "     and h.estado='APROBADO' and h.clase_registro in ('DEV','CYD','REG','RDP') and d.ejercicio <= "+date.getYear()+" and d.programa = 94 "+
+       "	 group by d.ejercicio, d.entidad, d.unidad_ejecutora, d.programa, d.subprograma, d.proyecto, d.obra, d.actividad, d.renglon "+
        "   ) gasto "+
        "    on (p.ejercicio = gasto.ejercicio and p.entidad=gasto.entidad and p.unidad_ejecutora=gasto.unidad_ejecutora "+ 
        "       and p.programa=gasto.programa and p.subprograma=gasto.subprograma and p.proyecto=gasto.proyecto and p.obra=gasto.obra "+ 
