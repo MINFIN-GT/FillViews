@@ -206,20 +206,24 @@ public class CSalud {
 			pstm.close();
 			
 			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_puestos_salud " +
-					"select epg.ejercicio,m.codigo_municipio, m.nombre_municipio, d.nombre_departamento, d.codigo_departamento, r.rubro, r.nombre nombre_rubro, r.orden, r.nivel,    " + 
-					"    										 sum(case when epg.mes = 1 then asignado end) asignado, sum(ano_actual) ejecucion, sum(case when epg.mes = 12 then vigente end) vigente " + 
-					"    from dashboard.mv_ejecucion_presupuestaria_geografico epg  " + 
-					"    right outer join observatorio.hospitales_rubro_renglon rr on (rr.renglon = epg.renglon) " + 
-					"    right outer join observatorio.hospitales_rubro r on (r.rubro = rr.rubro) " + 
-					"    full outer join (select codigo_departamento, codigo_municipio, cast(concat(codigo_departamento,lpad(codigo_municipio,2,'0')) as int) geografico,   " + 
-					"    					              nombre_municipio  from sicoinprod.cg_municipios) m on (epg.geografico=m.geografico)  " + 
-					"    full outer join sicoinprod.cg_departamentos d on (m.codigo_departamento = d.codigo_departamento)          " + 
-					"    where epg.entidad = 11130009 " + 
-					"    and epg.programa in (12,14,15) " + 
-					"    and (epg.unidad_ejecutora not in (227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,250,252,253,254,255,259,260,261,262,263,264,285)) " + 
-					"    and (epg.unidad_ejecutora not in (201,272, 273, 274, 275, 276, 277, 279, 280, 281) or (epg.unidad_ejecutora=201 and epg.programa in (14,15) and epg.renglon=266)) " + 
-					"    and epg.ejercicio between year(current_timestamp)-4 and year(current_timestamp) " + 
-					"    group by epg.ejercicio,m.geografico, m.codigo_municipio, m.nombre_municipio, r.rubro, r.nombre, r.orden, r.nivel, d.nombre_departamento, d.codigo_departamento ");
+					" select t.ejercicio, g.geografico, g.nombre, d.codigo_departamento, d.nombre_departamento, r.rubro, r.nombre nombre_rubro, r.orden, r.nivel,    " + 
+					"										 sum(case when epg.mes = 1 then asignado end) asignado, sum(ano_actual) ejecucion, sum(case when epg.mes = 12 then vigente end) vigente     " + 
+					"										 from sicoinprod.cg_geograficos g  " + 
+					"										 cross join observatorio.hospitales_rubro r  " + 
+					"										 left outer join observatorio.hospitales_rubro_renglon rr on (r.rubro == rr.rubro)  " + 
+					"										 cross join dashboard.tiempo t on (t.dia=1 and t.mes=1 and t.ejercicio between year(current_timestamp)-4 and year(current_timestamp) and g.ejercicio=t.ejercicio) " + 
+					"										 left outer join dashboard.mv_ejecucion_presupuestaria_geografico epg on (     " + 
+					"  										 epg.ejercicio = g.ejercicio " + 
+					"  										 and epg.geografico = g.geografico     " + 
+					"  										 and epg.entidad = 11130009     " + 
+					"  										 and epg.programa in (12,14,15)   " + 
+					"  										 and epg.renglon = rr.renglon      " + 
+					"  										 and (epg.unidad_ejecutora not in (227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,250,252,253,254,255,259,260,261,262,263,264,285))  " + 
+					"  										 and (epg.unidad_ejecutora not in (201,272, 273, 274, 275, 276, 277, 279, 280, 281) or (epg.unidad_ejecutora=201 and epg.programa in (14,15) and epg.renglon=266))  " + 
+					"										 )  " + 
+					"										 left outer join sicoinprod.cg_departamentos d on (d.codigo_departamento = (g.geografico-pmod(g.geografico,100))/100) " + 
+					"										 where t.ejercicio between year(current_timestamp)-4 and year(current_timestamp) " + 
+					"										 group by t.ejercicio,  g.geografico, g.nombre, d.codigo_departamento, d.nombre_departamento, r.rubro, r.nombre, r.orden, r.nivel");
 			pstm.executeUpdate();
 			pstm.close();
 			
@@ -249,8 +253,8 @@ public class CSalud {
 						}
 						
 						pstm1.setInt(1, rs.getInt("ejercicio"));
-						pstm1.setInt(2, rs.getInt("codigo_municipio"));
-						pstm1.setString(3,rs.getString("nombre_municipio"));
+						pstm1.setInt(2, rs.getInt("geografico"));
+						pstm1.setString(3,rs.getString("nombre"));
 						pstm1.setInt(4, rs.getInt("codigo_departamento"));
 						pstm1.setString(5,rs.getString("nombre_departamento"));
 						pstm1.setInt(6, rs.getInt("rubro"));

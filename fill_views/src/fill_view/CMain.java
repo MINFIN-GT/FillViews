@@ -49,6 +49,7 @@ public class CMain {
 		options.addOption("hospitales", "hospitales", false, "actualiza vista de hospitales");
 		options.addOption("centros", "centros", false, "actualiza vista de centros");
 		options.addOption("puestos", "puestos", false, "actualiza vista de puestos");
+		options.addOption("epf", "ejecucion-finalidad", true, "cargar ejecucion presupuestaria por finalidad");
 		options.addOption( "h", "help", false, "muestra este listado de opciones" );
 	}
 	
@@ -255,6 +256,13 @@ public class CMain {
 				 CLogger.writeConsole("Inicio de actualización de la vista mv_puestos_salud");
 				 if(CSalud.updatePuestos(conn))
 					 CLogger.writeConsole("Vista mv_puestos_salud actualizada con exito");
+			 }
+			 else if(cline.hasOption("ejecucion-finalidad")) {
+				 CLogger.writeConsole("Inicio carga de ejecucion presupuestaria por finalidad");
+				 Integer ejercicio = cline.getOptionValue("ejecucion-finalidad")!=null && cline.getOptionValue("ejecucion-finalidad").length()>0 ? 
+						 Integer.parseInt(cline.getOptionValue("ejecucion-finalidad")) : start.getYear();
+				 if(CEjecucionPresupuestaria.loadEjecucionPresupuestariaFinalidadFuncionDivision(conn,ejercicio))
+					 CLogger.writeConsole("Vista de mv_ejecucion_presupuestaria_finalidad actualizada con éxito");
 			 }
 			 else if(cline.hasOption("help")){
 				 HelpFormatter formater = new HelpFormatter();

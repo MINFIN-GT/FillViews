@@ -1514,4 +1514,133 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 		}
 		return ret;
 	}
+
+public static boolean loadEjecucionPresupuestariaFinalidadFuncionDivision(Connection conn, Integer ejercicio){
+	
+	boolean ret = false;
+	try{
+		if( !conn.isClosed() && CMemSQL.connect()){
+			ret = true;
+
+			CLogger.writeConsole("CEjecucionPresupuestaria Finalidad,Funcion,Division (Ejercicio "+ejercicio+"):");
+			PreparedStatement pstm;
+			
+			CLogger.writeConsole("Eliminando data actual:");
+			pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_ejecucion_presupuestaria_finalidad");
+			pstm.executeUpdate();
+			pstm.close();
+			
+			CLogger.writeConsole("Copiando historia:");
+			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ejecucion_presupuestaria_finalidad SELECT * FROM dashboard_historia.mv_ejecucion_presupuestaria_finalidad where ejercicio <> ?");
+			pstm.setInt(1, ejercicio);
+			pstm.executeUpdate();
+			pstm.close();
+				
+			CLogger.writeConsole("Insertando valores a MV_EJECUCION_PRESUPUESTARIA_FINALIDAD");
+			pstm = conn.prepareStatement("INSERT INTO TABLE dashboard.mv_ejecucion_presupuestaria_finalidad  "+
+						"select t1.ejercicio, t1.entidad, t1.unidad_ejecutora, t1.programa, t1.subprograma, t1.proyecto, t1.obra, t1.actividad, t1.renglon, t1.finalidad, t1.finalidad_nombre, t1.funcion, t1.funcion_nombre, t1.division, t1.division_nombre,  " + 
+						"sum(case when t1.mes=1 then t1.asignado end) asignado, sum(t1.ano_actual) ejecucion, " + 
+						"sum(case when t1.mes=12 then t1.vigente end) vigente " + 
+						"from ( " + 
+						"  select ep.*, (e.funcion - pmod(e.funcion,10000)) finalidad, f_finalidad.nombre finalidad_nombre, " + 
+						"  (e.funcion - pmod(e.funcion,100)) funcion, f_funcion.nombre funcion_nombre,  " + 
+						"  e.funcion division, f_division.nombre division_nombre " + 
+						"  from dashboard.mv_ejecucion_presupuestaria ep " + 
+						"  left outer join sicoinprod.cp_estructuras e on  " + 
+						"  ( " + 
+						"    ep.ejercicio = e.ejercicio " + 
+						"  	and ep.entidad = e.entidad " + 
+						"  	and ep.unidad_ejecutora = e.unidad_ejecutora " + 
+						"  	and ep.programa = e.programa " + 
+						"  	and ep.subprograma = e.subprograma " + 
+						"  	and ep.proyecto =  e.proyecto " + 
+						"  	and ep.actividad = e.actividad " + 
+						"  	and ep.obra = e.obra " + 
+						"  ) " + 
+						"  left outer join sicoinprod.cg_funciones f_finalidad on (f_finalidad.ejercicio = ep.ejercicio and f_finalidad.funcion=(e.funcion - pmod(e.funcion,10000))) " + 
+						"  left outer join sicoinprod.cg_funciones f_funcion on (f_funcion.ejercicio = ep.ejercicio and f_funcion.funcion=(e.funcion - pmod(e.funcion,100))) " + 
+						"  left outer join sicoinprod.cg_funciones f_division on (f_division.ejercicio = ep.ejercicio and f_division.funcion=e.funcion) " + 
+						"  where ep.ejercicio = ? " + 
+						") t1 " + 
+						"group by t1.ejercicio, t1.entidad, t1.unidad_ejecutora,t1.programa, t1.subprograma, t1.proyecto, t1.obra, t1.actividad, t1.renglon,t1.finalidad, t1.finalidad_nombre, t1.funcion, t1.funcion_nombre, t1.division_nombre, t1.division " );
+			pstm.setInt(1, ejercicio);
+			pstm.executeUpdate();
+			pstm.close();
+			
+			boolean bconn =  CMemSQL.connect();
+			CLogger.writeConsole("Cargando datos a cache de MV_EJECUCION_PRESUPUESTARIA_FINALIDAD");
+			if(bconn){
+				CMemSQL.getConnection().setAutoCommit(false);
+				ret = true;
+				int rows = 0;
+				int rows_total=0;
+				boolean first=true;
+				PreparedStatement pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ejecucion_presupuestaria_finalidad(ejercicio, entidad, unidad_ejecutora, programa, subprograma, " + 
+						"proyecto, obra, actividad, renglon, finalidad, finalidad_nombre, funcion, funcion_nombre, division, division_nombre, asignado, ejecucion, vigente) "
+						+ "values (?,?,?,?,?,?,?,?,?,?,"
+						+ "?,?,?,?,?,?,?,?) ");
+				
+						pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ejecucion_presupuestaria_finalidad where ejercicio = ?");
+						pstm.setInt(1, ejercicio);
+						pstm.setFetchSize(10000);
+						ResultSet rs = pstm.executeQuery();
+						while(rs!=null && rs.next()){
+							if(first){
+								PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ejecucion_presupuestaria_finalidad where ejercicio =  ? ");
+								pstm2.setInt(1, ejercicio);
+								if (pstm2.executeUpdate()>0)
+									CLogger.writeConsole("Registros eliminados");
+								else
+									CLogger.writeConsole("Sin registros para eliminar");	
+								pstm2.close();
+								first=false;
+							}
+							pstm1.setInt(1, rs.getInt("ejercicio"));
+							pstm1.setInt(2, rs.getInt("entidad"));
+							pstm1.setInt(3, rs.getInt("unidad_ejecutora"));
+							pstm1.setInt(4, rs.getInt("programa"));
+							pstm1.setInt(5, rs.getInt("subprograma"));
+							pstm1.setInt(6, rs.getInt("proyecto"));
+							pstm1.setInt(7, rs.getInt("actividad"));
+							pstm1.setInt(8, rs.getInt("obra"));
+							pstm1.setInt(9, rs.getInt("renglon"));
+							pstm1.setInt(10, rs.getInt("finalidad"));
+							pstm1.setString(11, rs.getString("finalidad_nombre"));
+							pstm1.setInt(12, rs.getInt("funcion"));
+							pstm1.setString(13, rs.getString("funcion_nombre"));
+							pstm1.setInt(14, rs.getInt("division"));
+							pstm1.setString(15, rs.getString("division_nombre"));
+							pstm1.setDouble(16, rs.getDouble("asignado"));
+							pstm1.setDouble(17, rs.getDouble("ejecucion"));
+							pstm1.setDouble(18, rs.getDouble("vigente"));
+							pstm1.addBatch();
+							rows++;
+							if((rows % 10000) == 0){
+								pstm1.executeBatch();
+								CMemSQL.getConnection().commit();
+							}
+						}
+						pstm1.executeBatch();
+						rows_total += rows;
+						rows=0;
+						rs.close();
+						pstm.close();
+						CMemSQL.getConnection().commit();
+					
+					CLogger.writeConsole("Records escritos Totales: "+rows_total);
+					pstm1.close();
+				
+			}
+			
+		}					
+			
+	}
+	catch(Exception e){
+		CLogger.writeFullConsole("Error 1: CEjecucionPresupuestaria.class", e);
+	}
+	finally{
+		CMemSQL.close();
+	}
+	return ret;
+}
 }
