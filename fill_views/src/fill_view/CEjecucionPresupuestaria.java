@@ -146,44 +146,53 @@ public class CEjecucionPresupuestaria {
 					CLogger.writeConsole("Insertando valores a MV_GASTO_ANUAL");
 					///Actualiza la vista de gasto
 					pstm = conn.prepareStatement("insert into table dashboard.mv_gasto_anual " + 
-							"select gh.ejercicio,month(gh.fec_aprobado) mes, gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma, gd.proyecto, gd.actividad, gd.obra, gd.renglon, gd.fuente,          " + 
-							" gd.renglon - (gd.renglon%100) grupo, gd.renglon - (gd.renglon%10) subgrupo, gd.geografico,     " + 
-							" gd.organismo, gd.correlativo, gd.entidad_receptora,  " + 
-							" (f.funcion-(f.funcion%10000)) finalidad, " + 
-							" (f.funcion-(f.funcion%100)) funcion, " + 
-							" f.funcion division,  " + 
-							" f.economico,  " + 
-							" (f.tipo_presupuesto - (f.tipo_presupuesto%10)) tipo_gasto, " + 
-							" f.tipo_presupuesto subgrupo_tipo_gasto,           " + 
-							" sum(gd.monto_renglon) ejecucion           " + 
-							" 			from sicoinprod.eg_gastos_hoja gh, sicoinprod.eg_gastos_detalle gd, sicoinprod.eg_f6_partidas f, " + 
-							" 			dashboard.mv_entidad e	      " + 
-							" 			where gh.ejercicio = ? " + 
-							" 			and gh.ejercicio = gd.ejercicio              " + 
-							" 			and gh.entidad = gd.entidad            " + 
-							" 			and gh.unidad_ejecutora = gd.unidad_ejecutora            " + 
-							" 			and gh.no_cur = gd.no_cur            " + 
-							" 			and gh.clase_registro IN ('DEV', 'CYD', 'RDP', 'REG')            " + 
-							" 			and gh.estado = 'APROBADO'         " + 
-							" 			and f.ejercicio = gd.ejercicio       " + 
-							"			and f.entidad = gd.entidad       " + 
-							"			and f.unidad_ejecutora = gd.unidad_ejecutora       " + 
-							"			and f.programa = gd.programa       " + 
-							"			and f.subprograma = gd.subprograma       " + 
-							"			and f.proyecto = gd.proyecto       " + 
-							"			and f.actividad = gd.actividad       " + 
-							"			and f.obra = gd.obra       " + 
-							"			and f.geografico = gd.geografico       " + 
-							"			and f.renglon = gd.renglon       " + 
-							"			and f.fuente = gd.fuente       " + 
-							"			and f.organismo = gd.organismo       " + 
-							"			and f.correlativo = gd.correlativo " + 
-							"			and e.ejercicio = gh.ejercicio " + 
-							"			and e.entidad = gd.entidad " + 
-							"			and ((gh.unidad_ejecutora>0 and e.unidades_ejecutoras>1) or (gh.unidad_ejecutora=0 and e.unidades_ejecutoras=1)) " + 
-							"			group by gh.ejercicio, month(gh.fec_aprobado), gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma,            " + 
-							" 			gd.proyecto, gd.actividad, gd.obra, gd.renglon, gd.fuente, gd.geografico,     " + 
-							" 			gd.organismo, gd.correlativo, gd.entidad_receptora, f.funcion, f.economico, f.tipo_presupuesto");
+							"select gh.ejercicio,month(gh.fec_aprobado) mes, gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma, gd.proyecto, gd.actividad, gd.obra, gd.renglon, gd.fuente,             " + 
+							"							  gd.renglon - (gd.renglon%100) grupo, gd.renglon - (gd.renglon%10) subgrupo, gd.geografico,        " + 
+							"							  gd.organismo, gd.correlativo, gd.entidad_receptora,     " + 
+							"							  case  " + 
+							"							     when gh.ejercicio > 2009 then (f.funcion-(f.funcion%10000))  " + 
+							"							     else (f.funcion-(f.funcion%100)) " + 
+							"							  end finalidad,    " + 
+							"							  case  " + 
+							"							     when gh.ejercicio > 2009 then (f.funcion-(f.funcion%100))  " + 
+							"							     else f.funcion " + 
+							"							  end funcion,    " + 
+							"							  case " + 
+							"							     when gh.ejercicio > 2009 then f.funcion " + 
+							"							     else null  " + 
+							"							  end division,     " + 
+							"							  f.economico,     " + 
+							"							  (f.tipo_presupuesto - (f.tipo_presupuesto%10)) tipo_gasto,    " + 
+							"							  f.tipo_presupuesto subgrupo_tipo_gasto,              " + 
+							"							  sum(gd.monto_renglon) ejecucion              " + 
+							"							  			from sicoinprod.eg_gastos_hoja gh, sicoinprod.eg_gastos_detalle gd, sicoinprod.eg_f6_partidas f,    " + 
+							"							  			dashboard.mv_entidad e	         " + 
+							"							  			where gh.ejercicio = ?    " + 
+							"							  			and gh.ejercicio = gd.ejercicio                 " + 
+							"							  			and gh.entidad = gd.entidad               " + 
+							"							  			and gh.unidad_ejecutora = gd.unidad_ejecutora               " + 
+							"							  			and gh.no_cur = gd.no_cur               " + 
+							"							  			and gh.clase_registro IN ('DEV', 'CYD', 'RDP', 'REG')               " + 
+							"							  			and gh.estado = 'APROBADO'            " + 
+							"							  			and f.ejercicio = gd.ejercicio          " + 
+							"							 			and f.entidad = gd.entidad          " + 
+							"							 			and f.unidad_ejecutora = gd.unidad_ejecutora          " + 
+							"							 			and f.programa = gd.programa          " + 
+							"							 			and f.subprograma = gd.subprograma          " + 
+							"							 			and f.proyecto = gd.proyecto          " + 
+							"							 			and f.actividad = gd.actividad          " + 
+							"							 			and f.obra = gd.obra          " + 
+							"							 			and f.geografico = gd.geografico          " + 
+							"							 			and f.renglon = gd.renglon          " + 
+							"							 			and f.fuente = gd.fuente          " + 
+							"							 			and f.organismo = gd.organismo          " + 
+							"							 			and f.correlativo = gd.correlativo    " + 
+							"							 			and e.ejercicio = gh.ejercicio    " + 
+							"							 			and e.entidad = gd.entidad    " + 
+							"							 			and ((gh.unidad_ejecutora>0 and e.unidades_ejecutoras>1) or (gh.unidad_ejecutora=0 and e.unidades_ejecutoras=1))    " + 
+							"							 			group by gh.ejercicio, month(gh.fec_aprobado), gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma,               " + 
+							"							  			gd.proyecto, gd.actividad, gd.obra, gd.renglon, gd.fuente, gd.geografico,        " + 
+							"							  			gd.organismo, gd.correlativo, gd.entidad_receptora, f.funcion, f.economico, f.tipo_presupuesto");
 					pstm.setInt(1, ejercicio);
 					pstm.executeUpdate();
 					pstm.close();
@@ -949,7 +958,65 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 					pstm.setInt(10, i);
 	 				pstm.executeUpdate();
 					pstm.close();
+					
+					
 				}
+				
+				CLogger.writeConsole("Insertando valores a MV_GASTO_ANUAL");
+				///Actualiza la vista de gasto
+				pstm = conn.prepareStatement("insert into table dashboard_historia.mv_gasto_anual " + 
+						"select gh.ejercicio,month(gh.fec_aprobado) mes, gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma, gd.proyecto, gd.actividad, gd.obra, gd.renglon, gd.fuente,             " + 
+						"							  gd.renglon - (gd.renglon%100) grupo, gd.renglon - (gd.renglon%10) subgrupo, gd.geografico,        " + 
+						"							  gd.organismo, gd.correlativo, gd.entidad_receptora,     " + 
+						"							  case  " + 
+						"							     when gh.ejercicio > 2009 then (f.funcion-(f.funcion%10000))  " + 
+						"							     else (f.funcion-(f.funcion%100)) " + 
+						"							  end finalidad,    " + 
+						"							  case  " + 
+						"							     when gh.ejercicio > 2009 then (f.funcion-(f.funcion%100))  " + 
+						"							     else f.funcion " + 
+						"							  end funcion,    " + 
+						"							  case " + 
+						"							     when gh.ejercicio > 2009 then f.funcion " + 
+						"							     else null  " + 
+						"							  end division,     " + 
+						"							  f.economico,     " + 
+						"							  (f.tipo_presupuesto - (f.tipo_presupuesto%10)) tipo_gasto,    " + 
+						"							  f.tipo_presupuesto subgrupo_tipo_gasto,              " + 
+						"							  sum(gd.monto_renglon) ejecucion              " + 
+						"							  			from sicoinprod.eg_gastos_hoja gh, sicoinprod.eg_gastos_detalle gd, sicoinprod.eg_f6_partidas f,    " + 
+						"							  			dashboard.mv_entidad e	         " + 
+						"							  			where gh.ejercicio between ? and ?    " + 
+						"							  			and gh.ejercicio = gd.ejercicio                 " + 
+						"							  			and gh.entidad = gd.entidad               " + 
+						"							  			and gh.unidad_ejecutora = gd.unidad_ejecutora               " + 
+						"							  			and gh.no_cur = gd.no_cur               " + 
+						"							  			and gh.clase_registro IN ('DEV', 'CYD', 'RDP', 'REG')               " + 
+						"							  			and gh.estado = 'APROBADO'            " + 
+						"							  			and f.ejercicio = gd.ejercicio          " + 
+						"							 			and f.entidad = gd.entidad          " + 
+						"							 			and f.unidad_ejecutora = gd.unidad_ejecutora          " + 
+						"							 			and f.programa = gd.programa          " + 
+						"							 			and f.subprograma = gd.subprograma          " + 
+						"							 			and f.proyecto = gd.proyecto          " + 
+						"							 			and f.actividad = gd.actividad          " + 
+						"							 			and f.obra = gd.obra          " + 
+						"							 			and f.geografico = gd.geografico          " + 
+						"							 			and f.renglon = gd.renglon          " + 
+						"							 			and f.fuente = gd.fuente          " + 
+						"							 			and f.organismo = gd.organismo          " + 
+						"							 			and f.correlativo = gd.correlativo    " + 
+						"							 			and e.ejercicio = gh.ejercicio    " + 
+						"							 			and e.entidad = gd.entidad    " + 
+						"							 			and ((gh.unidad_ejecutora>0 and e.unidades_ejecutoras>1) or (gh.unidad_ejecutora=0 and e.unidades_ejecutoras=1))    " + 
+						"							 			group by gh.ejercicio, month(gh.fec_aprobado), gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma,               " + 
+						"							  			gd.proyecto, gd.actividad, gd.obra, gd.renglon, gd.fuente, gd.geografico,        " + 
+						"							  			gd.organismo, gd.correlativo, gd.entidad_receptora, f.funcion, f.economico, f.tipo_presupuesto");
+				pstm.setInt(1, ejercicio_inicio);
+				pstm.setInt(1, ejercicio_fin);
+				
+				pstm.executeUpdate();
+				pstm.close();
 				
 				CLogger.writeConsole("Insertando valores a MV_CUOTA");
 				///Actualiza la vista de cuota
@@ -1598,9 +1665,9 @@ public static boolean loadEjecucionPresupuestariaFinalidadFuncionDivision(Connec
 				
 			CLogger.writeConsole("Insertando valores a MV_EJECUCION_PRESUPUESTARIA_FINALIDAD");
 			pstm = conn.prepareStatement("INSERT INTO TABLE dashboard.mv_ejecucion_presupuestaria_finalidad  "+
-						"select t1.ejercicio, t1.entidad, t1.unidad_ejecutora, t1.programa, t1.subprograma, t1.proyecto, t1.obra, t1.actividad, t1.renglon, t1.finalidad, t1.finalidad_nombre, t1.funcion, t1.funcion_nombre, t1.division, t1.division_nombre,     " + 
-						"	sum(case when t1.mes=1 then t1.asignado end) asignado, sum(t1.ejecucion) ejecucion,    " + 
-						"	sum(case when t1.mes=7 then t1.vigente end) vigente    " + 
+						"select t1.ejercicio, t1.mes, t1.entidad, t1.unidad_ejecutora, t1.programa, t1.subprograma, t1.proyecto, t1.obra, t1.actividad, t1.renglon, t1.finalidad, t1.finalidad_nombre, t1.funcion, t1.funcion_nombre, t1.division, t1.division_nombre,     " + 
+						"	sum(t1.asignado) asignado, sum(t1.ejecucion) ejecucion,    " + 
+						"	sum(t1.vigente) vigente    " + 
 						"	from (    " + 
 						"		select ga.*, f_finalidad.nombre finalidad_nombre,    " + 
 						"		f_funcion.nombre funcion_nombre,     " + 
@@ -1620,12 +1687,22 @@ public static boolean loadEjecucionPresupuestariaFinalidadFuncionDivision(Connec
 						"		left outer join sicoinprod.cg_funciones f_finalidad on (f_finalidad.ejercicio = ga.ejercicio and f_finalidad.funcion=ga.finalidad)    " + 
 						"		left outer join sicoinprod.cg_funciones f_funcion on (f_funcion.ejercicio = ga.ejercicio and f_funcion.funcion=ga.funcion)    " + 
 						"		left outer join sicoinprod.cg_funciones f_division on (f_division.ejercicio = ga.ejercicio and f_division.funcion=ga.division)    " + 
-						"		left outer join dashboard.mv_vigente v on ( v.ejercicio = ga.ejercicio and v.mes = ga.mes and v.entidad=ga.entidad and v.unidad_ejecutora = ga.unidad_ejecutora   " + 
-						"			and	v.programa = ga.programa and v.subprograma = ga.subprograma and v.proyecto = ga.proyecto and v.actividad = ga.actividad and v.obra = ga.obra    " + 
-						"			and v.fuente = ga.fuente and v.geografico = ga.geografico )   " + 
+						"		left outer join dashboard.mv_vigente v on (  " + 
+						"			v.ejercicio = ga.ejercicio " +
+						"			and v.mes = ga.mes " + 
+						"			and v.entidad=ga.entidad " + 
+						"			and v.unidad_ejecutora = ga.unidad_ejecutora   " + 
+						"			and	v.programa = ga.programa " +
+						"			and v.subprograma = ga.subprograma " +
+						"			and v.proyecto = ga.proyecto " +
+						"			and v.actividad = ga.actividad " +
+						"			and v.obra = ga.obra  " +
+						"			and v.renglon = ga.renglon " +	
+						"			and v.fuente = ga.fuente " + 
+						"			and v.geografico = ga.geografico )   " + 
 						"		where ga.ejercicio = ?    " + 
 						"		) t1    " + 
-						"		group by t1.ejercicio, t1.entidad, t1.unidad_ejecutora,t1.programa, t1.subprograma, t1.proyecto, t1.obra, t1.actividad, t1.renglon,t1.finalidad, t1.finalidad_nombre, t1.funcion, t1.funcion_nombre, t1.division_nombre, t1.division" );
+						"		group by t1.ejercicio, t1.mes, t1.entidad, t1.unidad_ejecutora,t1.programa, t1.subprograma, t1.proyecto, t1.obra, t1.actividad, t1.renglon,t1.finalidad, t1.finalidad_nombre, t1.funcion, t1.funcion_nombre, t1.division_nombre, t1.division" );
 			pstm.setInt(1, ejercicio);
 			pstm.executeUpdate();
 			pstm.close();
@@ -1638,10 +1715,10 @@ public static boolean loadEjecucionPresupuestariaFinalidadFuncionDivision(Connec
 				int rows = 0;
 				int rows_total=0;
 				boolean first=true;
-				PreparedStatement pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ejecucion_presupuestaria_finalidad(ejercicio, entidad, unidad_ejecutora, programa, subprograma, " + 
+				PreparedStatement pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ejecucion_presupuestaria_finalidad(ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, " + 
 						"proyecto, obra, actividad, renglon, finalidad, finalidad_nombre, funcion, funcion_nombre, division, division_nombre, asignado, ejecucion, vigente) "
 						+ "values (?,?,?,?,?,?,?,?,?,?,"
-						+ "?,?,?,?,?,?,?,?) ");
+						+ "?,?,?,?,?,?,?,?,?) ");
 				
 						pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ejecucion_presupuestaria_finalidad where ejercicio = ?");
 						pstm.setInt(1, ejercicio);
@@ -1659,23 +1736,24 @@ public static boolean loadEjecucionPresupuestariaFinalidadFuncionDivision(Connec
 								first=false;
 							}
 							pstm1.setInt(1, rs.getInt("ejercicio"));
-							pstm1.setInt(2, rs.getInt("entidad"));
-							pstm1.setInt(3, rs.getInt("unidad_ejecutora"));
-							pstm1.setInt(4, rs.getInt("programa"));
-							pstm1.setInt(5, rs.getInt("subprograma"));
-							pstm1.setInt(6, rs.getInt("proyecto"));
-							pstm1.setInt(7, rs.getInt("actividad"));
-							pstm1.setInt(8, rs.getInt("obra"));
-							pstm1.setInt(9, rs.getInt("renglon"));
-							pstm1.setInt(10, rs.getInt("finalidad"));
-							pstm1.setString(11, rs.getString("finalidad_nombre"));
-							pstm1.setInt(12, rs.getInt("funcion"));
-							pstm1.setString(13, rs.getString("funcion_nombre"));
-							pstm1.setInt(14, rs.getInt("division"));
-							pstm1.setString(15, rs.getString("division_nombre"));
-							pstm1.setDouble(16, rs.getDouble("asignado"));
-							pstm1.setDouble(17, rs.getDouble("ejecucion"));
-							pstm1.setDouble(18, rs.getDouble("vigente"));
+							pstm1.setInt(2, rs.getInt("mes"));
+							pstm1.setInt(3, rs.getInt("entidad"));
+							pstm1.setInt(4, rs.getInt("unidad_ejecutora"));
+							pstm1.setInt(5, rs.getInt("programa"));
+							pstm1.setInt(6, rs.getInt("subprograma"));
+							pstm1.setInt(7, rs.getInt("proyecto"));
+							pstm1.setInt(8, rs.getInt("actividad"));
+							pstm1.setInt(9, rs.getInt("obra"));
+							pstm1.setInt(10, rs.getInt("renglon"));
+							pstm1.setInt(11, rs.getInt("finalidad"));
+							pstm1.setString(12, rs.getString("finalidad_nombre"));
+							pstm1.setInt(13, rs.getInt("funcion"));
+							pstm1.setString(14, rs.getString("funcion_nombre"));
+							pstm1.setInt(15, rs.getInt("division"));
+							pstm1.setString(16, rs.getString("division_nombre"));
+							pstm1.setDouble(17, rs.getDouble("asignado"));
+							pstm1.setDouble(18, rs.getDouble("ejecucion"));
+							pstm1.setDouble(19, rs.getDouble("vigente"));
 							pstm1.addBatch();
 							rows++;
 							if((rows % 10000) == 0){
