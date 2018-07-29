@@ -24,7 +24,7 @@ public class CMain {
 		options.addOption("tn_ent", "tn-entidades", false, "calcula los datos de las entidades del TN");
 		options.addOption("tn_ef", "tn-estructuras-financieras", false, "calcula las estructuras financieras del TN");
 		options.addOption("update_all","update-all",false,"Cargar todas las tablas a MemSQL");
-		options.addOption("eec", "ejecucion-estados-calamidad", false, "cargar ejecucion fisica y financiera de los  estados de calamidad");
+		options.addOption("eec", "ejecucion-estados-calamidad", true, "cargar ejecucion fisica y financiera de los  estados de calamidad");
 		options.addOption("eec_gc", "actualizar-eventos-gc-est-calamidad", true, "actualiza eventos de guatecompras para un estado de calamidad");
 		options.addOption("emp", "ejecucion-metas-presidenciales", false, "cargar ejecucion fisica y financiera de metas presidenciales");
 		options.addOption(Option.builder("dt").hasArgs().longOpt("dimension-tiempo").desc("<ejercicio_inicio> <ejercicio_fin> crea la dimension tiempo").build());
@@ -82,8 +82,11 @@ public class CMain {
 			} 
 			else if(cline.hasOption("ejecucion-estados-calamidad")){
 				 CLogger.writeConsole("Inicio registro avance fisico y financiero de estados de calamidad...");
+				 Integer ejercicio = cline.getOptionValue("eec")!=null && cline.getOptionValue("eec").length()>0 ? 
+						 Integer.parseInt(cline.getOptionValue("eec")) : 0;
 				 if(     CEjecucionCalamidad.loadEjecucionFisicaFinanciera(false) && 
-						 CEjecucionCalamidad.loadEjecucionFisicaFinanciera(true) //&&
+						 CEjecucionCalamidad.loadEjecucionFisicaFinanciera(true) &&
+						 CEjecucionCalamidad.loadEjecucionFinancieraOtrosProgramas(ejercicio)
 						 //CEjecucionCalamidad.loadActividadesPresupuestarias(false, 94) &&
 						 //CEjecucionCalamidad.loadActividadesPresupuestarias(true, 94)
 					)
