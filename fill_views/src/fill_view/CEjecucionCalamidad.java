@@ -33,15 +33,15 @@ public class CEjecucionCalamidad {
        "metas.meta, sum(avance.meta_avanzado) meta_avanzado "+
        "from "+esquema+".EG_F6_PARTIDAS p  "+
        "left join (select distinct p3.ejercicio, p3.entidad from "+esquema+".eg_f6_partidas p3 where p3.unidad_ejecutora > 0 and p3.ejercicio <= "+date.getYear()+") p2 on ( p2.entidad = p.entidad and p2.ejercicio = p.ejercicio) "+ 
-       "left join (select d.ejercicio, d.entidad, d.unidad_ejecutora, d.programa, d.subprograma, d.proyecto, d.obra, d.actividad, d.geografico, d.renglon, sum(d.monto_renglon) monto_renglon  "+
+       "left join (select d.ejercicio, d.entidad, d.unidad_ejecutora, d.programa, d.subprograma, d.proyecto, d.obra, d.actividad, d.geografico, d.renglon, d.fuente, sum(d.monto_renglon) monto_renglon  "+
        "     from "+esquema+".eg_gastos_hoja h, "+esquema+".eg_gastos_detalle d  "+
        "     where h.ejercicio=d.ejercicio and h.entidad=d.entidad and h.unidad_ejecutora=d.unidad_ejecutora and h.no_cur=d.no_cur "+
        "     and h.estado='APROBADO' and h.clase_registro in ('DEV','CYD','REG','RDP') and d.ejercicio <= "+date.getYear()+" and d.programa = 94 "+
-       "	 group by d.ejercicio, d.entidad, d.unidad_ejecutora, d.programa, d.subprograma, d.proyecto, d.obra, d.actividad, d.geografico, d.renglon "+
+       "	 group by d.ejercicio, d.entidad, d.unidad_ejecutora, d.programa, d.subprograma, d.proyecto, d.obra, d.actividad, d.geografico, d.renglon, d.fuente "+
        "   ) gasto "+
        "    on (p.ejercicio = gasto.ejercicio and p.entidad=gasto.entidad and p.unidad_ejecutora=gasto.unidad_ejecutora "+ 
        "       and p.programa=gasto.programa and p.subprograma=gasto.subprograma and p.proyecto=gasto.proyecto and p.obra=gasto.obra "+ 
-       "       and p.actividad=gasto.actividad and p.renglon=gasto.renglon and p.geografico = gasto.geografico ) "+
+       "       and p.actividad=gasto.actividad and p.renglon=gasto.renglon and p.geografico = gasto.geografico and p.fuente = gasto.fuente ) "+
        "left join (select m.ejercicio,m.entidad,m.unidad_ejecutora,m.programa,m.subprograma,m.proyecto,m.obra,m.actividad,m.codigo_meta,m.descripcion, m.unidad_medida,(m.CANTIDAD+m.ADICION+m.DISMINUCION) meta "+
        "     from "+esquema+".sf_meta m left join (select distinct m3.ejercicio, m3.entidad from "+esquema+".sf_meta m3 where m3.unidad_ejecutora > 0 and m3.ejercicio <= "+date.getYear()+") m2 on ( m2.entidad = m.entidad and m2.ejercicio = m.ejercicio) "+
        "     where (m2.entidad is null or m.unidad_ejecutora>0) and m.ejercicio <= "+date.getYear()+" and m.programa=94 "+
