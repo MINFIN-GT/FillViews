@@ -21,7 +21,8 @@ public class CEjecucionPresupuestaria {
 				PreparedStatement pstm;
 				if(calcular){
 					CLogger.writeConsole("Eliminando data actual:");
-					List<String> tablas = Arrays.asList("mv_entidad", "mv_estructura", "mv_cuota","mv_gasto", "mv_gasto_anual", "mv_anticipo","mv_vigente", "mv_ejecucion_presupuestaria","mv_ejecucion_presupuestaria_geografico","mv_ejecucion_presupuestaria_mensualizada");
+					List<String> tablas = Arrays.asList("mv_entidad", "mv_estructura", "mv_cuota","mv_gasto", "mv_gasto_anual","mv_gasto_sin_regularizaciones", "mv_anticipo","mv_vigente", 
+							"mv_ejecucion_presupuestaria","mv_ejecucion_presupuestaria_geografico","mv_ejecucion_presupuestaria_mensualizada");
 					
 					if(con_historia) {
 						CLogger.writeConsole("Copiando historia:");
@@ -141,6 +142,31 @@ public class CEjecucionPresupuestaria {
 					pstm.setInt(9, ejercicio);
 					pstm.setInt(10, ejercicio);
 	 				pstm.executeUpdate();
+					pstm.close();
+					
+					CLogger.writeConsole("Insertando valores a MV_GASTO_SIN_REGULARIZACIONES");
+					///Actualiza la vista de gasto sin regularizaciones
+					pstm = conn.prepareStatement("insert into table dashboard.mv_gasto_sin_regularizaciones " +
+							"select gh.ejercicio,month(gh.fec_aprobado) mes, gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma, " + 
+							"							 gd.proyecto, gd.actividad, gd.obra, gd.renglon, gd.fuente,  " + 
+							"							 gd.renglon - (gd.renglon%100) grupo, gd.renglon - (gd.renglon%10) subgrupo, gd.geografico, sum(gd.monto_renglon) gasto, sum(de.monto_deduccion) deducciones   " + 
+							"							 	from sicoinprod.eg_gastos_hoja gh, sicoinprod.eg_gastos_detalle gd left outer join " + 
+							"							 	sicoinprod.eg_gastos_deducciones de on (de.ejercicio = gh.ejercicio " + 
+							"							 	     and de.entidad = gh.entidad " + 
+							"							 	     and de.unidad_ejecutora = gh.unidad_ejecutora " + 
+							"							 	     and de.no_cur = gh.no_cur " + 
+							"							 	     and de.deduccion = 302) " + 
+							"							 	where gh.ejercicio = gd.ejercicio      " + 
+							"							 	and gh.entidad = gd.entidad    " + 
+							"							 	and gh.unidad_ejecutora = gd.unidad_ejecutora    " + 
+							"							 	and gh.no_cur = gd.no_cur    " + 
+							"							 	and (gh.clase_registro IN ('DEV', 'CYD') OR (gh.entidad in (11130018, 11130019) and gh.clase_registro in ('DEV','CYD','REG','RDP')))    " + 
+							"							 	and gh.estado = 'APROBADO'    " + 
+							"							 	and gh.ejercicio = ? " + 
+							"							 	group by gh.ejercicio, month(gh.fec_aprobado), gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma,    " + 
+							"							 	gd.proyecto, gd.actividad, gd.obra, gd.renglon, gd.fuente, gd.geografico");
+					pstm.setInt(1, ejercicio);
+					pstm.executeUpdate();
 					pstm.close();
 					
 					CLogger.writeConsole("Insertando valores a MV_GASTO_ANUAL");

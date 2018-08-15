@@ -323,12 +323,14 @@ public class CEjecucionCalamidad {
 				ResultSet rs = ps.executeQuery();
 				if(rs.next()) {
 					int estado_calamidad_guatecompras = rs.getInt("estado_calamidad_guatecompras");
-					PreparedStatement ps1 = CMemSQL.getConnection().prepareStatement("select * from minfin.mv_evento_gc where estado_calamidad=?");
+					int estado_calamidad_guatecompras_fuera_de_estado = rs.getInt("estado_calamidad_guatecompras_fuera_de_estado");
+					PreparedStatement ps1 = CMemSQL.getConnection().prepareStatement("select * from minfin.mv_evento_gc where (estado_calamidad=? OR estado_calamidad=?)");
 					ps1.setInt(1, estado_calamidad_guatecompras);
+					ps1.setInt(2, estado_calamidad_guatecompras_fuera_de_estado);
 					ResultSet rs1 = ps1.executeQuery();
 					boolean first = true;
-					PreparedStatement ps2 = CMemSQL.getConnection().prepareStatement("INSERT INTO estados_excepcion.seg_compra(entidad,unidad,programa,subprograma,nog,fecha_creacion, usuario_creacion, es_manual) "
-							+ "values(?,?,?,?,?,?,?,?)");
+					PreparedStatement ps2 = CMemSQL.getConnection().prepareStatement("INSERT INTO estados_excepcion.seg_compra(entidad,unidad,programa,subprograma,nog,fecha_creacion, usuario_creacion, es_manual,estado_calamidad_guatecompras) "
+							+ "values(?,?,?,?,?,?,?,?,?)");
 					int rows=0;
 					while(rs1.next()) {
 						if(first) {
@@ -343,6 +345,7 @@ public class CEjecucionCalamidad {
 						ps2.setTimestamp(6, new Timestamp(DateTime.now().getMillis()));
 						ps2.setString(7, "Sistema");
 						ps2.setInt(8, 0);
+						ps2.setInt(9, rs1.getInt("estado_calamidad"));
 						ps2.addBatch();
 						rows++;
 					}
@@ -371,7 +374,7 @@ public class CEjecucionCalamidad {
 			String esquema =  "sicoinprod";
 			String query = "select gd.ejercicio,gd.entidad, e.nombre entidad_nombre, gd.unidad_ejecutora, ue.nombre unidad_ejecutora_nombre,  gd.programa, prog.NOM_ESTRUCTURA programa_nombre,  " + 
 					"gd.subprograma, subp.nom_estructura subprograma_nombre,  gd.proyecto, proy.nom_estructura proyecto_nombre, gd.actividad, gd.obra, act.nom_estructura actividad_nombre, " + 
-					"gd.renglon, r.nombre renglon_nombre, gd.geografico, g.nombre geografico_nombre, sum(case when gh.clase_registro='COM' then gd.monto_renglon end) comprometido, " + 
+					"gd.renglon, r.nombre renglon_nombre, gd.geografico, g.nombre geografico_nombre,c.estado_calamidad, sum(case when gh.clase_registro='COM' then gd.monto_renglon end) comprometido, " + 
 					"sum(case when gh.clase_registro<>'COM' then gd.monto_renglon end) ejecutado " + 
 					"from guatecompras.gc_concurso c, "+esquema+".eg_gastos_hoja gh, "+esquema+".eg_gastos_detalle gd, " + 
 					"sicoinprod.cg_entidades e, "+esquema+".cg_entidades ue, "+esquema+".cp_estructuras prog,  " + 
@@ -397,7 +400,7 @@ public class CEjecucionCalamidad {
 					"and g.ejercicio=gd.ejercicio and g.geografico=gd.geografico " +
 					"group by gd.ejercicio,gd.entidad, e.nombre, gd.unidad_ejecutora, ue.nombre,  gd.programa, prog.nom_estructura,  " + 
 					"gd.subprograma, subp.nom_estructura,  gd.proyecto, proy.nom_estructura, gd.actividad, gd.obra, act.nom_estructura, " + 
-					"gd.renglon, r.nombre, gd.geografico, g.nombre"; 
+					"gd.renglon, r.nombre, gd.geografico, g.nombre, c.estado_calamidad"; 
 		
 			Connection conn =  CHive.openConnection();	
 			if(!conn.isClosed() && CMemSQL.connect()){
@@ -414,9 +417,10 @@ public class CEjecucionCalamidad {
 					pstm = CMemSQL.getConnection().prepareStatement("Insert INTO estados_excepcion.calamidad_ejecucion_otros_programas (ejercicio,entidad,entidad_nombre,unidad_ejecutora,"
 							+ " unidad_ejecutora_nombre,programa,programa_nombre "+
 						       ",subprograma,subprograma_nombre,proyecto,proyecto_nombre,actividad,obra,actividad_nombre, "+
-						       "renglon,renglon_nombre, geografico, geografico_nombre, compromiso, ejecutado) "+
+						       "renglon,renglon_nombre, geografico, geografico_nombre, compromiso, ejecutado, estado_de_calamidad_gc) "+
 								"values (?,?,?,?,?,?,?,?,?,?,"
-									  + "?,?,?,?,?,?,?,?,?,?) ");
+									  + "?,?,?,?,?,?,?,?,?,?,"
+									  + "?) ");
 					while(rs.next()){
 						if (first){
 							first=false;							
@@ -450,6 +454,7 @@ public class CEjecucionCalamidad {
 						pstm.setString(18, rs.getString("geografico_nombre"));
 						pstm.setDouble(19, rs.getDouble("comprometido"));
 						pstm.setDouble(20, rs.getDouble("ejecutado"));
+						pstm.setInt(21,rs.getInt("estado_calamidad"));
 						pstm.addBatch();
 						rows++;
 						if((rows % 1000) == 0){

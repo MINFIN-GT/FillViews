@@ -50,6 +50,7 @@ public class CMain {
 		options.addOption("centros", "centros", false, "actualiza vista de centros");
 		options.addOption("puestos", "puestos", false, "actualiza vista de puestos");
 		options.addOption("epf", "ejecucion-finalidad", true, "cargar ejecucion presupuestaria por finalidad");
+		options.addOption("eca", "ejecucion-contable-anticipo", true, "cargar ejecucion contable de anticipos");
 		options.addOption( "h", "help", false, "muestra este listado de opciones" );
 	}
 	
@@ -266,6 +267,13 @@ public class CMain {
 						 Integer.parseInt(cline.getOptionValue("ejecucion-finalidad")) : start.getYear();
 				 if(CEjecucionPresupuestaria.loadEjecucionPresupuestariaFinalidadFuncionDivision(conn,ejercicio))
 					 CLogger.writeConsole("Vista de mv_ejecucion_presupuestaria_finalidad actualizada con éxito");
+			 }
+			 else if(cline.hasOption("ejecucion-contable-anticipo")) {
+				 CLogger.writeConsole("Inicio carga de ejecucion contable de anticipos");
+				 Integer ejercicio = cline.getOptionValue("ejecucion-contable-anticipo")!=null && cline.getOptionValue("ejecucion-contable-anticipo").length()>0 ? 
+						 Integer.parseInt(cline.getOptionValue("ejecucion-contable-anticipo")) : start.getYear();
+				 if(CEjecucionContable.loadEjecucionAnticipos(conn,ejercicio))
+					 CLogger.writeConsole("Vista de mv_anticipo_contable actualizada con éxito");
 			 }
 			 else if(cline.hasOption("help")){
 				 HelpFormatter formater = new HelpFormatter();
