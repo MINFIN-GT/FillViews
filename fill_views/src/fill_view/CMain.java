@@ -51,6 +51,7 @@ public class CMain {
 		options.addOption("puestos", "puestos", false, "actualiza vista de puestos");
 		options.addOption("epf", "ejecucion-finalidad", true, "cargar ejecucion presupuestaria por finalidad");
 		options.addOption("eca", "ejecucion-contable-anticipo", true, "cargar ejecucion contable de anticipos");
+		options.addOption("gsr", "gasto-sin-regularizaciones", true, "cargar de cache de gasto sin regularizaciones");
 		options.addOption( "h", "help", false, "muestra este listado de opciones" );
 	}
 	
@@ -274,6 +275,15 @@ public class CMain {
 						 Integer.parseInt(cline.getOptionValue("ejecucion-contable-anticipo")) : start.getYear();
 				 if(CEjecucionContable.loadEjecucionAnticipos(conn,ejercicio))
 					 CLogger.writeConsole("Vista de mv_anticipo_contable actualizada con éxito");
+			 }
+			 else if(cline.hasOption("gasto-sin-regularizaciones")){
+				 CLogger.writeConsole("Inicio carga de gasto sin regularizaciones");
+				 String[] argumentos = cline.getOptionValues("gsr");
+				 Integer ejercicio =  argumentos!=null && argumentos.length>0 ? 
+						 Integer.parseInt(argumentos[0]) : start.getYear();
+				 boolean con_historia = argumentos!=null && argumentos.length>1 ? argumentos[1]=="true" : true;		 
+				 if(CEjecucionPresupuestaria.loadGastoSinRegularizaciones(conn, ejercicio, true, con_historia))
+					 CLogger.writeConsole("Datos de gasto sin regularizaciones cargados con exito");
 			 }
 			 else if(cline.hasOption("help")){
 				 HelpFormatter formater = new HelpFormatter();
