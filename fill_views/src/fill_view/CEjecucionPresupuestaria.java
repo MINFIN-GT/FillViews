@@ -820,7 +820,7 @@ public class CEjecucionPresupuestaria {
 					CMemSQL.getConnection().commit();
 					
 					
-					CLogger.writeConsole("Cargando datos a cache de MV_EJECUCION_PRESUPUESTARIA_MENSUALIZADA");
+					CLogger.writeConsole("Cargando datos a cache de MV_GASTO_SIN_REGULARIZACIONES");
 					ret = true;
 					rows = 0;
 					first=true;
