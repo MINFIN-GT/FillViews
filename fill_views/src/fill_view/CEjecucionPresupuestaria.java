@@ -820,7 +820,7 @@ public class CEjecucionPresupuestaria {
 					CMemSQL.getConnection().commit();
 					
 					
-					CLogger.writeConsole("Cargando datos a cache de MV_GASTO_SIN_REGULARIZACIONES");
+					CLogger.writeConsole("Cargando datos a cache de MV_EJECUCION_PRESUPUESTARIA_MENSUALIZADA");
 					ret = true;
 					rows = 0;
 					first=true;
@@ -1929,17 +1929,18 @@ public static boolean loadGastoSinRegularizaciones(Connection conn, Integer ejer
 				ret = true;
 				rows = 0;
 				first=true;
-				PreparedStatement pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ejecucion_presupuestaria_mensualizada(ejercicio, entidad, unidad_ejecutora, "
-						+ "programa, subprograma, proyecto,actividad, obra, fuente, renglon, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12) "
-						+ "values (?,?,?,?,?,?,?,?,?,?,?,"
-						+ "?,?,?,?,?,?,?,?,?,?,?) ");
-				pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ejecucion_presupuestaria_mensualizada where ejercicio = ? ");
+				PreparedStatement pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_gasto_sin_regularizaciones(ejercicio, mes, entidad, unidad_ejecutora, "
+						+ "programa, subprograma, proyecto, "
+						+ "actividad, obra, renglon, fuente, grupo, subgrupo, geografico, gasto, deducciones) "
+						+ "values (?,?,?,?,?,?,?,?,?,?,"
+						+ "?,?,?,?,?,?) ");
+				pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_gasto_sin_regularizaciones where ejercicio = ? ");
 				pstm.setInt(1, ejercicio);
 				pstm.setFetchSize(10000);
 				ResultSet rs = pstm.executeQuery();
 				while(rs!=null && rs.next()){
 					if(first){
-						PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ejecucion_presupuestaria_mensualizada where ejercicio = ? ");
+						PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_gasto_sin_regularizaciones where ejercicio = ? ");
 						pstm2.setInt(1, ejercicio);
 						if (pstm2.executeUpdate()>0)
 							CLogger.writeConsole("Registros eliminados");
@@ -1949,27 +1950,21 @@ public static boolean loadGastoSinRegularizaciones(Connection conn, Integer ejer
 						first=false;
 					}
 					pstm1.setInt(1, rs.getInt("ejercicio"));
-					pstm1.setInt(2, rs.getInt("entidad"));
-					pstm1.setInt(3, rs.getInt("unidad_ejecutora"));
-					pstm1.setInt(4, rs.getInt("programa"));
-					pstm1.setInt(5, rs.getInt("subprograma"));
-					pstm1.setInt(6, rs.getInt("proyecto"));
-					pstm1.setInt(7, rs.getInt("actividad"));
-					pstm1.setInt(8, rs.getInt("obra"));
-					pstm1.setInt(9, rs.getInt("fuente"));
+					pstm1.setInt(2, rs.getInt("mes"));
+					pstm1.setInt(3, rs.getInt("entidad"));
+					pstm1.setInt(4, rs.getInt("unidad_ejecutora"));
+					pstm1.setInt(5, rs.getInt("programa"));
+					pstm1.setInt(6, rs.getInt("subprograma"));
+					pstm1.setInt(7, rs.getInt("proyecto"));
+					pstm1.setInt(8, rs.getInt("actividad"));
+					pstm1.setInt(9, rs.getInt("obra"));
 					pstm1.setInt(10, rs.getInt("renglon"));
-					pstm1.setDouble(11, rs.getDouble("m1"));
-					pstm1.setDouble(12, rs.getDouble("m2"));
-					pstm1.setDouble(13, rs.getDouble("m3"));
-					pstm1.setDouble(14, rs.getDouble("m4"));
-					pstm1.setDouble(15, rs.getDouble("m5"));
-					pstm1.setDouble(16, rs.getDouble("m6"));
-					pstm1.setDouble(17, rs.getDouble("m7"));
-					pstm1.setDouble(18, rs.getDouble("m8"));
-					pstm1.setDouble(19, rs.getDouble("m9"));
-					pstm1.setDouble(20, rs.getDouble("m10"));
-					pstm1.setDouble(21, rs.getDouble("m11"));
-					pstm1.setDouble(22, rs.getDouble("m12"));
+					pstm1.setInt(11, rs.getInt("fuente"));
+					pstm1.setInt(12, rs.getInt("grupo"));
+					pstm1.setInt(13, rs.getInt("subgrupo"));
+					pstm1.setInt(14, rs.getInt("geografico"));
+					pstm1.setDouble(15, rs.getDouble("gasto"));
+					pstm1.setDouble(16, rs.getDouble("deducciones"));
 					pstm1.addBatch();
 					rows++;
 					if((rows % 10000) == 0){
@@ -1981,9 +1976,6 @@ public static boolean loadGastoSinRegularizaciones(Connection conn, Integer ejer
 				rs.close();
 				pstm.close();
 				CMemSQL.getConnection().commit();
-				
-				CLogger.writeConsole("Records escritos Totales: "+rows);
-				pstm1.close();
 			}
 			
 		}					
