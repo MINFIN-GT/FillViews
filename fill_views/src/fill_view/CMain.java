@@ -167,7 +167,9 @@ public class CMain {
 						 Integer.parseInt(argumentos[0]) : start.getYear();
 				 Integer ejercicio_fin = argumentos!=null && argumentos.length>1 ? 
 								 Integer.parseInt(argumentos[1]) : start.getYear();
-				 if(CEjecucionPresupuestaria.loadEjecucionPresupuestariaHistoria(conn, ejercicio_inicio, ejercicio_fin))
+				 boolean calcula = 	argumentos!=null && argumentos.length>2 ? 
+						 Integer.parseInt(argumentos[2])==1 : true;			 
+				 if(CEjecucionPresupuestaria.loadEjecucionPresupuestariaHistoria(conn, ejercicio_inicio, ejercicio_fin, calcula))
 					 CLogger.writeConsole("Datos Historicos de ejecucion presupuestaria cargados con exito");
 			 }
 			 else if(cline.hasOption("ejecucion-fisica")){
