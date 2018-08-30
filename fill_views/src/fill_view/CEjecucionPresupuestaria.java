@@ -141,6 +141,8 @@ public class CEjecucionPresupuestaria {
 							"	and f.renglon = gd.renglon " + 
 							"	and f.geografico = gd.geografico " + 
 							"	and f.fuente = gd.fuente    " + 
+							"   and f.organismo = gd.organismo  " +
+							"	and f.correlativo = gd.correlativo " +
 							"				group by month(gh.fec_aprobado), gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma,          " + 
 							"				gd.proyecto, gd.actividad, gd.obra, gg.nombre, sg.nombre, r.nombre, f.economico, gd.renglon, gd.fuente, gd.geografico");
 					pstm.setInt(1, ejercicio);
