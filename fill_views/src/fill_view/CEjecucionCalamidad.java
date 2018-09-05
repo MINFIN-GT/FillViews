@@ -49,25 +49,26 @@ public class CEjecucionCalamidad {
        "   on (p.ejercicio = metas.ejercicio and p.entidad=metas.entidad and p.unidad_ejecutora=metas.unidad_ejecutora "+
        "       and p.programa=metas.programa and p.subprograma = metas.subprograma and p.proyecto=metas.proyecto and p.obra=metas.obra "+
        "       and p.actividad=metas.actividad) "+
-       "left join (select d.ejercicio, d.entidad, d.unidad_ejecutora, d.programa, d.subprograma, d.proyecto, d.obra, d.actividad, d.codigo_meta, d.cantidad_unidades meta_avanzado"+
+       "left join (select d.ejercicio, d.entidad, d.unidad_ejecutora, d.programa, d.subprograma, d.proyecto, d.obra, d.actividad, d.codigo_meta, sum(d.cantidad_unidades) meta_avanzado"+
        "     from "+esquema+".sf_ejecucion_hoja_4 h, "+esquema+".sf_ejecucion_detalle_4 d "+
        "     where h.ejercicio=d.ejercicio and h.entidad=d.entidad and h.unidad_ejecutora=d.unidad_ejecutora and h.no_cur=d.no_cur "+
        "     and h.estado='APROBADO' and d.ejercicio <= "+date.getYear()+" and d.programa=94 "+
+       "	 group by d.ejercicio, d.entidad, d.unidad_ejecutora, d.programa, d.subprograma, d.proyecto, d.obra, d.actividad, d.codigo_meta " +
        "     ) avance   "+
-       "     on(metas.ejercicio=avance.ejercicio and metas.entidad=avance.entidad and metas.unidad_ejecutora=avance.unidad_ejecutora "+
-       "     and metas.programa=avance.programa and metas.subprograma=avance.subprograma and metas.proyecto=avance.proyecto and metas.obra=avance.obra "+
-       "     and metas.actividad=avance.actividad and metas.codigo_meta=avance.codigo_meta) "+
-       "left join "+esquema+".fp_unidad_medida um  on ( um.ejercicio=metas.ejercicio and um.codigo=metas.unidad_medida ) "+
-       ","+esquema+".cg_entidades e, "+esquema+".cg_entidades ue, "+esquema+".cp_estructuras prog, "+esquema+".cp_estructuras subp, "+
-       esquema+".cp_estructuras proy, "+esquema+".cp_estructuras act, "+esquema+".cp_objetos_gasto r, "+esquema+".cg_geograficos g "+
-       "where (p2.entidad is null or p.unidad_ejecutora>0)  "+
-       "and p.ejercicio <= "+date.getYear()+" and p.programa = 94  "+
-       "and e.ejercicio=p.ejercicio and e.entidad=p.entidad and e.unidad_ejecutora = 0 "+
-       "and ue.ejercicio=p.ejercicio and ue.entidad=p.entidad and ue.unidad_ejecutora=p.unidad_ejecutora "+
-       "and prog.ejercicio=p.ejercicio and prog.entidad=p.entidad and prog.unidad_ejecutora=p.unidad_ejecutora and prog.programa=p.programa and prog.nivel_estructura=2 "+
-       "and subp.ejercicio=p.ejercicio and subp.entidad=p.entidad and subp.unidad_ejecutora=p.unidad_ejecutora and subp.programa=p.programa and subp.subprograma=p.subprograma and subp.nivel_estructura=3 "+
-       "and proy.ejercicio=p.ejercicio and proy.entidad=p.entidad and proy.unidad_ejecutora=p.unidad_ejecutora and proy.programa=p.programa and proy.subprograma=p.subprograma and proy.proyecto=p.proyecto and proy.nivel_estructura=4 "+
-       "and act.ejercicio=p.ejercicio and act.entidad=p.entidad and act.unidad_ejecutora=p.unidad_ejecutora and act.programa=p.programa and act.subprograma=p.subprograma and act.proyecto=p.proyecto and act.obra=p.obra and act.actividad=p.actividad and act.nivel_estructura=5 "+
+       "     on(metas.ejercicio=avance.ejercicio and metas.entidad=avance.entidad and metas.unidad_ejecutora=avance.unidad_ejecutora " +
+       "     and metas.programa=avance.programa and metas.subprograma=avance.subprograma and metas.proyecto=avance.proyecto and metas.obra=avance.obra " +
+       "     and metas.actividad=avance.actividad and metas.codigo_meta=avance.codigo_meta) " +
+       "left join "+esquema+".fp_unidad_medida um  on ( um.ejercicio=metas.ejercicio and um.codigo=metas.unidad_medida ) " +
+       ","+esquema+".cg_entidades e, "+esquema+".cg_entidades ue, "+esquema+".cp_estructuras prog, "+esquema+".cp_estructuras subp, " +
+       esquema+".cp_estructuras proy, "+esquema+".cp_estructuras act, "+esquema+".cp_objetos_gasto r, "+esquema+".cg_geograficos g " + 
+       "where (p2.entidad is null or p.unidad_ejecutora>0)  " +
+       "and p.ejercicio <= "+date.getYear()+" and p.programa = 94  " +
+       "and e.ejercicio=p.ejercicio and e.entidad=p.entidad and e.unidad_ejecutora = 0 " +
+       "and ue.ejercicio=p.ejercicio and ue.entidad=p.entidad and ue.unidad_ejecutora=p.unidad_ejecutora " +
+       "and prog.ejercicio=p.ejercicio and prog.entidad=p.entidad and prog.unidad_ejecutora=p.unidad_ejecutora and prog.programa=p.programa and prog.nivel_estructura=2 " +
+       "and subp.ejercicio=p.ejercicio and subp.entidad=p.entidad and subp.unidad_ejecutora=p.unidad_ejecutora and subp.programa=p.programa and subp.subprograma=p.subprograma and subp.nivel_estructura=3 " +
+       "and proy.ejercicio=p.ejercicio and proy.entidad=p.entidad and proy.unidad_ejecutora=p.unidad_ejecutora and proy.programa=p.programa and proy.subprograma=p.subprograma and proy.proyecto=p.proyecto and proy.nivel_estructura=4 " +
+       "and act.ejercicio=p.ejercicio and act.entidad=p.entidad and act.unidad_ejecutora=p.unidad_ejecutora and act.programa=p.programa and act.subprograma=p.subprograma and act.proyecto=p.proyecto and act.obra=p.obra and act.actividad=p.actividad and act.nivel_estructura=5 " +
        "and r.ejercicio=p.ejercicio and r.renglon=p.renglon " +
        "and g.ejercicio=p.ejercicio and g.geografico=p.geografico " +
        "group by p.ejercicio,p.entidad, e.nombre, p.unidad_ejecutora, ue.nombre,  p.programa, prog.nom_estructura, " +
