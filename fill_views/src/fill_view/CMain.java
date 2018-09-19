@@ -38,7 +38,7 @@ public class CMain {
 		options.addOption("ef", "ejecucion-fisica", true, "cargar ejecucion fisica");
 		options.addOption("efh", "ejecucion-fisica-historia", true, "cargar historia ejecucion fisica");
 		options.addOption("eff", "ejecucion-financiera-fisica", false, "actualiza vista de financiera-fisica");
-		options.addOption("ei", "ejecucion-ingresos", false, "cargar ingresos");
+		options.addOption("ei", "ejecucion-ingresos", true, "cargar ingresos");
 		options.addOption("ing_ra", "ing_ra", true, "cargar ingresos recurso auxiliar por año");
 		options.addOption("ing_r", "ing_r", true, "cargar ingresos recurso por año");
 		options.addOption("sn", "snips", false, "cargar snips");

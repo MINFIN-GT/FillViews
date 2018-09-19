@@ -58,7 +58,7 @@ public class CIngreso {
 				"and ih.clase_registro = 'DYP' " + 
 				"group by ih.ejercicio, ih.entidad, e.nombre, ih.unidad_ejecutora, ue.nombre, ih.fuente, ih.organismo, ih.geografico,   " + 
 				"year(ih.fec_aprobado), month(ih.fec_aprobado), day(ih.fec_aprobado), date_format(ih.fec_aprobado,'u'), " + 
-				"id.mes_ingreso, id.recurso, r.nombre, id.recurso_auxiliar, ra.nombre, 'Fecha Aprobado' ");
+				"id.recurso, r.nombre, id.recurso_auxiliar, ra.nombre, 'Fecha Aprobado' ");
 			pstm.setInt(1, ejercicio);
 			pstm.executeUpdate();
 			pstm.close();
@@ -108,10 +108,10 @@ public class CIngreso {
 						pstm1.setInt(13, rs.getInt("recurso"));
 						pstm1.setString(14,rs.getString("recurso_nombre"));
 						pstm1.setInt(15, rs.getInt("recurso_auxiliar"));
-						pstm1.setString(16,rs.getString("rcurso_auxiliar_nombre"));
+						pstm1.setString(16,rs.getString("recurso_auxiliar_nombre"));
 						pstm1.setDouble(17, rs.getDouble("monto_ingreso"));
 						pstm1.setDouble(18, rs.getDouble("saldo_ingreso"));
-						pstm1.setDouble(19, rs.getDouble("fecha_referencia"));
+						pstm1.setString(19, rs.getString("fecha_referencia"));
 						pstm1.addBatch();
 						
 						rows++;
@@ -163,7 +163,7 @@ public class CIngreso {
 				"and ih.clase_registro = 'DYP' " + 
 				"group by ih.ejercicio, ih.entidad, e.nombre, ih.unidad_ejecutora, ue.nombre, ih.fuente, ih.organismo, ih.geografico,   " + 
 				"year(date_add(ih.fec_real,3)), month(date_add(ih.fec_real,3)), day(date_add(ih.fec_real,3)), date_format(date_add(ih.fec_real,3),'u'), " + 
-				"id.mes_ingreso, id.recurso, r.nombre, id.recurso_auxiliar, ra.nombre, 'Fecha Real' ");
+				"id.recurso, r.nombre, id.recurso_auxiliar, ra.nombre, 'Fecha Real' ");
 			pstm.setInt(1, ejercicio);
 			pstm.executeUpdate();
 			pstm.close();
@@ -213,10 +213,10 @@ public class CIngreso {
 						pstm1.setInt(13, rs.getInt("recurso"));
 						pstm1.setString(14,rs.getString("recurso_nombre"));
 						pstm1.setInt(15, rs.getInt("recurso_auxiliar"));
-						pstm1.setString(16,rs.getString("rcurso_auxiliar_nombre"));
+						pstm1.setString(16,rs.getString("recurso_auxiliar_nombre"));
 						pstm1.setDouble(17, rs.getDouble("monto_ingreso"));
 						pstm1.setDouble(18, rs.getDouble("saldo_ingreso"));
-						pstm1.setDouble(19, rs.getDouble("fecha_referencia"));
+						pstm1.setString(19, rs.getString("fecha_referencia"));
 						pstm1.addBatch();
 						
 						rows++;
@@ -260,7 +260,7 @@ public class CIngreso {
 			
 			CLogger.writeConsole("Insertando valores a MV_INGRESO_RECURSO_AUXILIAR (Fecha Aprobado)");
 			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ingreso_recurso_auxiliar "+
-					"SELECT recurso, recurso_nombre, recurso_auxiliar, recurso_auxiliar_nombre, ejercicio, 'Fecha Aprobado' fecha_referencia, "
+					"SELECT recurso, recurso_nombre, recurso_auxiliar, recurso_auxiliar_nombre, ejercicio, fecha_referencia, "
 					+ "sum(case when fec_mes=1 then monto_ingreso else 0 end) m1, "
 					+ "sum(case when fec_mes=2 then monto_ingreso else 0 end) m2, "
 					+ "sum(case when fec_mes=3 then monto_ingreso else 0 end) m3, "
@@ -276,7 +276,7 @@ public class CIngreso {
 					+ "from dashboard.mv_ingreso "
 					+ "where ejercicio = ? "
 					+ "and fecha_referencia='Fecha Aprobado'  "
-					+ "group by recurso, recurso_nombre, recurso_auxiliar, recurso_auxiliar_nombre, ejercicio, 'Fecha Aprobado' ");
+					+ "group by recurso, recurso_nombre, recurso_auxiliar, recurso_auxiliar_nombre, ejercicio, fecha_referencia ");
 			pstm.setInt(1, ejercicio);
 			pstm.executeUpdate();
 			pstm.close();
@@ -293,7 +293,7 @@ public class CIngreso {
 						+ "?,?,?,?,?,?,?,?,?,?,"
 						+ "?,?,?) ");
 				
-				pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ingreso_recurso_auxiliar where ejercicio = ?");
+				pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ingreso_recurso_auxiliar where ejercicio = ? and fecha_referencia = 'Fecha Aprobado'");
 				pstm.setInt(1, ejercicio);
 				ResultSet rs = pstm.executeQuery();
 				while(rs.next()){
@@ -340,7 +340,7 @@ public class CIngreso {
 			
 			CLogger.writeConsole("Insertando valores a MV_INGRESO_RECURSO_AUXILIAR (Fecha Real)");
 			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ingreso_recurso_auxiliar "+
-					"SELECT recurso, recurso_nombre, recurso_auxiliar, recurso_auxiliar_nombre, ejercicio, 'Fecha Real' fecha_referencia, "
+					"SELECT recurso, recurso_nombre, recurso_auxiliar, recurso_auxiliar_nombre, ejercicio, fecha_referencia, "
 					+ "sum(case when fec_mes=1 then monto_ingreso else 0 end) m1, "
 					+ "sum(case when fec_mes=2 then monto_ingreso else 0 end) m2, "
 					+ "sum(case when fec_mes=3 then monto_ingreso else 0 end) m3, "
@@ -356,7 +356,7 @@ public class CIngreso {
 					+ "from dashboard.mv_ingreso "
 					+ "where ejercicio = ? "
 					+ "and fecha_referencia='Fecha Real' "
-					+ "group by recurso, recurso_nombre, recurso_auxiliar, recurso_auxiliar_nombre, ejercicio, 'Fecha Real' ");
+					+ "group by recurso, recurso_nombre, recurso_auxiliar, recurso_auxiliar_nombre, ejercicio, fecha_referencia ");
 			pstm.setInt(1, ejercicio);
 			pstm.executeUpdate();
 			pstm.close();
@@ -367,53 +367,53 @@ public class CIngreso {
 				ret = true;
 				int rows = 0;
 				boolean first=true;
-				PreparedStatement pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ingreso_recurso_auxiliar(recurso, recurso_nombre, auxiliar, auxiliar_nombre,ejercicio,"
+				PreparedStatement pstm4 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ingreso_recurso_auxiliar(recurso, recurso_nombre, auxiliar, auxiliar_nombre,ejercicio,"
 						+ "m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12,fecha_referencia) "
 						+ "values (?,?,?,?,?,"
 						+ "?,?,?,?,?,?,?,?,?,?,"
 						+ "?,?,?) ");
 				
-				pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ingreso_recurso_auxiliar where ejercicio = ?");
+				pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ingreso_recurso_auxiliar where ejercicio = ?  and fecha_referencia = 'Fecha Real'");
 				pstm.setInt(1, ejercicio);
 				ResultSet rs = pstm.executeQuery();
 				while(rs.next()){
 					if(first){
-						PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ingreso_recurso_auxiliar where ejercicio =  ? and fecha_referencia='Fecha Real'");
-						pstm2.setInt(1, ejercicio);
-						if (pstm2.executeUpdate()>0)
+						PreparedStatement pstm3 = CMemSQL.getConnection().prepareStatement("delete from mv_ingreso_recurso_auxiliar where ejercicio =  ? and fecha_referencia='Fecha Real'");
+						pstm3.setInt(1, ejercicio);
+						if (pstm3.executeUpdate()>0)
 							CLogger.writeConsole("Registros eliminados");
 						else
 							CLogger.writeConsole("Sin registros para eliminar");	
-						pstm2.close();
+						pstm3.close();
 						first=false;
 					}
-					pstm1.setInt(1, rs.getInt("recurso"));
-					pstm1.setString(2, rs.getString("recurso_nombre"));
-					pstm1.setInt(3, rs.getInt("recurso_auxiliar"));
-					pstm1.setString(4, rs.getString("recurso_auxiliar_nombre"));
-					pstm1.setInt(5, rs.getInt("ejercicio"));
-					pstm1.setDouble(6, rs.getDouble("m1"));
-					pstm1.setDouble(7, rs.getDouble("m2"));
-					pstm1.setDouble(8, rs.getDouble("m3"));
-					pstm1.setDouble(9, rs.getDouble("m4"));
-					pstm1.setDouble(10, rs.getDouble("m5"));
-					pstm1.setDouble(11, rs.getDouble("m6"));
-					pstm1.setDouble(12, rs.getDouble("m7"));
-					pstm1.setDouble(13, rs.getDouble("m8"));
-					pstm1.setDouble(14, rs.getDouble("m9"));
-					pstm1.setDouble(15, rs.getDouble("m10"));
-					pstm1.setDouble(16, rs.getDouble("m11"));
-					pstm1.setDouble(17, rs.getDouble("m12"));
-					pstm1.setString(18, "Fecha Real");
+					pstm4.setInt(1, rs.getInt("recurso"));
+					pstm4.setString(2, rs.getString("recurso_nombre"));
+					pstm4.setInt(3, rs.getInt("recurso_auxiliar"));
+					pstm4.setString(4, rs.getString("recurso_auxiliar_nombre"));
+					pstm4.setInt(5, rs.getInt("ejercicio"));
+					pstm4.setDouble(6, rs.getDouble("m1"));
+					pstm4.setDouble(7, rs.getDouble("m2"));
+					pstm4.setDouble(8, rs.getDouble("m3"));
+					pstm4.setDouble(9, rs.getDouble("m4"));
+					pstm4.setDouble(10, rs.getDouble("m5"));
+					pstm4.setDouble(11, rs.getDouble("m6"));
+					pstm4.setDouble(12, rs.getDouble("m7"));
+					pstm4.setDouble(13, rs.getDouble("m8"));
+					pstm4.setDouble(14, rs.getDouble("m9"));
+					pstm4.setDouble(15, rs.getDouble("m10"));
+					pstm4.setDouble(16, rs.getDouble("m11"));
+					pstm4.setDouble(17, rs.getDouble("m12"));
+					pstm4.setString(18, "Fecha Real");
 					
-					pstm1.addBatch();
+					pstm4.addBatch();
 					rows++;
 					if((rows % 100) == 0)
-						pstm1.executeBatch();
+						pstm4.executeBatch();
 				}
 				CLogger.writeConsole("Records escritos: "+rows);
-				pstm1.executeBatch();
-				pstm1.close();
+				pstm4.executeBatch();
+				pstm4.close();
 				rs.close();
 				pstm.close();
 			}
@@ -442,7 +442,7 @@ public class CIngreso {
 			
 			CLogger.writeConsole("Insertando valores a MV_INGRESO_RECURSO (Fecha Aprobado)");
 			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ingreso_recurso "+
-					"SELECT recurso, recurso_nombre, ejercicio, 'Fecha Aprobado' fecha_referencia, "
+					"SELECT recurso, recurso_nombre, ejercicio, fecha_referencia, "
 					+ "sum(case when fec_mes=1 then monto_ingreso else 0 end) m1, "
 					+ "sum(case when fec_mes=2 then monto_ingreso else 0 end) m2, "
 					+ "sum(case when fec_mes=3 then monto_ingreso else 0 end) m3, "
@@ -458,7 +458,7 @@ public class CIngreso {
 					+ "from dashboard.mv_ingreso "
 					+ "where ejercicio = ? "
 					+ "and fecha_referencia = 'Fecha Aprobado' "
-					+ "group by recurso, recurso_nombre, ejercicio, 'Fecha Aprobado' ");
+					+ "group by recurso, recurso_nombre, ejercicio, fecha_referencia ");
 			pstm.setInt(1, ejercicio);
 			pstm.executeUpdate();
 			pstm.close();
@@ -474,7 +474,7 @@ public class CIngreso {
 						+ "values (?,?,?,"
 						+ "?,?,?,?,?,?,?,?,?,?,?,?,?) ");
 				
-				pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ingreso_recurso where ejercicio = ?");
+				pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ingreso_recurso where ejercicio = ? and fecha_referencia = 'Fecha Aprobado'");
 				pstm.setInt(1, ejercicio);
 				ResultSet rs = pstm.executeQuery();
 				while(rs.next()){
@@ -503,7 +503,7 @@ public class CIngreso {
 					pstm1.setDouble(13, rs.getDouble("m10"));
 					pstm1.setDouble(14, rs.getDouble("m11"));
 					pstm1.setDouble(15, rs.getDouble("m12"));
-					pstm1.setString(16, rs.getString("Fecha Aprobado"));
+					pstm1.setString(16, "Fecha Aprobado");
 					
 					pstm1.addBatch();
 					rows++;
@@ -519,7 +519,7 @@ public class CIngreso {
 			
 			CLogger.writeConsole("Insertando valores a MV_INGRESO_RECURSO (Fecha Real)");
 			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ingreso_recurso "+
-					"SELECT recurso, recurso_nombre, ejercicio, 'Fecha Real' fecha_referencia, "
+					"SELECT recurso, recurso_nombre, ejercicio, fecha_referencia, "
 					+ "sum(case when fec_mes=1 then monto_ingreso else 0 end) m1, "
 					+ "sum(case when fec_mes=2 then monto_ingreso else 0 end) m2, "
 					+ "sum(case when fec_mes=3 then monto_ingreso else 0 end) m3, "
@@ -535,7 +535,7 @@ public class CIngreso {
 					+ "from dashboard.mv_ingreso "
 					+ "where ejercicio = ? "
 					+ "and fecha_referencia = 'Fecha Real' "
-					+ "group by recurso, recurso_nombre, ejercicio, 'Fecha Real' ");
+					+ "group by recurso, recurso_nombre, ejercicio, fecha_referencia ");
 			pstm.setInt(1, ejercicio);
 			pstm.executeUpdate();
 			pstm.close();
@@ -551,7 +551,7 @@ public class CIngreso {
 						+ "values (?,?,?,"
 						+ "?,?,?,?,?,?,?,?,?,?,?,?,?) ");
 				
-				pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ingreso_recurso where ejercicio = ?");
+				pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ingreso_recurso where ejercicio = ? and fecha_referencia='Fecha Real' ");
 				pstm.setInt(1, ejercicio);
 				ResultSet rs = pstm.executeQuery();
 				while(rs.next()){
@@ -580,7 +580,7 @@ public class CIngreso {
 					pstm1.setDouble(13, rs.getDouble("m10"));
 					pstm1.setDouble(14, rs.getDouble("m11"));
 					pstm1.setDouble(15, rs.getDouble("m12"));
-					pstm1.setString(16, rs.getString("Fecha Real"));
+					pstm1.setString(16, "Fecha Real");
 					
 					pstm1.addBatch();
 					rows++;
