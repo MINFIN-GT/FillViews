@@ -28,8 +28,8 @@ public class CIngreso {
 			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ingreso "+
 				"select ih.ejercicio, ih.entidad, e.nombre entidad_nombre,ih.unidad_ejecutora, ue.nombre unidad_ejecutora_nombre,   " + 
 				"ih.fuente, ih.organismo, ih.geografico,  " + 
-				"day(ih.fec_aprobado) fec_aprobado_dia, month(ih.fec_aprobado) fec_aprobado_mes, " + 
-				"year(ih.fec_aprobado) fec_aprobado_anio, date_format(ih.fec_aprobado,'u') dia_semana,  " + 
+				"day(ih.fec_aprobado) fec_dia, month(ih.fec_aprobado) fec_mes, " + 
+				"year(ih.fec_aprobado) fec_anio, date_format(ih.fec_aprobado,'u') dia_semana,  " + 
 				"id.recurso, r.nombre recurso_nombre, id.recurso_auxiliar, ra.nombre recurso_auxiliar_nombre, " + 
 				"'Fecha Aprobado' fecha_referencia, " +
 				"sum(id.monto_ingreso) monto_ingreso,  " + 
@@ -94,9 +94,9 @@ public class CIngreso {
 						}
 						
 						pstm1.setInt(1, rs.getInt("ejercicio"));
-						pstm1.setInt(2, rs.getInt("fec_aprobado_dia"));
-						pstm1.setInt(3, rs.getInt("fec_aprobado_mes"));
-						pstm1.setInt(4, rs.getInt("fec_aprobado_anio"));
+						pstm1.setInt(2, rs.getInt("fec_dia"));
+						pstm1.setInt(3, rs.getInt("fec_mes"));
+						pstm1.setInt(4, rs.getInt("fec_anio"));
 						pstm1.setInt(5, rs.getInt("entidad"));
 						pstm1.setString(6,rs.getString("entidad_nombre"));
 						pstm1.setInt(7, rs.getInt("unidad_ejecutora"));
@@ -133,8 +133,8 @@ public class CIngreso {
 			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ingreso "+
 				"select ih.ejercicio, ih.entidad, e.nombre entidad_nombre,ih.unidad_ejecutora, ue.nombre unidad_ejecutora_nombre,   " + 
 				"ih.fuente, ih.organismo, ih.geografico,  " + 
-				"day(date_add(ih.fec_real,3)) fec_aprobado_dia, month(date_add(ih.fec_real,3)) fec_aprobado_mes, " + 
-				"year(date_add(ih.fec_real,3)) fec_aprobado_anio, date_format(date_add(ih.fec_real,3),'u') dia_semana,  " + 
+				"day(date_add(ih.fec_real,3)) fec_dia, month(date_add(ih.fec_real,3)) fec_mes, " + 
+				"year(date_add(ih.fec_real,3)) fec_anio, date_format(date_add(ih.fec_real,3),'u') dia_semana,  " + 
 				"id.recurso, r.nombre recurso_nombre, id.recurso_auxiliar, ra.nombre recurso_auxiliar_nombre, " + 
 				"'Fecha Real' fecha_referencia, " +
 				"sum(id.monto_ingreso) monto_ingreso,  " + 
@@ -199,9 +199,9 @@ public class CIngreso {
 						}
 						
 						pstm1.setInt(1, rs.getInt("ejercicio"));
-						pstm1.setInt(2, rs.getInt("fec_aprobado_dia"));
-						pstm1.setInt(3, rs.getInt("fec_aprobado_mes"));
-						pstm1.setInt(4, rs.getInt("fec_aprobado_anio"));
+						pstm1.setInt(2, rs.getInt("fec_dia"));
+						pstm1.setInt(3, rs.getInt("fec_mes"));
+						pstm1.setInt(4, rs.getInt("fec_anio"));
 						pstm1.setInt(5, rs.getInt("entidad"));
 						pstm1.setString(6,rs.getString("entidad_nombre"));
 						pstm1.setInt(7, rs.getInt("unidad_ejecutora"));
