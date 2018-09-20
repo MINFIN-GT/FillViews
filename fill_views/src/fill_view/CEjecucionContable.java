@@ -28,7 +28,7 @@ public class CEjecucionContable {
 						"sum(ch.monto_contable) monto " + 
 						"from dashboard.tiempo t " + 
 						"left outer join sicoinprod.co_clases_registro cr  " + 
-						"on (t.ejercicio = cr.ejercicio and cr.clase_registro in ('EIA','EIAP','EIC','EICO','EID','EIE','EIF','EIP','EIR','FRA','FRC','FRR'))  " + 
+						"on (t.ejercicio = cr.ejercicio and cr.clase_registro in ('EIA','EIAP','EIC','EICO','EID','EIE','EIF','EIP','EIR','FRA','FRC','FRR', 'NDB'))  " + 
 						"left outer join sicoinprod.co_contabilidad_hoja ch  " + 
 						"on(t.ejercicio = ch.ejercicio and t.mes = month(ch.fec_aprobado) and ch.ejercicio = cr.ejercicio and ch.clase_registro = cr.clase_registro " + 
 						"  and ch.estado = 'PAGADO' and ch.aprobado = 'S' and ch.revertido = 'N' " + 
