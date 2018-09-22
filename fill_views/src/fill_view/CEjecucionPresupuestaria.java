@@ -172,7 +172,7 @@ public class CEjecucionPresupuestaria {
 							"							 	and gh.entidad = gd.entidad    " + 
 							"							 	and gh.unidad_ejecutora = gd.unidad_ejecutora    " + 
 							"							 	and gh.no_cur = gd.no_cur    " + 
-							"							 	and (gh.clase_registro IN ('DEV', 'CYD') OR (gh.entidad in (11130018, 11130019) and gh.clase_registro in ('DEV','CYD','REG','RDP')))    " + 
+							"							 	and (gh.clase_registro IN ('DEV', 'CYD'))    " + 
 							"							 	and gh.estado = 'APROBADO'    " + 
 							"							 	and gh.ejercicio = ? " + 
 							"							 	group by gh.ejercicio, month(gh.fec_aprobado), gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma,    " + 

@@ -31,7 +31,7 @@ public class CEjecucionContable {
 						"on (t.ejercicio = cr.ejercicio and cr.clase_registro in ('EIA','EIAP','EIC','EICO','EID','EIE','EIF','EIP','EIR','FRA','FRC','FRR', 'NDB'))  " + 
 						"left outer join sicoinprod.co_contabilidad_hoja ch  " + 
 						"on(t.ejercicio = ch.ejercicio and t.mes = month(ch.fec_aprobado) and ch.ejercicio = cr.ejercicio and ch.clase_registro = cr.clase_registro " + 
-						"  and ch.estado = 'PAGADO' and ch.aprobado = 'S' and ch.revertido = 'N' " + 
+						"  and ((ch.clase_registro<>'NDB' and ch.estado = 'PAGADO') OR (ch.clase_registro='NDB' and ch.estado='APROBADO')) and ch.aprobado = 'S' and ch.revertido = 'N' " + 
 						")  " + 
 						"where t.dia=1  " + 
 						"and t.ejercicio = ? " + 
