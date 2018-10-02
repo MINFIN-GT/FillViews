@@ -106,8 +106,8 @@ public class CEjecucionPresupuestaria {
 					CLogger.writeConsole("Insertando valores a MV_GASTO");
 					///Actualiza la vista de gasto
 					pstm = conn.prepareStatement("insert into table dashboard.mv_gasto "
-							+"select  "+ejercicio+"  ejercicio,month(gh.fec_aprobado) mes, gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma, gd.proyecto, gd.actividad, gd.obra, f.economico, gd.renglon, r.nombre renglon_nombre, gd.fuente,        " + 
-							"	gd.renglon - (gd.renglon%100) grupo, gg.nombre grupo_nombre, gd.renglon - (gd.renglon%10) subgrupo, sg.nombre subgrupo_nombre, gd.geografico,        " + 
+							+"select  "+ejercicio+"  ejercicio,month(gh.fec_aprobado) mes, gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma, gd.proyecto, gd.actividad, gd.obra, gd.renglon, r.nombre renglon_nombre, gd.fuente,        " + 
+							"	gd.renglon - (gd.renglon%100) grupo, gg.nombre grupo_nombre, gd.renglon - (gd.renglon%10) subgrupo, sg.nombre subgrupo_nombre, gd.geografico, f.economico,       " + 
 							"	sum( case when gh.ejercicio = (? - 5) then gd.monto_renglon else 0 end) ano_1,         " + 
 							"	sum( case when gh.ejercicio = (? - 4) then gd.monto_renglon else 0 end) ano_2,         " + 
 							"	sum( case when gh.ejercicio = (? - 3) then gd.monto_renglon else 0 end) ano_3,         " + 
@@ -442,24 +442,24 @@ public class CEjecucionPresupuestaria {
 							"																		 	nvl(v.subgrupo, g.subgrupo) subgrupo,      " + 
 							"																		 	nvl(v.subgrupo_nombre, g.subgrupo_nombre) subgrupo_nombre,      " + 
 							"																		 	nvl(v.renglon, g.renglon) renglon,      " + 
-							"																		 	nvl(v.economico, g.economico) economico,      " +
+							"																		 	v.economico economico,      " +
 							"																		 	nvl(v.renglon_nombre, g.renglon_nombre) renglon_nombre,      " + 
 							"																			g.ano_1 ano_1, g.ano_2 ano_2, g.ano_3 ano_3, g.ano_4 ano_4, g.ano_5 ano_5, g.ano_actual ano_actual,      " + 
 							"																		 	v.asignado asignado, v.vigente vigente, v.compromiso compromiso      " + 
-							"																		 	from  (	select ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, grupo, grupo_nombre, " + 
-							"								    										   subgrupo, subgrupo_nombre, economico, renglon, renglon_nombre, fuente, sum(asignado) asignado, sum(vigente) vigente, sum(compromiso) compromiso " + 
+							"																		 	from  (	select ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, fuente, economico, grupo, grupo_nombre, " + 
+							"								    										   subgrupo, subgrupo_nombre, renglon, renglon_nombre, fuente, sum(asignado) asignado, sum(vigente) vigente, sum(compromiso) compromiso " + 
 							"																			   from dashboard.mv_vigente " + 
 							"																			   where ejercicio = ? " + 
-							"																			   group by ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, grupo, grupo_nombre, subgrupo, subgrupo_nombre, economico, renglon, renglon_nombre, fuente " + 
+							"																			   group by ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, fuente,economico, grupo, grupo_nombre, subgrupo, subgrupo_nombre,  renglon, renglon_nombre " + 
 							"																			) v full outer join   (" + 
 							"																		 		select g1.ejercicio, g1.mes, g1.entidad, g1.unidad_ejecutora, g1.programa, g1.subprograma, g1.proyecto, g1.actividad, g1.obra, g1.fuente," + 
-							"																		 		g1.grupo, g1.grupo_nombre, g1.subgrupo, g1.subgrupo_nombre, g1.economico, g1.renglon, g1.renglon_nombre," + 
+							"																		 		g1.grupo, g1.grupo_nombre, g1.subgrupo, g1.subgrupo_nombre, g1.renglon, g1.renglon_nombre," + 
 							"																		 		sum(g1.ano_1) ano_1, sum(g1.ano_2) ano_2, sum(g1.ano_3) ano_3, sum(g1.ano_4) ano_4, sum(g1.ano_5) ano_5," + 
 							"																		 		sum(g1.ano_actual) ano_actual" + 
 							"																		 		from dashboard.mv_gasto g1 " +
 							"																				where g1.ejercicio = ? " +		
 							"																		 		group by g1.ejercicio, g1.mes, g1.entidad, g1.unidad_ejecutora, g1.programa, g1.subprograma, g1.proyecto, g1.actividad, g1.obra, g1.fuente, " + 
-							"																		 		g1.grupo, g1.grupo_nombre, g1.subgrupo, g1.subgrupo_nombre, g1.economico, g1.renglon, g1.renglon_nombre" + 
+							"																		 		g1.grupo, g1.grupo_nombre, g1.subgrupo, g1.subgrupo_nombre, g1.renglon, g1.renglon_nombre" + 
 							"																		 	) g "+
 							"																		 	on(       " + 
 							"																		 		g.entidad = v.entidad      " + 
@@ -960,7 +960,7 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 						
 					CLogger.writeConsole("Insertando valores a MV_ESTRUCTURA");
 					pstm = conn.prepareStatement("insert into table dashboard_historia.mv_estructura "+
-							"select e.ejercicio, e.entidad, e.nombre entidad_nombre, es.sigla, ue.unidad_ejecutora, ue.nombre unidad_ejecutora_nombre,  " + 
+							"select distinct * from (select e.ejercicio, e.entidad, e.nombre entidad_nombre, es.sigla, ue.unidad_ejecutora, ue.nombre unidad_ejecutora_nombre,  " + 
 							"p.programa, p.nom_estructura programa_nombre,  " + 
 							"sp.subprograma, sp.nom_estructura subprograma_nombre,  " + 
 							"pr.proyecto, pr.nom_estructura proyecto_nombre,  " + 
@@ -1007,7 +1007,7 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 							"and mve.entidad = e.entidad  " + 
 							"and mve.ejercicio = e.ejercicio  " + 
 							"and ((ue.unidad_ejecutora = 0 and mve.unidades_ejecutoras=1) or (ue.unidad_ejecutora>0 and mve.unidades_ejecutoras>1))  " + 
-							"and es.entidad = e.entidad");
+							"and es.entidad = e.entidad) t1");
 					pstm.setInt(1, ejercicio_inicio);
 					pstm.setInt(2, ejercicio_fin);
 					pstm.executeUpdate();
@@ -1060,8 +1060,8 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 					///Actualiza la vista de gasto sin regularizaciones
 					pstm = conn.prepareStatement("insert into table dashboard_historia.mv_gasto_sin_regularizaciones " +
 							"select gh.ejercicio,month(gh.fec_aprobado) mes, gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma, " + 
-							"							 gd.proyecto, gd.actividad, gd.obra, gd.renglon, gd.fuente,  " + 
-							"							 gd.renglon - (gd.renglon%100) grupo, gd.renglon - (gd.renglon%10) subgrupo, gd.geografico, gd.economico, sum(gd.monto_renglon) gasto, sum(de.monto_deduccion) deducciones   " + 
+							"							 gd.proyecto, gd.actividad, gd.obra, gd.economico, gd.renglon, gd.fuente,  " + 
+							"							 gd.renglon - (gd.renglon%100) grupo, gd.renglon - (gd.renglon%10) subgrupo, gd.geografico, sum(gd.monto_renglon) gasto, sum(de.monto_deduccion) deducciones   " + 
 							"							 	from sicoinprod.eg_gastos_hoja gh, sicoinprod.eg_gastos_detalle gd left outer join " + 
 							"							 	sicoinprod.eg_gastos_deducciones de on (de.ejercicio = gh.ejercicio " + 
 							"							 	     and de.entidad = gh.entidad " + 
@@ -1072,11 +1072,11 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 							"							 	and gh.entidad = gd.entidad    " + 
 							"							 	and gh.unidad_ejecutora = gd.unidad_ejecutora    " + 
 							"							 	and gh.no_cur = gd.no_cur    " + 
-							"							 	and (gh.clase_registro IN ('DEV', 'CYD') OR (gh.entidad in (11130018, 11130019) and gh.clase_registro in ('DEV','CYD','REG','RDP')))    " + 
+							"							 	and (gh.clase_registro IN ('DEV', 'CYD'))    " + 
 							"							 	and gh.estado = 'APROBADO'    " + 
 							"							 	and gh.ejercicio between ? and ? " + 
 							"							 	group by gh.ejercicio, month(gh.fec_aprobado), gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma,    " + 
-							"							 	gd.proyecto, gd.actividad, gd.obra, gd.economico,gd.renglon, gd.fuente, gd.geografico");
+							"							 	gd.proyecto, gd.actividad, gd.obra, gd.economico, gd.renglon, gd.fuente, gd.geografico");
 					pstm.setInt(1, ejercicio_inicio);
 					pstm.setInt(2, ejercicio_fin);
 					pstm.executeUpdate();
@@ -1100,7 +1100,6 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 							"							     when gh.ejercicio > 2009 then f.funcion " + 
 							"							     else null  " + 
 							"							  end division, " + 
-							"							  f.economico, " + 
 							"							  (f.tipo_presupuesto - (f.tipo_presupuesto%10)) tipo_gasto, " + 
 							"							  f.tipo_presupuesto subgrupo_tipo_gasto, " + 
 							"							  sum(gd.monto_renglon) ejecucion  " + 
@@ -1328,7 +1327,7 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 							"												t1.proyecto,    " + 
 							"												t1.actividad,    " + 
 							"												t1.obra,    " + 
-							"												t1.mes, t1.fuente, t1.grupo, t1.grupo_nombre, t1.subgrupo, t1.subgrupo_nombre, t1.economico, t1.renglon, t1.renglon_nombre, t1.economico,     " + 
+							"												t1.mes, t1.fuente, t1.grupo, t1.grupo_nombre, t1.subgrupo, t1.subgrupo_nombre, t1.economico, t1.renglon, t1.renglon_nombre,      " + 
 							"																		 t1.ano_1, t1.ano_2, t1.ano_3, t1.ano_4, t1.ano_5, t1.ano_actual, t1.asignado, t1.vigente, t1.compromiso,  " +
 							"																		 a.anticipo anticipo_cuota, c.solicitado solicitado_cuota,      " + 
 							"																		 c.aprobado aprobado_cuota       " + 
@@ -1350,7 +1349,7 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 							"																		 	nvl(v.subgrupo_nombre, g.subgrupo_nombre) subgrupo_nombre,      " + 
 							"																		 	nvl(v.renglon, g.renglon) renglon,      " + 
 							"																		 	nvl(v.renglon_nombre, g.renglon_nombre) renglon_nombre,      " + 
-							"																		 	nvl(v.economico, g.economico) economico,      " + 
+							"																		 	v.economico economico,      " + 
 							"																			g.ano_1 ano_1, g.ano_2 ano_2, g.ano_3 ano_3, g.ano_4 ano_4, g.ano_5 ano_5, g.ano_actual ano_actual,      " + 
 							"																		 	v.asignado asignado, v.vigente vigente, v.compromiso compromiso      " + 
 							"																		 	from  (	select ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, grupo, grupo_nombre, " + 
@@ -1360,13 +1359,13 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 							"																			   group by ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, grupo, grupo_nombre, subgrupo, subgrupo_nombre, economico, renglon, renglon_nombre, fuente " + 
 							"																			) v full outer join   (" + 
 							"																		 		select g1.ejercicio, g1.mes, g1.entidad, g1.unidad_ejecutora, g1.programa, g1.subprograma, g1.proyecto, g1.actividad, g1.obra, g1.fuente," + 
-							"																		 		g1.grupo, g1.grupo_nombre, g1.subgrupo, g1.subgrupo_nombre, g1.economico, g1.renglon, g1.renglon_nombre," + 
+							"																		 		g1.grupo, g1.grupo_nombre, g1.subgrupo, g1.subgrupo_nombre, g1.renglon, g1.renglon_nombre," + 
 							"																		 		sum(g1.ano_1) ano_1, sum(g1.ano_2) ano_2, sum(g1.ano_3) ano_3, sum(g1.ano_4) ano_4, sum(g1.ano_5) ano_5," + 
 							"																		 		sum(g1.ano_actual) ano_actual" + 
 							"																		 		from dashboard_historia.mv_gasto g1 " +
 							"																				where g1.ejercicio between ? and ? " +		
 							"																		 		group by g1.ejercicio, g1.mes, g1.entidad, g1.unidad_ejecutora, g1.programa, g1.subprograma, g1.proyecto, g1.actividad, g1.obra, g1.fuente, " + 
-							"																		 		g1.grupo, g1.grupo_nombre, g1.subgrupo, g1.subgrupo_nombre, g1.economico, g1.renglon, g1.renglon_nombre" + 
+							"																		 		g1.grupo, g1.grupo_nombre, g1.subgrupo, g1.subgrupo_nombre, g1.renglon, g1.renglon_nombre" + 
 							"																		 	) g "+
 							"																		 	on(       " + 
 							"																		 		g.entidad = v.entidad      " + 
