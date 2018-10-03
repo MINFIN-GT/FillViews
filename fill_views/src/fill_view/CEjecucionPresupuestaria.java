@@ -21,7 +21,8 @@ public class CEjecucionPresupuestaria {
 				PreparedStatement pstm;
 				if(calcular){
 					CLogger.writeConsole("Eliminando data actual:");
-					List<String> tablas = Arrays.asList("mv_entidad", "mv_estructura", "mv_cuota","mv_gasto", "mv_gasto_anual","mv_gasto_sin_regularizaciones", "mv_anticipo","mv_vigente", 
+					List<String> tablas = Arrays.asList("mv_entidad", "mv_estructura", "mv_cuota","mv_gasto","mv_gasto_fecha_pagado_total", 
+							"mv_gasto_anual","mv_gasto_sin_regularizaciones","mv_gasto_sin_regularizaciones_fecha_pagado_total", "mv_anticipo","mv_vigente", 
 							"mv_ejecucion_presupuestaria","mv_ejecucion_presupuestaria_geografico","mv_ejecucion_presupuestaria_mensualizada");
 					
 					if(con_historia) {
@@ -156,6 +157,59 @@ public class CEjecucionPresupuestaria {
 					pstm.executeUpdate();
 					pstm.close();
 					
+					CLogger.writeConsole("Insertando valores a MV_GASTO_FECHA_PAGADO_TOTAL");
+					///Actualiza la vista de gasto
+					pstm = conn.prepareStatement("insert into table dashboard.mv_gasto_fecha_pagado_total "
+							+"select  "+ejercicio+"  ejercicio,month(gh.fec_pagado_total) mes, gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma, gd.proyecto, gd.actividad, gd.obra, gd.renglon, r.nombre renglon_nombre, gd.fuente,        " + 
+							"	gd.renglon - (gd.renglon%100) grupo, gg.nombre grupo_nombre, gd.renglon - (gd.renglon%10) subgrupo, sg.nombre subgrupo_nombre, gd.geografico, f.economico,       " + 
+							"	sum( case when gh.ejercicio = (? - 5) then gd.monto_renglon else 0 end) ano_1,         " + 
+							"	sum( case when gh.ejercicio = (? - 4) then gd.monto_renglon else 0 end) ano_2,         " + 
+							"	sum( case when gh.ejercicio = (? - 3) then gd.monto_renglon else 0 end) ano_3,         " + 
+							"	sum( case when gh.ejercicio = (? - 2) then gd.monto_renglon else 0 end) ano_4,         " + 
+							"	sum( case when gh.ejercicio = (? - 1) then gd.monto_renglon else 0 end) ano_5,         " + 
+							"	sum( case when gh.ejercicio = ? then gd.monto_renglon else 0 end) ano_actual         " + 
+							"	from sicoinprod.eg_gastos_hoja gh, sicoinprod.eg_gastos_detalle gd,         " + 
+							"	sicoinprod.cp_grupos_gasto gg, sicoinprod.cp_objetos_gasto sg, sicoinprod.cp_objetos_gasto r, " + 
+							"	sicoinprod.eg_f6_partidas f  		    " + 
+							"	where gh.ejercicio = gd.ejercicio            " + 
+							"	and gh.entidad = gd.entidad          " + 
+							"	and gh.unidad_ejecutora = gd.unidad_ejecutora          " + 
+							"	and gh.no_cur = gd.no_cur          " + 
+							"	and gh.clase_registro IN ('DEV', 'CYD', 'RDP', 'REG')          " + 
+							"	and gh.estado = 'APROBADO'          " + 
+							"	and gh.ejercicio > ( ? - 6 )          " + 
+							"	and gg.ejercicio =  ?    " + 
+							"	and gg.grupo_gasto = (gd.renglon-(gd.renglon%100))      " + 
+							"	and sg.ejercicio = gg.ejercicio       " + 
+							"	and sg.renglon = (gd.renglon - (gd.renglon%10))           " + 
+							"	and r.ejercicio = sg.ejercicio      " + 
+							"	and r.renglon = gd.renglon  " + 
+							"	and f.ejercicio = r.ejercicio " + 
+							"	and f.entidad = gd.entidad " + 
+							"	and f.unidad_ejecutora = gd.unidad_ejecutora  " + 
+							"	and f.programa = gd.programa " + 
+							"	and f.subprograma = gd.subprograma " + 
+							"	and f.proyecto = gd.proyecto " + 
+							"	and f.actividad = gd.actividad " + 
+							"	and f.obra = gd.obra " + 
+							"	and f.renglon = gd.renglon " + 
+							"	and f.geografico = gd.geografico " + 
+							"	and f.fuente = gd.fuente    " + 
+							"   and f.organismo = gd.organismo  " +
+							"	and f.correlativo = gd.correlativo " +
+							"				group by month(gh.fec_pagado_total), gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma,          " + 
+							"				gd.proyecto, gd.actividad, gd.obra, gg.nombre, sg.nombre, r.nombre, f.economico, gd.renglon, gd.fuente, gd.geografico");
+					pstm.setInt(1, ejercicio);
+					pstm.setInt(2, ejercicio);
+					pstm.setInt(3, ejercicio);
+					pstm.setInt(4, ejercicio);
+					pstm.setInt(5, ejercicio);
+					pstm.setInt(6, ejercicio);
+					pstm.setInt(7, ejercicio);
+					pstm.setInt(8, ejercicio);
+					pstm.executeUpdate();
+					pstm.close();
+					
 					CLogger.writeConsole("Insertando valores a MV_GASTO_SIN_REGULARIZACIONES");
 					///Actualiza la vista de gasto sin regularizaciones
 					pstm = conn.prepareStatement("insert into table dashboard.mv_gasto_sin_regularizaciones " +
@@ -176,6 +230,31 @@ public class CEjecucionPresupuestaria {
 							"							 	and gh.estado = 'APROBADO'    " + 
 							"							 	and gh.ejercicio = ? " + 
 							"							 	group by gh.ejercicio, month(gh.fec_aprobado), gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma,    " + 
+							"							 	gd.proyecto, gd.actividad, gd.obra, gd.economico, gd.renglon, gd.fuente, gd.geografico");
+					pstm.setInt(1, ejercicio);
+					pstm.executeUpdate();
+					pstm.close();
+					
+					CLogger.writeConsole("Insertando valores a MV_GASTO_SIN_REGULARIZACIONES_FECHA_PAGADO_TOTAL");
+					///Actualiza la vista de gasto sin regularizaciones
+					pstm = conn.prepareStatement("insert into table dashboard.mv_gasto_sin_regularizaciones_fecha_pagado_total " +
+							"select gh.ejercicio,month(gh.fec_pagado_total) mes, gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma, " + 
+							"							 gd.proyecto, gd.actividad, gd.obra, gd.economico, gd.renglon, gd.fuente,  " + 
+							"							 gd.renglon - (gd.renglon%100) grupo, gd.renglon - (gd.renglon%10) subgrupo, gd.geografico, sum(gd.monto_renglon) gasto, sum(de.monto_deduccion) deducciones   " + 
+							"							 	from sicoinprod.eg_gastos_hoja gh, sicoinprod.eg_gastos_detalle gd left outer join " + 
+							"							 	sicoinprod.eg_gastos_deducciones de on (de.ejercicio = gh.ejercicio " + 
+							"							 	     and de.entidad = gh.entidad " + 
+							"							 	     and de.unidad_ejecutora = gh.unidad_ejecutora " + 
+							"							 	     and de.no_cur = gh.no_cur " + 
+							"							 	     and de.deduccion = 302) " + 
+							"							 	where gh.ejercicio = gd.ejercicio      " + 
+							"							 	and gh.entidad = gd.entidad    " + 
+							"							 	and gh.unidad_ejecutora = gd.unidad_ejecutora    " + 
+							"							 	and gh.no_cur = gd.no_cur    " + 
+							"							 	and (gh.clase_registro IN ('DEV', 'CYD'))    " + 
+							"							 	and gh.estado = 'APROBADO'    " + 
+							"							 	and gh.ejercicio = ? " + 
+							"							 	group by gh.ejercicio, month(gh.fec_pagado_total), gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma,    " + 
 							"							 	gd.proyecto, gd.actividad, gd.obra, gd.economico, gd.renglon, gd.fuente, gd.geografico");
 					pstm.setInt(1, ejercicio);
 					pstm.executeUpdate();
@@ -799,6 +878,59 @@ public class CEjecucionPresupuestaria {
 					while(rs!=null && rs.next()){
 						if(first){
 							PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_gasto_sin_regularizaciones where ejercicio = ? ");
+							pstm2.setInt(1, ejercicio);
+							if (pstm2.executeUpdate()>0)
+								CLogger.writeConsole("Registros eliminados");
+							else
+								CLogger.writeConsole("Sin registros para eliminar");	
+							pstm2.close();
+							first=false;
+						}
+						pstm1.setInt(1, rs.getInt("ejercicio"));
+						pstm1.setInt(2, rs.getInt("mes"));
+						pstm1.setInt(3, rs.getInt("entidad"));
+						pstm1.setInt(4, rs.getInt("unidad_ejecutora"));
+						pstm1.setInt(5, rs.getInt("programa"));
+						pstm1.setInt(6, rs.getInt("subprograma"));
+						pstm1.setInt(7, rs.getInt("proyecto"));
+						pstm1.setInt(8, rs.getInt("actividad"));
+						pstm1.setInt(9, rs.getInt("obra"));
+						pstm1.setInt(10, rs.getInt("economico"));
+						pstm1.setInt(11, rs.getInt("renglon"));
+						pstm1.setInt(12, rs.getInt("fuente"));
+						pstm1.setInt(13, rs.getInt("grupo"));
+						pstm1.setInt(14, rs.getInt("subgrupo"));
+						pstm1.setInt(15, rs.getInt("geografico"));
+						pstm1.setDouble(16, rs.getDouble("gasto"));
+						pstm1.setDouble(17, rs.getDouble("deducciones"));
+						pstm1.addBatch();
+						rows++;
+						if((rows % 10000) == 0){
+							pstm1.executeBatch();
+							CMemSQL.getConnection().commit();
+						}
+					}
+					pstm1.executeBatch();
+					rs.close();
+					pstm.close();
+					CMemSQL.getConnection().commit();
+					
+					CLogger.writeConsole("Cargando datos a cache de MV_GASTO_SIN_REGULARIZACIONES_FECHA_PAGADO_TOTAL");
+					ret = true;
+					rows = 0;
+					first=true;
+					pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_gasto_sin_regularizaciones_fecha_pagado_total(ejercicio, mes, entidad, unidad_ejecutora, "
+							+ "programa, subprograma, proyecto, "
+							+ "actividad, obra, economico, renglon, fuente, grupo, subgrupo, geografico, gasto, deducciones) "
+							+ "values (?,?,?,?,?,?,?,?,?,?,"
+							+ "?,?,?,?,?,?,?) ");
+					pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_gasto_sin_regularizaciones_fecha_pagado_total where ejercicio = ? ");
+					pstm.setInt(1, ejercicio);
+					pstm.setFetchSize(10000);
+					rs = pstm.executeQuery();
+					while(rs!=null && rs.next()){
+						if(first){
+							PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_gasto_sin_regularizaciones_fecha_pagado_total where ejercicio = ? ");
 							pstm2.setInt(1, ejercicio);
 							if (pstm2.executeUpdate()>0)
 								CLogger.writeConsole("Registros eliminados");
@@ -1972,7 +2104,7 @@ public static boolean loadGastoSinRegularizaciones(Connection conn, Integer ejer
 			PreparedStatement pstm;
 			if(calcular){
 				CLogger.writeConsole("Eliminando data actual:");
-				List<String> tablas = Arrays.asList("mv_gasto_sin_regularizaciones");
+				List<String> tablas = Arrays.asList("mv_gasto_sin_regularizaciones","mv_gasto_sin_regularizaciones_fecha_pagado_total");
 				
 				if(con_historia) {
 					CLogger.writeConsole("Copiando historia:");
@@ -2013,6 +2145,31 @@ public static boolean loadGastoSinRegularizaciones(Connection conn, Integer ejer
 				pstm.executeUpdate();
 				pstm.close();
 				
+				CLogger.writeConsole("Insertando valores a MV_GASTO_SIN_REGULARIZACIONES_FECHA_PAGADO_TOTAL");
+				///Actualiza la vista de gasto sin regularizaciones
+				pstm = conn.prepareStatement("insert into table dashboard.mv_gasto_sin_regularizaciones_fecha_pagado_total " +
+						"select gh.ejercicio,month(gh.fec_pagado_total) mes, gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma, " + 
+						"							 gd.proyecto, gd.actividad, gd.obra, gd.economico, gd.renglon, gd.fuente,  " + 
+						"							 gd.renglon - (gd.renglon%100) grupo, gd.renglon - (gd.renglon%10) subgrupo, gd.geografico, sum(gd.monto_renglon) gasto, sum(de.monto_deduccion) deducciones   " + 
+						"							 	from sicoinprod.eg_gastos_hoja gh, sicoinprod.eg_gastos_detalle gd left outer join " + 
+						"							 	sicoinprod.eg_gastos_deducciones de on (de.ejercicio = gh.ejercicio " + 
+						"							 	     and de.entidad = gh.entidad " + 
+						"							 	     and de.unidad_ejecutora = gh.unidad_ejecutora " + 
+						"							 	     and de.no_cur = gh.no_cur " + 
+						"							 	     and de.deduccion = 302) " + 
+						"							 	where gh.ejercicio = gd.ejercicio      " + 
+						"							 	and gh.entidad = gd.entidad    " + 
+						"							 	and gh.unidad_ejecutora = gd.unidad_ejecutora    " + 
+						"							 	and gh.no_cur = gd.no_cur    " + 
+						"							 	and (gh.clase_registro IN ('DEV', 'CYD') OR (gh.entidad in (11130018, 11130019) and gh.clase_registro in ('DEV','CYD','REG','RDP')))    " + 
+						"							 	and gh.estado = 'APROBADO'    " + 
+						"							 	and gh.ejercicio = ? " + 
+						"							 	group by gh.ejercicio, month(gh.fec_pagado_total), gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma,    " + 
+						"							 	gd.proyecto, gd.actividad, gd.obra, gd.economico, gd.renglon, gd.fuente, gd.geografico");
+				pstm.setInt(1, ejercicio);
+				pstm.executeUpdate();
+				pstm.close();
+				
 			}
 			
 			boolean bconn =  CMemSQL.connect();
@@ -2038,6 +2195,59 @@ public static boolean loadGastoSinRegularizaciones(Connection conn, Integer ejer
 				while(rs!=null && rs.next()){
 					if(first){
 						PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_gasto_sin_regularizaciones where ejercicio = ? ");
+						pstm2.setInt(1, ejercicio);
+						if (pstm2.executeUpdate()>0)
+							CLogger.writeConsole("Registros eliminados");
+						else
+							CLogger.writeConsole("Sin registros para eliminar");	
+						pstm2.close();
+						first=false;
+					}
+					pstm1.setInt(1, rs.getInt("ejercicio"));
+					pstm1.setInt(2, rs.getInt("mes"));
+					pstm1.setInt(3, rs.getInt("entidad"));
+					pstm1.setInt(4, rs.getInt("unidad_ejecutora"));
+					pstm1.setInt(5, rs.getInt("programa"));
+					pstm1.setInt(6, rs.getInt("subprograma"));
+					pstm1.setInt(7, rs.getInt("proyecto"));
+					pstm1.setInt(8, rs.getInt("actividad"));
+					pstm1.setInt(9, rs.getInt("obra"));
+					pstm1.setInt(10, rs.getInt("economico"));
+					pstm1.setInt(11, rs.getInt("renglon"));
+					pstm1.setInt(12, rs.getInt("fuente"));
+					pstm1.setInt(13, rs.getInt("grupo"));
+					pstm1.setInt(14, rs.getInt("subgrupo"));
+					pstm1.setInt(15, rs.getInt("geografico"));
+					pstm1.setDouble(16, rs.getDouble("gasto"));
+					pstm1.setDouble(17, rs.getDouble("deducciones"));
+					pstm1.addBatch();
+					rows++;
+					if((rows % 10000) == 0){
+						pstm1.executeBatch();
+						CMemSQL.getConnection().commit();
+					}
+				}
+				pstm1.executeBatch();
+				rs.close();
+				pstm.close();
+				CMemSQL.getConnection().commit();
+				
+				CLogger.writeConsole("Cargando datos a cache de MV_GASTO_SIN_REGULARIZACIONES_FECHA_PAGADO_TOTAL");
+				ret = true;
+				rows = 0;
+				first=true;
+				pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_gasto_sin_regularizaciones_fecha_pagado_total(ejercicio, mes, entidad, unidad_ejecutora, "
+						+ "programa, subprograma, proyecto, "
+						+ "actividad, obra, economico, renglon, fuente, grupo, subgrupo, geografico, gasto, deducciones) "
+						+ "values (?,?,?,?,?,?,?,?,?,?,"
+						+ "?,?,?,?,?,?,?) ");
+				pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_gasto_sin_regularizaciones_fecha_pagado_total where ejercicio = ? ");
+				pstm.setInt(1, ejercicio);
+				pstm.setFetchSize(10000);
+				rs = pstm.executeQuery();
+				while(rs!=null && rs.next()){
+					if(first){
+						PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_gasto_sin_regularizaciones_fecha_pagado_total where ejercicio = ? ");
 						pstm2.setInt(1, ejercicio);
 						if (pstm2.executeUpdate()>0)
 							CLogger.writeConsole("Registros eliminados");

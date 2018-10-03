@@ -283,8 +283,9 @@ public class CMain {
 				 String[] argumentos = cline.getOptionValues("gsr");
 				 Integer ejercicio =  argumentos!=null && argumentos.length>0 ? 
 						 Integer.parseInt(argumentos[0]) : start.getYear();
-				 boolean con_historia = argumentos!=null && argumentos.length>1 ? argumentos[1]=="true" : true;		 
-				 if(CEjecucionPresupuestaria.loadGastoSinRegularizaciones(conn, ejercicio, true, con_historia))
+				 boolean con_historia = argumentos!=null && argumentos.length>1 ? argumentos[1]=="true" : true;
+				 boolean calcular = argumentos!=null && argumentos.length>2 ? argumentos[2]=="true" : true;
+				 if(CEjecucionPresupuestaria.loadGastoSinRegularizaciones(conn, ejercicio, calcular, con_historia))
 					 CLogger.writeConsole("Datos de gasto sin regularizaciones cargados con exito");
 			 }
 			 else if(cline.hasOption("help")){
