@@ -23,7 +23,8 @@ public class CEjecucionPresupuestaria {
 					CLogger.writeConsole("Eliminando data actual:");
 					List<String> tablas = Arrays.asList("mv_entidad", "mv_estructura", "mv_cuota","mv_gasto","mv_gasto_fecha_pagado_total", 
 							"mv_gasto_anual","mv_gasto_sin_regularizaciones","mv_gasto_sin_regularizaciones_fecha_pagado_total", "mv_anticipo","mv_vigente", 
-							"mv_ejecucion_presupuestaria","mv_ejecucion_presupuestaria_geografico","mv_ejecucion_presupuestaria_mensualizada");
+							"mv_ejecucion_presupuestaria","mv_ejecucion_presupuestaria_geografico","mv_ejecucion_presupuestaria_mensualizada",
+							"mv_ejecucion_presupuestaria_mensualizada_fecha_pagado_total","mv_ejecucion_presupuestaria_fecha_pagado_total");
 					
 					if(con_historia) {
 						CLogger.writeConsole("Copiando historia:");
@@ -575,6 +576,93 @@ public class CEjecucionPresupuestaria {
 					pstm.executeUpdate();
 					pstm.close();
 					
+					CLogger.writeConsole("Insertando valores a MV_EJECUCION_PRESUPUESTARIA_FECHA_PAGADO_TOTAL");
+					//Actualiza la vista de mv_ejecucion_presupuestaria
+					pstm = conn.prepareStatement("INSERT INTO TABLE dashboard.mv_ejecucion_presupuestaria_fecha_pagado_total  "+
+							"select    " + 
+							"												t1.ejercicio,    " + 
+							"												t1.entidad,    " + 
+							"												t1.unidad_ejecutora,    " + 
+							"												t1.programa,    " + 
+							"												t1.subprograma,    " + 
+							"												t1.proyecto,    " + 
+							"												t1.actividad,    " + 
+							"												t1.obra,    " + 
+							"												t1.mes, t1.fuente, t1.grupo, t1.grupo_nombre, t1.subgrupo, t1.subgrupo_nombre, t1.economico, t1.renglon, t1.renglon_nombre,     " + 
+							"																		 t1.ano_1, t1.ano_2, t1.ano_3, t1.ano_4, t1.ano_5, t1.ano_actual, t1.asignado, t1.vigente, t1.compromiso,  " +
+							"																		 a.anticipo anticipo_cuota, c.solicitado solicitado_cuota,      " + 
+							"																		 c.aprobado aprobado_cuota       " + 
+							"																		 from (      " + 
+							"																		 	select " +
+							"																			nvl(v.ejercicio,g.ejercicio) ejercicio, "+	
+							"																			nvl(v.mes,g.mes) mes,       " + 
+							"																		 	nvl(v.entidad,g.entidad) entidad,      " + 
+							"																		 	nvl(v.unidad_ejecutora, g.unidad_ejecutora) unidad_ejecutora,      " + 
+							"																		 	nvl(v.programa,g.programa) programa,      " + 
+							"																		 	nvl(v.subprograma, g.subprograma) subprograma,      " + 
+							"																		 	nvl(v.proyecto, g.proyecto) proyecto,      " + 
+							"																		 	nvl(v.actividad, g.actividad) actividad,      " + 
+							"																		 	nvl(v.obra, g.obra) obra,      " + 
+							"																		 	nvl(v.fuente, g.fuente) fuente,      " + 
+							"																		 	nvl(v.grupo, g.grupo) grupo,      " + 
+							"																		 	nvl(v.grupo_nombre, g.grupo_nombre) grupo_nombre,      " + 
+							"																		 	nvl(v.subgrupo, g.subgrupo) subgrupo,      " + 
+							"																		 	nvl(v.subgrupo_nombre, g.subgrupo_nombre) subgrupo_nombre,      " + 
+							"																		 	nvl(v.renglon, g.renglon) renglon,      " + 
+							"																		 	v.economico economico,      " +
+							"																		 	nvl(v.renglon_nombre, g.renglon_nombre) renglon_nombre,      " + 
+							"																			g.ano_1 ano_1, g.ano_2 ano_2, g.ano_3 ano_3, g.ano_4 ano_4, g.ano_5 ano_5, g.ano_actual ano_actual,      " + 
+							"																		 	v.asignado asignado, v.vigente vigente, v.compromiso compromiso      " + 
+							"																		 	from  (	select ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, fuente, economico, grupo, grupo_nombre, " + 
+							"								    										   subgrupo, subgrupo_nombre, renglon, renglon_nombre, fuente, sum(asignado) asignado, sum(vigente) vigente, sum(compromiso) compromiso " + 
+							"																			   from dashboard.mv_vigente " + 
+							"																			   where ejercicio = ? " + 
+							"																			   group by ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, fuente,economico, grupo, grupo_nombre, subgrupo, subgrupo_nombre,  renglon, renglon_nombre " + 
+							"																			) v full outer join   (" + 
+							"																		 		select g1.ejercicio, g1.mes, g1.entidad, g1.unidad_ejecutora, g1.programa, g1.subprograma, g1.proyecto, g1.actividad, g1.obra, g1.fuente," + 
+							"																		 		g1.grupo, g1.grupo_nombre, g1.subgrupo, g1.subgrupo_nombre, g1.renglon, g1.renglon_nombre," + 
+							"																		 		sum(g1.ano_1) ano_1, sum(g1.ano_2) ano_2, sum(g1.ano_3) ano_3, sum(g1.ano_4) ano_4, sum(g1.ano_5) ano_5," + 
+							"																		 		sum(g1.ano_actual) ano_actual" + 
+							"																		 		from dashboard.mv_gasto_fecha_pagado_total g1 " +
+							"																				where g1.ejercicio = ? " +		
+							"																		 		group by g1.ejercicio, g1.mes, g1.entidad, g1.unidad_ejecutora, g1.programa, g1.subprograma, g1.proyecto, g1.actividad, g1.obra, g1.fuente, " + 
+							"																		 		g1.grupo, g1.grupo_nombre, g1.subgrupo, g1.subgrupo_nombre, g1.renglon, g1.renglon_nombre" + 
+							"																		 	) g "+
+							"																		 	on(       " + 
+							"																		 		g.entidad = v.entidad      " + 
+							"																		 		and g.unidad_ejecutora = v.unidad_ejecutora      " + 
+							"																		 		and g.programa = v.programa      " + 
+							"																		 		and g.subprograma = v.subprograma      " + 
+							"																		 		and g.proyecto = v.proyecto      " + 
+							"																		 		and g.actividad = v.actividad      " + 
+							"																		 		and g.obra = v.obra      " + 
+							"																		 		and g.renglon = v.renglon      " + 
+							"																		 		and g.fuente = v.fuente      " + 
+							"																		 		and g.mes = v.mes      " + 
+							"																				and g.ejercicio = v.ejercicio " +
+							"																		 	  )    " + 
+							"																		 ) t1    " + 
+							"																		 left outer join dashboard.mv_cuota c   " + 
+							"																		 on (   " + 
+							" 																			c.ejercicio = t1.ejercicio " +
+							"																		 	and c.entidad = t1.entidad      " + 
+							"																		 	and c.unidad_ejecutora = t1.unidad_ejecutora      " + 
+							"																		 	and c.fuente = t1.fuente      " + 
+							"																		 	and c.mes = t1.mes   " + 
+							"																		 )   " + 
+							"																		 left outer join dashboard.mv_anticipo a  " + 
+							"																		 on(  " + 
+							"																			a.ejercicio = t1.ejercicio " +
+							"																		 	and a.entidad = t1.entidad  " + 
+							"																		 	and a.unidad_ejecutora = t1.unidad_ejecutora  " + 
+							"																		 	and a.fuente = t1.fuente  " + 
+							"																		 	and a.mes = t1.mes  " + 
+							"																		 ) " );
+					pstm.setInt(1, ejercicio);
+					pstm.setInt(2, ejercicio);
+					pstm.executeUpdate();
+					pstm.close();
+					
 					CLogger.writeConsole("Insertando valores a MV_EJECUCION_PRESUPUESTARIA_GEOGRAFICO");
 					//Actualiza la vista de mv_ejecucion_presupuestaria
 					pstm = conn.prepareStatement("INSERT INTO TABLE dashboard.mv_ejecucion_presupuestaria_geografico "+
@@ -653,7 +741,33 @@ public class CEjecucionPresupuestaria {
 					pstm.setInt(1, ejercicio);
 					pstm.executeUpdate();
 					pstm.close(); 
+					
+					CLogger.writeConsole("Insertando valores a MV_EJECUCION_PRESUPUESTARIA_MENSUALIZADA_FECHA_PAGADO_TOTAL");
+					//Actualiza la vista de mv_ejecucion_presupuestaria
+					pstm = conn.prepareStatement("INSERT INTO TABLE dashboard.mv_ejecucion_presupuestaria_mensualizada "+
+							"select ep.ejercicio, ep.entidad, ep.unidad_ejecutora, ep.programa, ep.subprograma, ep.proyecto, " + 
+							"ep.actividad, ep.obra, ep.fuente, ep.economico, ep.renglon, " + 
+							"sum(case when ep.mes=1 then ep.ano_actual else 0 end), " + 
+							"sum(case when ep.mes=2 then ep.ano_actual else 0 end), " + 
+							"sum(case when ep.mes=3 then ep.ano_actual else 0 end), " + 
+							"sum(case when ep.mes=4 then ep.ano_actual else 0 end), " + 
+							"sum(case when ep.mes=5 then ep.ano_actual else 0 end), " + 
+							"sum(case when ep.mes=6 then ep.ano_actual else 0 end), " + 
+							"sum(case when ep.mes=7 then ep.ano_actual else 0 end), " + 
+							"sum(case when ep.mes=8 then ep.ano_actual else 0 end), " + 
+							"sum(case when ep.mes=9 then ep.ano_actual else 0 end), " + 
+							"sum(case when ep.mes=10 then ep.ano_actual else 0 end), " + 
+							"sum(case when ep.mes=11 then ep.ano_actual else 0 end), " + 
+							"sum(case when ep.mes=12 then ep.ano_actual else 0 end) " + 
+							"from dashboard.mv_ejecucion_presupuestaria_fecha_pagado_total ep " +
+							"where ep.ejercicio = ? "+
+							"group by ep.ejercicio, ep.entidad, ep.unidad_ejecutora, ep.programa, ep.subprograma, ep.proyecto, ep.actividad, ep.obra, ep.fuente, ep.economico, ep.renglon" );
+					pstm.setInt(1, ejercicio);
+					pstm.executeUpdate();
+					pstm.close(); 
 				}
+				
+				
 				
 				boolean bconn =  CMemSQL.connect();
 				CLogger.writeConsole("Cargando datos a cache de MV_EJECUCION_PRESUPUESTARIA");
@@ -1028,7 +1142,68 @@ public class CEjecucionPresupuestaria {
 					CMemSQL.getConnection().commit();
 					
 					CLogger.writeConsole("Records escritos Totales: "+rows);
-					pstm1.close(); 
+					pstm1.close();
+					
+					CLogger.writeConsole("Cargando datos a cache de MV_EJECUCION_PRESUPUESTARIA_MENSUALIZADA_FECHA_PAGADO_TOTAL");
+					ret = true;
+					rows = 0;
+					first=true;
+					pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ejecucion_presupuestaria_mensualizada_fecha_pagado_total(ejercicio, entidad, unidad_ejecutora, "
+							+ "programa, subprograma, proyecto,actividad, obra, fuente, economico, renglon, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12) "
+							+ "values (?,?,?,?,?,?,?,?,?,?,?,"
+							+ "?,?,?,?,?,?,?,?,?,?,?,?) ");
+					pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ejecucion_presupuestaria_mensualizada_fecha_pagado_total where ejercicio = ? ");
+					pstm.setInt(1, ejercicio);
+					pstm.setFetchSize(10000);
+					rs = pstm.executeQuery();
+					while(rs!=null && rs.next()){
+						if(first){
+							PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ejecucion_presupuestaria_mensualizada_fecha_pagado_total where ejercicio = ? ");
+							pstm2.setInt(1, ejercicio);
+							if (pstm2.executeUpdate()>0)
+								CLogger.writeConsole("Registros eliminados");
+							else
+								CLogger.writeConsole("Sin registros para eliminar");	
+							pstm2.close();
+							first=false;
+						}
+						pstm1.setInt(1, rs.getInt("ejercicio"));
+						pstm1.setInt(2, rs.getInt("entidad"));
+						pstm1.setInt(3, rs.getInt("unidad_ejecutora"));
+						pstm1.setInt(4, rs.getInt("programa"));
+						pstm1.setInt(5, rs.getInt("subprograma"));
+						pstm1.setInt(6, rs.getInt("proyecto"));
+						pstm1.setInt(7, rs.getInt("actividad"));
+						pstm1.setInt(8, rs.getInt("obra"));
+						pstm1.setInt(9, rs.getInt("fuente"));
+						pstm1.setInt(10, rs.getInt("economico"));
+						pstm1.setInt(11, rs.getInt("renglon"));
+						pstm1.setDouble(12, rs.getDouble("m1"));
+						pstm1.setDouble(13, rs.getDouble("m2"));
+						pstm1.setDouble(14, rs.getDouble("m3"));
+						pstm1.setDouble(15, rs.getDouble("m4"));
+						pstm1.setDouble(16, rs.getDouble("m5"));
+						pstm1.setDouble(17, rs.getDouble("m6"));
+						pstm1.setDouble(18, rs.getDouble("m7"));
+						pstm1.setDouble(19, rs.getDouble("m8"));
+						pstm1.setDouble(20, rs.getDouble("m9"));
+						pstm1.setDouble(21, rs.getDouble("m10"));
+						pstm1.setDouble(22, rs.getDouble("m11"));
+						pstm1.setDouble(23, rs.getDouble("m12"));
+						pstm1.addBatch();
+						rows++;
+						if((rows % 10000) == 0){
+							pstm1.executeBatch();
+							CMemSQL.getConnection().commit();
+						}
+					}
+					pstm1.executeBatch();
+					rs.close();
+					pstm.close();
+					CMemSQL.getConnection().commit();
+					
+					CLogger.writeConsole("Records escritos Totales: "+rows);
+					pstm1.close();
 				}
 				
 			}					
