@@ -213,9 +213,11 @@ public class CMain {
 			 }
 			 else if(cline.hasOption("eventos-guatecompras")){
 				 CLogger.writeConsole("Inicio carga de eventos de Guatecompras");
-				 Integer ejercicio = cline.getOptionValue("egc")!=null && cline.getOptionValue("egc").length()>0 ? 
-						 Integer.parseInt(cline.getOptionValue("egc")) : start.getYear();
-				 if(CEventoGuatecompras.loadEventosGC(conn, ejercicio))
+				 String[] argumentos = cline.getOptionValues("egc");
+				 Integer ejercicio = argumentos!=null && argumentos.length>0 ? 
+						 Integer.parseInt(argumentos[0]) : start.getYear();
+				boolean getdata = argumentos!=null && argumentos.length>1 ? argumentos[1]=="true" : true;
+				 if(CEventoGuatecompras.loadEventosGC(conn, ejercicio, getdata))
 					 CLogger.writeConsole("Datos de eventos de Guatecompras cargados con exito");
 			 }
 			 else if(cline.hasOption("eventos-guatecompras-historia")){
@@ -225,7 +227,8 @@ public class CMain {
 						 Integer.parseInt(argumentos[0]) : start.getYear();
 				 Integer ejercicio_fin = argumentos!=null && argumentos.length>1 ? 
 								 Integer.parseInt(argumentos[1]) : start.getYear();
-				 if(CEventoGuatecompras.loadEventosGCHistoria(conn, ejercicio_inicio, ejercicio_fin))
+				boolean getdata = argumentos!=null && argumentos.length>2 ? argumentos[2]=="true" : true;
+				 if(CEventoGuatecompras.loadEventosGCHistoria(conn, ejercicio_inicio, ejercicio_fin, getdata))
 					 CLogger.writeConsole("Datos historia de eventos de Guatecompras cargados con exito");
 			 }
 			 else if(cline.hasOption("ing_ra")){

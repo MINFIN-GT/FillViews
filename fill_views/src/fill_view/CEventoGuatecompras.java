@@ -10,7 +10,7 @@ import utilities.CLogger;
 
 public class CEventoGuatecompras {
 
-public static boolean loadEventosGC(Connection conn, Integer ejercicio){
+public static boolean loadEventosGC(Connection conn, Integer ejercicio, boolean getdata){
 		
 		boolean ret = false;
 		try{
@@ -18,56 +18,59 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 				ret = true;
 
 				CLogger.writeConsole("CEventoGuatecompras (Ejercicio "+ejercicio+"):");
-				CLogger.writeConsole("Eliminando data actual:");
-				PreparedStatement pstm = conn.prepareStatement("DELETE FROM dashboard.mv_evento_gc WHERE ano_publicacion=?");
-				pstm.setInt(1, ejercicio);
-				pstm.executeUpdate();
-				pstm.close();
-				
-				CLogger.writeConsole("Insertando valores a MV_EVENTO_GC");
-				pstm = conn.prepareStatement("insert into table dashboard.mv_evento_gc "+
-						"SELECT tep.TIPO_ENTIDAD						 tipo_entidad_padre, " + 
-						"       tep.nombre                             tipo_entidad_padre_nombre, " + 
-						"	   te.TIPO_ENTIDAD						 tipo_entidad, " + 
-						"	   te.nombre                              tipo_entidad_nombre, " + 
-						"	   ec.ENTIDAD_COMPRADORA					 entidad_compradora, " + 
-						"       ec.nombre                              entidad_compradora_nombre, " + 
-						"	   uc.UNIDAD_COMPRADORA					 unidad_compradora, " + 
-						"       uc.nombre                              unidad_compradora_nombre, " + 
-						"       c.nog_concurso, " + 
-						"       c.descripcion, " + 
-						"       c.fecha_publicacion, " + 
-						"       month(c.fecha_publicacion) mes_publicacion, " + 
-						"       year(c.fecha_publicacion)  ano_publicacion, " + 
-						"       m.MODALIDAD							 modalidad, " + 
-						"	   m.nombre                               modalidad_nombre, " + 
-						"	   esc.ESTATUS_CONCURSO					 estatus_concurso, " + 
-						"       esc.nombre                             estatus_concurso_nombre, " + 
-						"       a.fecha_adjudicacion, " +
-						"		c.estado_calamidad, "+
-						"		sum(a.monto)						 monto "+
-						"  FROM guatecompras.gc_entidad                 ec, " + 
-						"       guatecompras.gc_entidad                 uc, " + 
-						"       guatecompras.gc_concurso                c  " + 
-						"       left outer join guatecompras.gc_adjudicacion a on (a.nog_concurso=c.nog_concurso and a.estatus = 0), " + 
-						"       guatecompras.gc_tipo_entidad            te, " + 
-						"       guatecompras.gc_modalidad               m, " + 
-						"       guatecompras.gc_tipo_entidad            tep, " + 
-						"       guatecompras.gc_estatus_concurso        esc " + 
-						" WHERE     ec.entidad_compradora = c.entidad_compradora " + 
-						"       AND ec.unidad_compradora = 0 " + 
-						"       AND uc.entidad_compradora = c.entidad_compradora " + 
-						"       AND uc.unidad_compradora = c.unidad_compradora " + 
-						"       AND te.tipo_entidad = ec.tipo_entidad " + 
-						"       AND m.modalidad = c.modalidad " + 
-						"       AND tep.tipo_entidad = te.tipo_entidad_padre " + 
-						"       AND esc.estatus_concurso = c.estatus_concurso " + 
-						"		AND YEAR(c.fecha_publicacion) between  YEAR(CURRENT_TIMESTAMP)-3 AND YEAR(CURRENT_TIMESTAMP) "+
-						" GROUP BY tep.TIPO_ENTIDAD, tep.nombre, te.TIPO_ENTIDAD, te.nombre, ec.ENTIDAD_COMPRADORA, ec.nombre, uc.UNIDAD_COMPRADORA, uc.nombre, c.nog_concurso, c.descripcion, c.fecha_publicacion, " +
-						" month(c.fecha_publicacion), year(c.fecha_publicacion), m.MODALIDAD, m.nombre, esc.ESTATUS_CONCURSO, esc.nombre, a.fecha_adjudicacion, c.estado_calamidad");
-				pstm.setInt(1, ejercicio);
-				pstm.executeUpdate();
-				pstm.close();
+				PreparedStatement pstm;
+				if(getdata) {
+					CLogger.writeConsole("Eliminando data actual:");
+					pstm = conn.prepareStatement("DELETE FROM dashboard.mv_evento_gc WHERE ano_publicacion=?");
+					pstm.setInt(1, ejercicio);
+					pstm.executeUpdate();
+					pstm.close();
+					
+					CLogger.writeConsole("Insertando valores a MV_EVENTO_GC");
+					pstm = conn.prepareStatement("insert into table dashboard.mv_evento_gc "+
+							"SELECT tep.TIPO_ENTIDAD						 tipo_entidad_padre, " + 
+							"       tep.nombre                             tipo_entidad_padre_nombre, " + 
+							"	   te.TIPO_ENTIDAD						 tipo_entidad, " + 
+							"	   te.nombre                              tipo_entidad_nombre, " + 
+							"	   ec.ENTIDAD_COMPRADORA					 entidad_compradora, " + 
+							"       ec.nombre                              entidad_compradora_nombre, " + 
+							"	   uc.UNIDAD_COMPRADORA					 unidad_compradora, " + 
+							"       uc.nombre                              unidad_compradora_nombre, " + 
+							"       c.nog_concurso, " + 
+							"       c.descripcion, " + 
+							"       c.fecha_publicacion, " + 
+							"       month(c.fecha_publicacion) mes_publicacion, " + 
+							"       year(c.fecha_publicacion)  ano_publicacion, " + 
+							"       m.MODALIDAD							 modalidad, " + 
+							"	   m.nombre                               modalidad_nombre, " + 
+							"	   esc.ESTATUS_CONCURSO					 estatus_concurso, " + 
+							"       esc.nombre                             estatus_concurso_nombre, " + 
+							"       a.fecha_adjudicacion, " +
+							"		c.estado_calamidad, "+
+							"		sum(a.monto)						 monto "+
+							"  FROM guatecompras.gc_entidad                 ec, " + 
+							"       guatecompras.gc_entidad                 uc, " + 
+							"       guatecompras.gc_concurso                c  " + 
+							"       left outer join guatecompras.gc_adjudicacion a on (a.nog_concurso=c.nog_concurso and a.estatus = 0), " + 
+							"       guatecompras.gc_tipo_entidad            te, " + 
+							"       guatecompras.gc_modalidad               m, " + 
+							"       guatecompras.gc_tipo_entidad            tep, " + 
+							"       guatecompras.gc_estatus_concurso        esc " + 
+							" WHERE     ec.entidad_compradora = c.entidad_compradora " + 
+							"       AND ec.unidad_compradora = 0 " + 
+							"       AND uc.entidad_compradora = c.entidad_compradora " + 
+							"       AND uc.unidad_compradora = c.unidad_compradora " + 
+							"       AND te.tipo_entidad = ec.tipo_entidad " + 
+							"       AND m.modalidad = c.modalidad " + 
+							"       AND tep.tipo_entidad = te.tipo_entidad_padre " + 
+							"       AND esc.estatus_concurso = c.estatus_concurso " + 
+							"		AND YEAR(c.fecha_publicacion) between  YEAR(CURRENT_TIMESTAMP)-3 AND YEAR(CURRENT_TIMESTAMP) "+
+							" GROUP BY tep.TIPO_ENTIDAD, tep.nombre, te.TIPO_ENTIDAD, te.nombre, ec.ENTIDAD_COMPRADORA, ec.nombre, uc.UNIDAD_COMPRADORA, uc.nombre, c.nog_concurso, c.descripcion, c.fecha_publicacion, " +
+							" month(c.fecha_publicacion), year(c.fecha_publicacion), m.MODALIDAD, m.nombre, esc.ESTATUS_CONCURSO, esc.nombre, a.fecha_adjudicacion, c.estado_calamidad");
+					pstm.setInt(1, ejercicio);
+					pstm.executeUpdate();
+					pstm.close();
+				}
 				
 				boolean bconn =  CMemSQL.connect();
 				CLogger.writeConsole("Cargando datos a cache de MV_EVENTO_GC");
@@ -140,64 +143,64 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 					CLogger.writeConsole("Records escritos Totales: "+rows);
 					pstm1.close();
 					
-					
-					CLogger.writeConsole("Eliminando data actual de MV_EVENTO_GC_GROUP:");
-					
-					pstm = conn.prepareStatement("DELETE FROM dashboard.mv_evento_gc_group WHERE ano_publicacion=?");
-					pstm.setInt(1, ejercicio);
-					pstm.executeUpdate();
-					pstm.close();
-					
-					CLogger.writeConsole("Insertando valores a MV_EVENTOS_GC_GROUP");
-					pstm = conn.prepareStatement("insert into table dashboard.mv_evento_gc_group "+
-							"select "+ejercicio+" ano_publicacion, entidad_compradora, entidad_compradora_nombre, " + 
-							"sum(case when mes_publicacion=1 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_1_ano_1, " + 
-							"sum(case when mes_publicacion=1 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_1_ano_2, " + 
-							"sum(case when mes_publicacion=1 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_1_ano_actual, " + 
-							"sum(case when mes_publicacion=2 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_2_ano_1, " + 
-							"sum(case when mes_publicacion=2 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_2_ano_2, " + 
-							"sum(case when mes_publicacion=2 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_2_ano_actual, " + 
-							"sum(case when mes_publicacion=3 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_3_ano_1, " + 
-							"sum(case when mes_publicacion=3 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_3_ano_2, " + 
-							"sum(case when mes_publicacion=3 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_3_ano_actual, " + 
-							"sum(case when mes_publicacion=4 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_4_ano_1, " + 
-							"sum(case when mes_publicacion=4 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_4_ano_2, " + 
-							"sum(case when mes_publicacion=4 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_4_ano_actual, " + 
-							"sum(case when mes_publicacion=5 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_5_ano_1, " + 
-							"sum(case when mes_publicacion=5 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_5_ano_2, " + 
-							"sum(case when mes_publicacion=5 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_5_ano_actual, " + 
-							"sum(case when mes_publicacion=6 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_6_ano_1, " + 
-							"sum(case when mes_publicacion=6 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_6_ano_2, " + 
-							"sum(case when mes_publicacion=6 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_6_ano_actual, " + 
-							"sum(case when mes_publicacion=7 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_7_ano_1, " + 
-							"sum(case when mes_publicacion=7 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_7_ano_2, " + 
-							"sum(case when mes_publicacion=7 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_7_ano_actual, " + 
-							"sum(case when mes_publicacion=8 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_8_ano_1, " + 
-							"sum(case when mes_publicacion=8 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_8_ano_2, " + 
-							"sum(case when mes_publicacion=8 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_8_ano_actual, " + 
-							"sum(case when mes_publicacion=9 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_9_ano_1, " + 
-							"sum(case when mes_publicacion=9 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_9_ano_2, " + 
-							"sum(case when mes_publicacion=9 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_9_ano_actual, " + 
-							"sum(case when mes_publicacion=10 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_10_ano_1, " + 
-							"sum(case when mes_publicacion=10 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_10_ano_2, " + 
-							"sum(case when mes_publicacion=10 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_10_ano_actual, " + 
-							"sum(case when mes_publicacion=11 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_11_ano_1, " + 
-							"sum(case when mes_publicacion=11 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_11_ano_2, " + 
-							"sum(case when mes_publicacion=11 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_11_ano_actual, " + 
-							"sum(case when mes_publicacion=12 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_12_ano_1, " + 
-							"sum(case when mes_publicacion=12 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_12_ano_2, " + 
-							"sum(case when mes_publicacion=12 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_12_ano_actual " + 
-							"from ( " + 
-							"select ano_publicacion, mes_publicacion, entidad_compradora, entidad_compradora_nombre, nog_concurso, sum(monto) " + 
-							"from dashboard_historia.mv_evento_gc " + 
-							"where tipo_entidad = 4 " + 
-							"and ano_publicacion between "+(ejercicio-2)+" and "+(ejercicio)+" "+ 
-							"group by ano_publicacion, mes_publicacion, entidad_compradora, entidad_compradora_nombre, nog_concurso " + 
-							") t1 " + 
-							"group by entidad_compradora, entidad_compradora_nombre");
-					pstm.executeUpdate();
-					pstm.close();
-					
+					if(getdata) {
+						CLogger.writeConsole("Eliminando data actual de MV_EVENTO_GC_GROUP:");
+						
+						pstm = conn.prepareStatement("DELETE FROM dashboard.mv_evento_gc_group WHERE ano_publicacion=?");
+						pstm.setInt(1, ejercicio);
+						pstm.executeUpdate();
+						pstm.close();
+						
+						CLogger.writeConsole("Insertando valores a MV_EVENTOS_GC_GROUP");
+						pstm = conn.prepareStatement("insert into table dashboard.mv_evento_gc_group "+
+								"select "+ejercicio+" ano_publicacion, entidad_compradora, entidad_compradora_nombre, " + 
+								"sum(case when mes_publicacion=1 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_1_ano_1, " + 
+								"sum(case when mes_publicacion=1 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_1_ano_2, " + 
+								"sum(case when mes_publicacion=1 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_1_ano_actual, " + 
+								"sum(case when mes_publicacion=2 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_2_ano_1, " + 
+								"sum(case when mes_publicacion=2 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_2_ano_2, " + 
+								"sum(case when mes_publicacion=2 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_2_ano_actual, " + 
+								"sum(case when mes_publicacion=3 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_3_ano_1, " + 
+								"sum(case when mes_publicacion=3 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_3_ano_2, " + 
+								"sum(case when mes_publicacion=3 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_3_ano_actual, " + 
+								"sum(case when mes_publicacion=4 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_4_ano_1, " + 
+								"sum(case when mes_publicacion=4 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_4_ano_2, " + 
+								"sum(case when mes_publicacion=4 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_4_ano_actual, " + 
+								"sum(case when mes_publicacion=5 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_5_ano_1, " + 
+								"sum(case when mes_publicacion=5 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_5_ano_2, " + 
+								"sum(case when mes_publicacion=5 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_5_ano_actual, " + 
+								"sum(case when mes_publicacion=6 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_6_ano_1, " + 
+								"sum(case when mes_publicacion=6 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_6_ano_2, " + 
+								"sum(case when mes_publicacion=6 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_6_ano_actual, " + 
+								"sum(case when mes_publicacion=7 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_7_ano_1, " + 
+								"sum(case when mes_publicacion=7 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_7_ano_2, " + 
+								"sum(case when mes_publicacion=7 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_7_ano_actual, " + 
+								"sum(case when mes_publicacion=8 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_8_ano_1, " + 
+								"sum(case when mes_publicacion=8 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_8_ano_2, " + 
+								"sum(case when mes_publicacion=8 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_8_ano_actual, " + 
+								"sum(case when mes_publicacion=9 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_9_ano_1, " + 
+								"sum(case when mes_publicacion=9 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_9_ano_2, " + 
+								"sum(case when mes_publicacion=9 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_9_ano_actual, " + 
+								"sum(case when mes_publicacion=10 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_10_ano_1, " + 
+								"sum(case when mes_publicacion=10 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_10_ano_2, " + 
+								"sum(case when mes_publicacion=10 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_10_ano_actual, " + 
+								"sum(case when mes_publicacion=11 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_11_ano_1, " + 
+								"sum(case when mes_publicacion=11 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_11_ano_2, " + 
+								"sum(case when mes_publicacion=11 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_11_ano_actual, " + 
+								"sum(case when mes_publicacion=12 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_12_ano_1, " + 
+								"sum(case when mes_publicacion=12 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_12_ano_2, " + 
+								"sum(case when mes_publicacion=12 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_12_ano_actual " + 
+								"from ( " + 
+								"select ano_publicacion, mes_publicacion, entidad_compradora, entidad_compradora_nombre, nog_concurso, sum(monto) " + 
+								"from dashboard.mv_evento_gc " + 
+								"where tipo_entidad = 4 " + 
+								"and ano_publicacion between "+(ejercicio-2)+" and "+(ejercicio)+" "+ 
+								"group by ano_publicacion, mes_publicacion, entidad_compradora, entidad_compradora_nombre, nog_concurso " + 
+								") t1 " + 
+								"group by entidad_compradora, entidad_compradora_nombre");
+						pstm.executeUpdate();
+						pstm.close();
+					}
 					ret = true;
 					PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_evento_gc_group where ano_publicacion =  ? ");
 					pstm2.setInt(1, ejercicio);
@@ -271,7 +274,7 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 		return ret;
 	}
 
-	public static boolean loadEventosGCHistoria(Connection conn, Integer ejercicio_inicio, Integer ejercicio_fin){
+	public static boolean loadEventosGCHistoria(Connection conn, Integer ejercicio_inicio, Integer ejercicio_fin, boolean getdata){
 		
 		boolean ret = false;
 		try{
@@ -279,63 +282,63 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 				ret = true;
 	
 				CLogger.writeConsole("CEventosGuatecompras Historia (Ejercicios entre "+ejercicio_inicio+" y "+ejercicio_fin+"):");
-				CLogger.writeConsole("Eliminando data actual:");
 				PreparedStatement pstm;
-				
-				pstm = conn.prepareStatement("DELETE FROM dashboard.mv_eventos_gc WHERE ano_publicacion BETWEEN ? and ?");
-				pstm.setInt(1, ejercicio_inicio);
-				pstm.setInt(2, ejercicio_fin);
-				pstm.executeUpdate();
-				pstm.close();
-				
-				
-				CLogger.writeConsole("Insertando valores a MV_EVENTOS_GC");
-				pstm = conn.prepareStatement("insert into table dashboard.mv_eventos_gc "+
-						"SELECT tep.TIPO_ENTIDAD						 tipo_entidad_padre, " + 
-						"       tep.nombre                             tipo_entidad_padre_nombre, " + 
-						"	   te.TIPO_ENTIDAD						 tipo_entidad, " + 
-						"	   te.nombre                              tipo_entidad_nombre, " + 
-						"	   ec.ENTIDAD_COMPRADORA					 entidad_compradora, " + 
-						"       ec.nombre                              entidad_compradora_nombre, " + 
-						"	   uc.UNIDAD_COMPRADORA					 unidad_compradora, " + 
-						"       uc.nombre                              unidad_compradora_nombre, " + 
-						"       c.nog_concurso, " + 
-						"       c.descripcion, " + 
-						"       c.fecha_publicacion, " + 
-						"       month(c.fecha_publicacion) mes_publicacion, " + 
-						"       year(c.fecha_publicacion)  ano_publicacion, " + 
-						"       m.MODALIDAD							 modalidad, " + 
-						"	   m.nombre                               modalidad_nombre, " + 
-						"	   esc.ESTATUS_CONCURSO					 estatus_concurso, " + 
-						"       esc.nombre                             estatus_concurso_nombre, " + 
-						"       a.fecha_adjudicacion, " +
-						"		c.estado_calamidad, " +	
-						"		sum(a.monto)						 monto "+ 
-						"  FROM guatecompras.gc_entidad                 ec, " + 
-						"       guatecompras.gc_entidad                 uc, " + 
-						"       guatecompras.gc_concurso                c  " + 
-						"       left outer join guatecompras.gc_adjudicacion a on (a.nog_concurso=c.nog_concurso and a.estatus = 0), " + 
-						"       guatecompras.gc_tipo_entidad            te, " + 
-						"       guatecompras.gc_modalidad               m, " + 
-						"       guatecompras.gc_tipo_entidad            tep, " + 
-						"       guatecompras.gc_estatus_concurso        esc " + 
-						" WHERE     ec.entidad_compradora = c.entidad_compradora " + 
-						"       AND ec.unidad_compradora = 0 " + 
-						"       AND uc.entidad_compradora = c.entidad_compradora " + 
-						"       AND uc.unidad_compradora = c.unidad_compradora " + 
-						"       AND te.tipo_entidad = ec.tipo_entidad " + 
-						"       AND m.modalidad = c.modalidad " + 
-						"       AND tep.tipo_entidad = te.tipo_entidad_padre " + 
-						"       AND esc.estatus_concurso = c.estatus_concurso " + 
-						"		AND YEAR(c.fecha_publicacion) between ? and ? " +
-						" GROUP BY tep.TIPO_ENTIDAD, tep.nombre, te.TIPO_ENTIDAD, te.nombre, ec.ENTIDAD_COMPRADORA, ec.nombre, uc.UNIDAD_COMPRADORA, " +
-						"uc.nombre, c.nog_concurso, c.descripcion, c.fecha_publicacion, month(c.fecha_publicacion), year(c.fecha_publicacion), m.MODALIDAD, m.nombre, " +
-						"esc.ESTATUS_CONCURSO, esc.nombre, a.fecha_adjudicacion, c.estado_calamidad");
-				pstm.setInt(1, ejercicio_inicio);
-				pstm.setInt(2, ejercicio_fin);
-				pstm.executeUpdate();
-				pstm.close();
-				
+				if(getdata) {
+					CLogger.writeConsole("Eliminando data actual:");
+					pstm = conn.prepareStatement("DELETE FROM dashboard.mv_eventos_gc WHERE ano_publicacion BETWEEN ? and ?");
+					pstm.setInt(1, ejercicio_inicio);
+					pstm.setInt(2, ejercicio_fin);
+					pstm.executeUpdate();
+					pstm.close();
+					
+					
+					CLogger.writeConsole("Insertando valores a MV_EVENTOS_GC");
+					pstm = conn.prepareStatement("insert into table dashboard.mv_eventos_gc "+
+							"SELECT tep.TIPO_ENTIDAD						 tipo_entidad_padre, " + 
+							"       tep.nombre                             tipo_entidad_padre_nombre, " + 
+							"	   te.TIPO_ENTIDAD						 tipo_entidad, " + 
+							"	   te.nombre                              tipo_entidad_nombre, " + 
+							"	   ec.ENTIDAD_COMPRADORA					 entidad_compradora, " + 
+							"       ec.nombre                              entidad_compradora_nombre, " + 
+							"	   uc.UNIDAD_COMPRADORA					 unidad_compradora, " + 
+							"       uc.nombre                              unidad_compradora_nombre, " + 
+							"       c.nog_concurso, " + 
+							"       c.descripcion, " + 
+							"       c.fecha_publicacion, " + 
+							"       month(c.fecha_publicacion) mes_publicacion, " + 
+							"       year(c.fecha_publicacion)  ano_publicacion, " + 
+							"       m.MODALIDAD							 modalidad, " + 
+							"	   m.nombre                               modalidad_nombre, " + 
+							"	   esc.ESTATUS_CONCURSO					 estatus_concurso, " + 
+							"       esc.nombre                             estatus_concurso_nombre, " + 
+							"       a.fecha_adjudicacion, " +
+							"		c.estado_calamidad, " +	
+							"		sum(a.monto)						 monto "+ 
+							"  FROM guatecompras.gc_entidad                 ec, " + 
+							"       guatecompras.gc_entidad                 uc, " + 
+							"       guatecompras.gc_concurso                c  " + 
+							"       left outer join guatecompras.gc_adjudicacion a on (a.nog_concurso=c.nog_concurso and a.estatus = 0), " + 
+							"       guatecompras.gc_tipo_entidad            te, " + 
+							"       guatecompras.gc_modalidad               m, " + 
+							"       guatecompras.gc_tipo_entidad            tep, " + 
+							"       guatecompras.gc_estatus_concurso        esc " + 
+							" WHERE     ec.entidad_compradora = c.entidad_compradora " + 
+							"       AND ec.unidad_compradora = 0 " + 
+							"       AND uc.entidad_compradora = c.entidad_compradora " + 
+							"       AND uc.unidad_compradora = c.unidad_compradora " + 
+							"       AND te.tipo_entidad = ec.tipo_entidad " + 
+							"       AND m.modalidad = c.modalidad " + 
+							"       AND tep.tipo_entidad = te.tipo_entidad_padre " + 
+							"       AND esc.estatus_concurso = c.estatus_concurso " + 
+							"		AND YEAR(c.fecha_publicacion) between ? and ? " +
+							" GROUP BY tep.TIPO_ENTIDAD, tep.nombre, te.TIPO_ENTIDAD, te.nombre, ec.ENTIDAD_COMPRADORA, ec.nombre, uc.UNIDAD_COMPRADORA, " +
+							"uc.nombre, c.nog_concurso, c.descripcion, c.fecha_publicacion, month(c.fecha_publicacion), year(c.fecha_publicacion), m.MODALIDAD, m.nombre, " +
+							"esc.ESTATUS_CONCURSO, esc.nombre, a.fecha_adjudicacion, c.estado_calamidad");
+					pstm.setInt(1, ejercicio_inicio);
+					pstm.setInt(2, ejercicio_fin);
+					pstm.executeUpdate();
+					pstm.close();
+				}
 				boolean bconn =  CMemSQL.connect();
 				CLogger.writeConsole("Cargando datos a cache de MV_EVENTO_GC");
 				if(bconn){
@@ -408,67 +411,67 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio){
 					
 					CLogger.writeConsole("Records escritos Totales: "+rows);
 					pstm1.close();
-					
-					CLogger.writeConsole("Eliminando data actual de MV_EVENTO_GC_GROUP:");
-					
-					pstm = conn.prepareStatement("DELETE FROM dashboard.mv_eventos_gc_group WHERE ano_publicacion BETWEEN ? and ?");
-					pstm.setInt(1, ejercicio_inicio);
-					pstm.setInt(2, ejercicio_fin);
-					pstm.executeUpdate();
-					pstm.close();
-					
-					CLogger.writeConsole("Insertando valores a MV_EVENTOS_GC_GROUP");
-					for(int ejercicio=ejercicio_inicio; ejercicio<=ejercicio_fin; ejercicio++){
-						pstm = conn.prepareStatement("insert into table dashboard.mv_eventos_group_gc "+
-								"select "+ejercicio+" ano_publicacion, entidad_compradora, entidad_compradora_nombre, " + 
-								"sum(case when mes_publicacion=1 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_1_ano_1, " + 
-								"sum(case when mes_publicacion=1 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_1_ano_2, " + 
-								"sum(case when mes_publicacion=1 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_1_ano_actual, " + 
-								"sum(case when mes_publicacion=2 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_2_ano_1, " + 
-								"sum(case when mes_publicacion=2 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_2_ano_2, " + 
-								"sum(case when mes_publicacion=2 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_2_ano_actual, " + 
-								"sum(case when mes_publicacion=3 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_3_ano_1, " + 
-								"sum(case when mes_publicacion=3 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_3_ano_2, " + 
-								"sum(case when mes_publicacion=3 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_3_ano_actual, " + 
-								"sum(case when mes_publicacion=4 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_4_ano_1, " + 
-								"sum(case when mes_publicacion=4 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_4_ano_2, " + 
-								"sum(case when mes_publicacion=4 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_4_ano_actual, " + 
-								"sum(case when mes_publicacion=5 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_5_ano_1, " + 
-								"sum(case when mes_publicacion=5 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_5_ano_2, " + 
-								"sum(case when mes_publicacion=5 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_5_ano_actual, " + 
-								"sum(case when mes_publicacion=6 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_6_ano_1, " + 
-								"sum(case when mes_publicacion=6 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_6_ano_2, " + 
-								"sum(case when mes_publicacion=6 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_6_ano_actual, " + 
-								"sum(case when mes_publicacion=7 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_7_ano_1, " + 
-								"sum(case when mes_publicacion=7 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_7_ano_2, " + 
-								"sum(case when mes_publicacion=7 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_7_ano_actual, " + 
-								"sum(case when mes_publicacion=8 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_8_ano_1, " + 
-								"sum(case when mes_publicacion=8 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_8_ano_2, " + 
-								"sum(case when mes_publicacion=8 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_8_ano_actual, " + 
-								"sum(case when mes_publicacion=9 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_9_ano_1, " + 
-								"sum(case when mes_publicacion=9 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_9_ano_2, " + 
-								"sum(case when mes_publicacion=9 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_9_ano_actual, " + 
-								"sum(case when mes_publicacion=10 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_10_ano_1, " + 
-								"sum(case when mes_publicacion=10 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_10_ano_2, " + 
-								"sum(case when mes_publicacion=10 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_10_ano_actual, " + 
-								"sum(case when mes_publicacion=11 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_11_ano_1, " + 
-								"sum(case when mes_publicacion=11 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_11_ano_2, " + 
-								"sum(case when mes_publicacion=11 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_11_ano_actual, " + 
-								"sum(case when mes_publicacion=12 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_12_ano_1, " + 
-								"sum(case when mes_publicacion=12 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_12_ano_2, " + 
-								"sum(case when mes_publicacion=12 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_12_ano_actual " + 
-								"from ( " + 
-								"select ano_publicacion, mes_publicacion, entidad_compradora, entidad_compradora_nombre, nog_concurso, sum(monto) " + 
-								"from mv_evento_gc " + 
-								"where tipo_entidad = 4 " + 
-								"and ano_publicacion between "+(ejercicio-2)+" and "+(ejercicio)+" "+ 
-								"group by ano_publicacion, mes_publicacion, entidad_compradora, entidad_compradora_nombre, nog_concurso " + 
-								") t1 " + 
-								"group by entidad_compradora, entidad_compradora_nombre");
+					if(getdata) {
+						CLogger.writeConsole("Eliminando data actual de MV_EVENTO_GC_GROUP:");
+						
+						pstm = conn.prepareStatement("DELETE FROM dashboard.mv_eventos_gc_group WHERE ano_publicacion BETWEEN ? and ?");
+						pstm.setInt(1, ejercicio_inicio);
+						pstm.setInt(2, ejercicio_fin);
 						pstm.executeUpdate();
 						pstm.close();
+						
+						CLogger.writeConsole("Insertando valores a MV_EVENTOS_GC_GROUP");
+						for(int ejercicio=ejercicio_inicio; ejercicio<=ejercicio_fin; ejercicio++){
+							pstm = conn.prepareStatement("insert into table dashboard.mv_eventos_group_gc "+
+									"select "+ejercicio+" ano_publicacion, entidad_compradora, entidad_compradora_nombre, " + 
+									"sum(case when mes_publicacion=1 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_1_ano_1, " + 
+									"sum(case when mes_publicacion=1 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_1_ano_2, " + 
+									"sum(case when mes_publicacion=1 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_1_ano_actual, " + 
+									"sum(case when mes_publicacion=2 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_2_ano_1, " + 
+									"sum(case when mes_publicacion=2 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_2_ano_2, " + 
+									"sum(case when mes_publicacion=2 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_2_ano_actual, " + 
+									"sum(case when mes_publicacion=3 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_3_ano_1, " + 
+									"sum(case when mes_publicacion=3 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_3_ano_2, " + 
+									"sum(case when mes_publicacion=3 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_3_ano_actual, " + 
+									"sum(case when mes_publicacion=4 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_4_ano_1, " + 
+									"sum(case when mes_publicacion=4 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_4_ano_2, " + 
+									"sum(case when mes_publicacion=4 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_4_ano_actual, " + 
+									"sum(case when mes_publicacion=5 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_5_ano_1, " + 
+									"sum(case when mes_publicacion=5 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_5_ano_2, " + 
+									"sum(case when mes_publicacion=5 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_5_ano_actual, " + 
+									"sum(case when mes_publicacion=6 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_6_ano_1, " + 
+									"sum(case when mes_publicacion=6 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_6_ano_2, " + 
+									"sum(case when mes_publicacion=6 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_6_ano_actual, " + 
+									"sum(case when mes_publicacion=7 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_7_ano_1, " + 
+									"sum(case when mes_publicacion=7 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_7_ano_2, " + 
+									"sum(case when mes_publicacion=7 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_7_ano_actual, " + 
+									"sum(case when mes_publicacion=8 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_8_ano_1, " + 
+									"sum(case when mes_publicacion=8 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_8_ano_2, " + 
+									"sum(case when mes_publicacion=8 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_8_ano_actual, " + 
+									"sum(case when mes_publicacion=9 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_9_ano_1, " + 
+									"sum(case when mes_publicacion=9 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_9_ano_2, " + 
+									"sum(case when mes_publicacion=9 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_9_ano_actual, " + 
+									"sum(case when mes_publicacion=10 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_10_ano_1, " + 
+									"sum(case when mes_publicacion=10 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_10_ano_2, " + 
+									"sum(case when mes_publicacion=10 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_10_ano_actual, " + 
+									"sum(case when mes_publicacion=11 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_11_ano_1, " + 
+									"sum(case when mes_publicacion=11 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_11_ano_2, " + 
+									"sum(case when mes_publicacion=11 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_11_ano_actual, " + 
+									"sum(case when mes_publicacion=12 and ano_publicacion="+(ejercicio-2)+" then 1 else 0 end) mes_12_ano_1, " + 
+									"sum(case when mes_publicacion=12 and ano_publicacion="+(ejercicio-1)+" then 1 else 0 end) mes_12_ano_2, " + 
+									"sum(case when mes_publicacion=12 and ano_publicacion="+ejercicio+" then 1 else 0 end) mes_12_ano_actual " + 
+									"from ( " + 
+									"select ano_publicacion, mes_publicacion, entidad_compradora, entidad_compradora_nombre, nog_concurso, sum(monto) " + 
+									"from mv_evento_gc " + 
+									"where tipo_entidad = 4 " + 
+									"and ano_publicacion between "+(ejercicio-2)+" and "+(ejercicio)+" "+ 
+									"group by ano_publicacion, mes_publicacion, entidad_compradora, entidad_compradora_nombre, nog_concurso " + 
+									") t1 " + 
+									"group by entidad_compradora, entidad_compradora_nombre");
+							pstm.executeUpdate();
+							pstm.close();
+						}
 					}
-					
 					ret = true;
 					rows = 0;
 					first=true;

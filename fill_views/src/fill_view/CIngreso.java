@@ -14,7 +14,7 @@ public class CIngreso {
 			CLogger.writeConsole("CIngresos Aprobado(Ejercicio "+ejercicio+"):");
 			CLogger.writeConsole("Elminiando la data actual de MV_INGRESO");
 			PreparedStatement pstm;
-			pstm = conn.prepareStatement("DELETE FROM dashboard.mv_ingreso WHERE ejercicio=");
+			pstm = conn.prepareStatement("DELETE FROM dashboard.mv_ingreso WHERE ejercicio=?");
 			pstm.setInt(1, ejercicio);
 			pstm.executeUpdate();
 			pstm.close();

@@ -27,7 +27,7 @@ public class CEjecucionPresupuestaria {
 							"mv_ejecucion_presupuestaria_mensualizada_fecha_pagado_total","mv_ejecucion_presupuestaria_fecha_pagado_total");
 					
 					if(con_historia) {
-						CLogger.writeConsole("Copiando historia:");
+						CLogger.writeConsole("Eliminando la data del ejercicio:");
 						for(String tabla:tablas){
 							CLogger.writeConsole("Copiando historia - "+tabla);
 							pstm = conn.prepareStatement("DELETE FROM dashboard."+tabla+ " WHERE ejercicio=?");
@@ -434,7 +434,8 @@ public class CEjecucionPresupuestaria {
 							"															where ejecuta_gastos='S'  " +	
 							"															group by ejercicio, entidad  ) ues on ( ues.ejercicio = t.ejercicio and ues.entidad = a.entidad)   " + 
 							"													where ((a.unidad_ejecutora>0 and ues.ues>1) OR (a.unidad_ejecutora=0 and ues.ues=1))   " + 
-							"													group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 " + 
+							"													group by t.ejercicio, t.mes, a.entidad, a.unidad_ejecutora, a.programa, a.subprograma, " +
+							"													a.proyecto, a.actividad, a.obra, a.fuente, (a.renglon-a.renglon%100), (a.renglon-a.renglon%10), a.economico, a.renglon, a.geografico " +	
 							"								 " + 
 							"						) asignado left outer join   " + 
 							"						(   " + 
