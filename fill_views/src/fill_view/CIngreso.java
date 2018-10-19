@@ -14,12 +14,7 @@ public class CIngreso {
 			CLogger.writeConsole("CIngresos Aprobado(Ejercicio "+ejercicio+"):");
 			CLogger.writeConsole("Elminiando la data actual de MV_INGRESO");
 			PreparedStatement pstm;
-			pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_ingreso");
-			pstm.executeUpdate();
-			pstm.close();
-			
-			CLogger.writeConsole("Cargando la historia");
-			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ingreso SELECT * FROM dashboard_historia.mv_ingreso WHERE ejercicio < ? ");
+			pstm = conn.prepareStatement("DELETE FROM dashboard.mv_ingreso WHERE ejercicio=");
 			pstm.setInt(1, ejercicio);
 			pstm.executeUpdate();
 			pstm.close();
@@ -249,11 +244,7 @@ public class CIngreso {
 			CLogger.writeConsole("CIngresos");
 			CLogger.writeConsole("Elminiando la data actual de MV_INGRESO_RECURSO_AUXILIAR");
 			PreparedStatement pstm;
-			pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_ingreso_recurso_auxiliar");
-			pstm.executeUpdate();
-			pstm.close();
-			CLogger.writeConsole("Copiando historia:");
-			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ingreso_recurso_auxiliar SELECT * FROM dashboard_historia.mv_ingreso_recurso_auxiliar WHERE ejercicio < ?");
+			pstm = conn.prepareStatement("DELETE FROM dashboard.mv_ingreso_recurso_auxiliar WHERE ejercicio=?");
 			pstm.setInt(1, ejercicio);
 			pstm.executeUpdate();
 			pstm.close();
@@ -431,11 +422,7 @@ public class CIngreso {
 			CLogger.writeConsole("CIngresos");
 			CLogger.writeConsole("Elminiando la data actual de MV_INGRESO_RECURSO");
 			PreparedStatement pstm;
-			pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_ingreso_recurso");
-			pstm.executeUpdate();
-			pstm.close();
-			CLogger.writeConsole("Copiando historia:");
-			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ingreso_recurso SELECT * FROM dashboard_historia.mv_ingreso_recurso WHERE ejercicio < ?");
+			pstm = conn.prepareStatement("DELETE FROM dashboard.mv_ingreso_recurso WHERE ejercicio=?");
 			pstm.setInt(1, ejercicio);
 			pstm.executeUpdate();
 			pstm.close();

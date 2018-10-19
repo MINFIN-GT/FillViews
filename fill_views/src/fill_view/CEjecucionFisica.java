@@ -171,12 +171,7 @@ public class CEjecucionFisica {
 			CLogger.writeConsole("CEjecucionFisica (Ejercicio "+ejercicio+"):");
 			CLogger.writeConsole("Elminiando la data actual de MV_EJECUCION_FISICA");
 			PreparedStatement pstm;
-			pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_ejecucion_fisica");
-			pstm.executeUpdate();
-			pstm.close();
-			
-			CLogger.writeConsole("Cargando la historia");
-			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ejecucion_fisica SELECT * FROM dashboard_historia.mv_ejecucion_fisica WHERE ejercicio < ? ");
+			pstm = conn.prepareStatement("DELETE FROM dashboard.mv_ejecucion_fisica WHERE ejercicio = ?");
 			pstm.setInt(1, ejercicio);
 			pstm.executeUpdate();
 			pstm.close();
@@ -415,39 +410,22 @@ public class CEjecucionFisica {
 		try{
 			CLogger.writeConsole("CEjecucionFisica (Ejercicios "+ejercicio_inicio+"  al "+ejercicio_fin+"):");
 			CLogger.writeConsole("Elminiando la data actual de MV_EJECUCION_FISICA");
-			CLogger.writeConsole("Copiando historia");
-			PreparedStatement pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard_historia.mv_ejecucion_fisica_temp PURGE");
-			pstm.executeUpdate();
-			pstm.close();
-			pstm = conn.prepareStatement("CREATE TABLE dashboard_historia.mv_ejecucion_fisica_temp AS SELECT * FROM dashboard_historia.mv_ejecucion_fisica WHERE ejercicio not between ? and ?");
+			PreparedStatement pstm = conn.prepareStatement("DELETE FROM dashboard.mv_ejecucion_fisica WHERE ejercicio between ? and ?");
 			pstm.setInt(1, ejercicio_inicio);
 			pstm.setInt(2, ejercicio_fin);
-			pstm.executeUpdate();
-			pstm.close();
-			pstm = conn.prepareStatement("TRUNCATE TABLE dashboard_historia.mv_ejecucion_fisica");
-			pstm.setInt(1, ejercicio_inicio);
-			pstm.setInt(2, ejercicio_fin);
-			pstm.executeUpdate();
-			pstm.close();
-			pstm = conn.prepareStatement("INSERT INTO dashboard_historia.mv_ejecucion_fisica SELECT * FROM dashboard_historia.mv_ejecucion_fisica_temp");
-			pstm.setInt(1, ejercicio_inicio);
-			pstm.setInt(2, ejercicio_fin);
-			pstm.executeUpdate();
-			pstm.close();
-			pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard_historia.mv_ejecucion_fisica_temp PURGE");
 			pstm.executeUpdate();
 			pstm.close();
 			
 			for(int i=ejercicio_inicio; i<=ejercicio_fin; i++){
 				CLogger.writeConsole("Insertando valores a MV_EJECUCION_FISICA");
-				pstm = conn.prepareStatement("INSERT INTO dashboard_historia.mv_ejecucion_fisica "+
+				pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ejecucion_fisica "+
 					"select me.*, e.entidad_nombre, e.unidad_ejecutora_nombre, " + 
 					"e.programa_nombre, e.subprograma_nombre, e.proyecto_nombre,e.actividad_obra_nombre, um.nombre unidad_medida_nombre, " + 
 					"ej.ejecucion, mo.modificacion " + 
 					"from ( " + 
 					"	select m.ejercicio, mes.mes, m.entidad, m.unidad_ejecutora, m.programa, m.subprograma, m.proyecto, m.actividad, m.obra, m.codigo_meta, " + 
 					"	m.cantidad, m.unidad_medida " + 
-					"	from sicoinprod_historia.sf_meta m, dashboard.mes mes, dashboard_historia.mv_entidad ent " + 
+					"	from sicoinprod.sf_meta m, dashboard.mes mes, dashboard.mv_entidad ent " + 
 					"	where m.estado = 'APROBADO' " + 
 					"   and m.ejercicio = ? "+
 					"	and mes.ejercicio = m.ejercicio " + 
@@ -457,7 +435,7 @@ public class CEjecucionFisica {
 					"	and ((m.unidad_ejecutora=0 and ent.unidades_ejecutoras=1) or (m.unidad_ejecutora>0 and ent.unidades_ejecutoras>1)) " + 
 					")me left outer join ( " + 
 					"	select md.ejercicio, month(mh.fec_aprobado) mes, md.entidad, md.unidad_ejecutora, md.programa, md.subprograma, md.proyecto, md.actividad, md.obra, md.codigo_meta, sum(md.cantidad_unidades) modificacion  " + 
-					"	from sicoinprod_historia.sf_modificacion_hoja mh,sicoinprod_historia.sf_modificacion_detalle md " + 
+					"	from sicoinprod..sf_modificacion_hoja mh,sicoinprod.sf_modificacion_detalle md " + 
 					"	where md.ejercicio = ? "+
 					"   and mh.ejercicio = md.ejercicio " + 
 					"	and mh.entidad = md.entidad " + 
@@ -484,8 +462,8 @@ public class CEjecucionFisica {
 					"				ed.proyecto, ed.actividad, ed.obra,    " + 
 					"				ed.codigo_meta,     " + 
 					"				sum(ed.cantidad_unidades) ejecucion   " + 
-					"				from sicoinprod_historia.sf_ejecucion_hoja_4 eh,   " + 
-					"				sicoinprod_historia.sf_ejecucion_detalle_4 ed   " + 
+					"				from sicoinprod.sf_ejecucion_hoja_4 eh,   " + 
+					"				sicoinprod.sf_ejecucion_detalle_4 ed   " + 
 					"				where eh.ejercicio =  ? "+ 
 					"				and eh.ejercicio = ed.ejercicio   " + 
 					"				and eh.entidad = ed.entidad   " + 
@@ -505,7 +483,7 @@ public class CEjecucionFisica {
 					"	and me.actividad = ej.actividad " + 
 					"	and me.obra = ej.obra " + 
 					"	and me.codigo_meta = ej.codigo_meta " + 
-					"), sicoinprod_historia.fp_unidad_medida um, dashboard.mv_estructura e " + 
+					"), sicoinprod.fp_unidad_medida um, dashboard.mv_estructura e " + 
 					"where me.ejercicio =  ? "+ 
 					"and um.codigo = me.unidad_medida   " + 
 					"and um.ejercicio = me.ejercicio   " +
@@ -526,7 +504,7 @@ public class CEjecucionFisica {
 			}
 			
 			if(!conn.isClosed()){
-				pstm = conn.prepareStatement("SELECT * FROM dashboard_historia.mv_ejecucion_fisica where ejercicio between ? and ? ");
+				pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_ejecucion_fisica where ejercicio between ? and ? ");
 				pstm.setInt(1, ejercicio_inicio);
 				pstm.setInt(2, ejercicio_fin);
 				ResultSet rs = pstm.executeQuery();
@@ -590,7 +568,7 @@ public class CEjecucionFisica {
 					pstm1.close();
 					pstm.close();
 				}
-				pstm = conn.prepareStatement("SELECT * FROM sicoinprod_historia.sf_meta where ejercicio between ? and ? ");
+				pstm = conn.prepareStatement("SELECT * FROM sicoinprod.sf_meta where ejercicio between ? and ? ");
 				pstm.setInt(1, ejercicio_inicio);
 				pstm.setInt(2, ejercicio_fin);
 				rs = pstm.executeQuery();

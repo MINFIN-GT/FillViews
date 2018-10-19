@@ -13,11 +13,8 @@ public class CEjecucionContable {
 			if( !conn.isClosed() && CMemSQL.connect()){
 				CLogger.writeConsole("CEjecucionPresupuestaria Entidades (Ejercicio "+ejercicio+"):");
 				PreparedStatement pstm;
-				CLogger.writeConsole("Copiando historia - MV_ANTICIPO_CONTABLE");
-				pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_anticipo_contable");
-				pstm.executeUpdate();
-				pstm.close();
-				pstm = conn.prepareStatement("INSERT INTO dashboard.mv_anticipo_contable SELECT * FROM dashboard_historia.mv_anticipo_contable where ejercicio <> ?");
+				CLogger.writeConsole("Eliminando data del ejercicio - MV_ANTICIPO_CONTABLE");
+				pstm = conn.prepareStatement("DELETE FROM dashboard.mv_anticipo_contable WHERE ejercicio=?");
 				pstm.setInt(1, ejercicio);
 				pstm.executeUpdate();
 				pstm.close();
