@@ -742,7 +742,7 @@ public class CEjecucionPresupuestaria {
 					
 					CLogger.writeConsole("Insertando valores a MV_EJECUCION_PRESUPUESTARIA_MENSUALIZADA_FECHA_PAGADO_TOTAL");
 					//Actualiza la vista de mv_ejecucion_presupuestaria
-					pstm = conn.prepareStatement("INSERT INTO TABLE dashboard.mv_ejecucion_presupuestaria_mensualizada "+
+					pstm = conn.prepareStatement("INSERT INTO TABLE dashboard.mv_ejecucion_presupuestaria_mensualizada_fecha_pagado_total "+
 							"select ep.ejercicio, ep.entidad, ep.unidad_ejecutora, ep.programa, ep.subprograma, ep.proyecto, " + 
 							"ep.actividad, ep.obra, ep.fuente, ep.economico, ep.renglon, " + 
 							"sum(case when ep.mes=1 then ep.ano_actual else 0 end), " + 
