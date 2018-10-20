@@ -11,10 +11,10 @@ public class CDimensionTiempo {
 			DateTime end = new DateTime(end_year+1,1,1,0,0);
 			try{
 				if(!conn.isClosed()){
-					//PreparedStatement pstm_delete = conn.prepareStatement("DELETE FROM dashboard.tiempo WHERE ejercicio BETWEEN ? AND ?");
-					//pstm_delete.setInt(1, init_year);
-					//pstm_delete.setInt(2, end_year);
-					//pstm_delete.executeUpdate();
+					PreparedStatement pstm_delete = conn.prepareStatement("DELETE FROM dashboard.tiempo WHERE ejercicio BETWEEN ? AND ?");
+					pstm_delete.setInt(1, init_year);
+					pstm_delete.setInt(2, end_year);
+					pstm_delete.executeUpdate();
 					long cont=0;
 					PreparedStatement pstm = conn.prepareStatement("INSERT INTO dashboard.tiempo VALUES(?,?,?,?,?,?,?,?)");
 					while(init.getMillis()<end.getMillis()){
