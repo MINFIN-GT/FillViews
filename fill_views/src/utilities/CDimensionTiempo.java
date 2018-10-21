@@ -28,10 +28,13 @@ public class CDimensionTiempo {
 						pstm.setLong(8, init.plusHours(23).plusMinutes(59).plusSeconds(59).plusMillis(999).getMillis());
 						init = init.plusDays(1);
 						cont++;
-						pstm.executeUpdate();
-						if(cont%100==0)
+						pstm.addBatch();
+						if(cont%1000==0) {
+							pstm.executeBatch();
 							CLogger.writeConsole(cont+" Registros insertados");
+						}
 					}
+					pstm.executeBatch();
 					pstm.close();
 					CLogger.writeConsole("Totald e registros insertados "+cont);
 				}
