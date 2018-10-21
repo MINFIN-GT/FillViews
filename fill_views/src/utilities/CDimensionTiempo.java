@@ -16,25 +16,27 @@ public class CDimensionTiempo {
 					pstm_delete.setInt(2, end_year);
 					pstm_delete.executeUpdate();
 					long cont=0;
-					PreparedStatement pstm = conn.prepareStatement("INSERT INTO dashboard.tiempo VALUES(?,?,?,?,?,?,?,?)");
+					String query="INSERT INTO dashboard.tiempo VALUES ";
+					String values="";
+					PreparedStatement pstm = conn.prepareStatement("");
 					while(init.getMillis()<end.getMillis()){
-						pstm.setInt(1, init.getDayOfMonth());
-						pstm.setInt(2, init.getWeekOfWeekyear());
-						pstm.setInt(3, init.getMonthOfYear());
-						pstm.setInt(4, init.getMonthOfYear() < 4 ? 1 :( init.getMonthOfYear() < 7 ? 2  : (init.getMonthOfYear()<10 ? 3 : 4)));
-						pstm.setInt(5, init.getMonthOfYear() < 5 ?  1 : (init.getMonthOfYear() < 9 ? 2 : 3));
-						pstm.setInt(6, init.getYear());
-						pstm.setLong(7, init.getMillis());
-						pstm.setLong(8, init.plusHours(23).plusMinutes(59).plusSeconds(59).plusMillis(999).getMillis());
+						values = values + String.join("",",("+init.getDayOfMonth()+",",
+								init.getWeekOfWeekyear()+",",
+								init.getMonthOfYear()+",", init.getMonthOfYear() < 4 ? "1" :( init.getMonthOfYear() < 7 ? "2"  : (init.getMonthOfYear()<10 ? "3" : "4")),",",
+								init.getMonthOfYear() < 5 ?  "1" : (init.getMonthOfYear() < 9 ? "2" : "3"),",",
+								init.getYear()+",",
+								init.getMillis()+",", 
+								init.plusHours(23).plusMinutes(59).plusSeconds(59).plusMillis(999).getMillis()+")");
 						init = init.plusDays(1);
 						cont++;
-						pstm.addBatch();
-						if(cont%1000==0) {
-							pstm.executeBatch();
+						if(cont%100==0) {
+							pstm.executeUpdate(query + values.substring(1));
+							values="";
 							CLogger.writeConsole(cont+" Registros insertados");
 						}
 					}
-					pstm.executeBatch();
+					if(values.length()>0)
+						pstm.executeUpdate(query + values.substring(1));
 					pstm.close();
 					CLogger.writeConsole("Totald e registros insertados "+cont);
 				}
