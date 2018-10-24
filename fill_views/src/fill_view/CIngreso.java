@@ -14,8 +14,20 @@ public class CIngreso {
 			CLogger.writeConsole("CIngresos Aprobado(Ejercicio "+ejercicio+"):");
 			CLogger.writeConsole("Elminiando la data actual de MV_INGRESO");
 			PreparedStatement pstm;
-			pstm = conn.prepareStatement("DELETE FROM dashboard.mv_ingreso WHERE ejercicio=?");
+			pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard.mv_ingreso_temp");
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("CREATE TABLE dashboard.mv_ingreso_temp AS SELECT * FROM dashboard.mv_ingreso WHERE ejercicio <> ?");
 			pstm.setInt(1, ejercicio);
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_ingreso");
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ingreso SELECT * FROM dashboard.mv_ingreso_temp");
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("DROP TABLE dashboard.mv_ingreso_temp");
 			pstm.executeUpdate();
 			pstm.close();
 			
@@ -244,8 +256,20 @@ public class CIngreso {
 			CLogger.writeConsole("CIngresos");
 			CLogger.writeConsole("Elminiando la data actual de MV_INGRESO_RECURSO_AUXILIAR");
 			PreparedStatement pstm;
-			pstm = conn.prepareStatement("DELETE FROM dashboard.mv_ingreso_recurso_auxiliar WHERE ejercicio=?");
+			pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard.mv_ingreso_recurso_auxiliar_temp");
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("CREATE TABLE dashboard.mv_ingreso_recurso_auxiliar_temp AS SELECT * FROM dashboard.mv_ingreso_recurso_auxiliar WHERE ejercicio <> ?");
 			pstm.setInt(1, ejercicio);
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_ingreso_recurso_auxiliar");
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ingreso_recurso_auxiliar SELECT * FROM dashboard.mv_ingreso_recurso_auxiliar_temp");
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("DROP TABLE dashboard.mv_ingreso_recurso_auxiliar_temp");
 			pstm.executeUpdate();
 			pstm.close();
 			
@@ -422,8 +446,20 @@ public class CIngreso {
 			CLogger.writeConsole("CIngresos");
 			CLogger.writeConsole("Elminiando la data actual de MV_INGRESO_RECURSO");
 			PreparedStatement pstm;
-			pstm = conn.prepareStatement("DELETE FROM dashboard.mv_ingreso_recurso WHERE ejercicio=?");
+			pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard.mv_ingreso_recurso_temp");
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("CREATE TABLE dashboard.mv_ingreso_recurso_temp AS SELECT * FROM dashboard.mv_ingreso_recurso WHERE ejercicio <> ?");
 			pstm.setInt(1, ejercicio);
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_ingreso_recurso");
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ingreso_recurso SELECT * FROM dashboard.mv_ingreso_recurso_temp");
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("DROP TABLE dashboard.mv_ingreso_recurso_temp");
 			pstm.executeUpdate();
 			pstm.close();
 			

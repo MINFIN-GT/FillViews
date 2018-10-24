@@ -171,8 +171,20 @@ public class CEjecucionFisica {
 			CLogger.writeConsole("CEjecucionFisica (Ejercicio "+ejercicio+"):");
 			CLogger.writeConsole("Elminiando la data actual de MV_EJECUCION_FISICA");
 			PreparedStatement pstm;
-			pstm = conn.prepareStatement("DELETE FROM dashboard.mv_ejecucion_fisica WHERE ejercicio = ?");
+			pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard.mv_ejecucion_fisica_temp");
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("CREATE TABLE dashboard.mv_ejecucion_fisica_temp AS SELECT * FROM dashboard.mv_ejecucion_fisica WHERE ejercicio <> ?");
 			pstm.setInt(1, ejercicio);
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_ejecucion_fisica");
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ejecucion_fisica SELECT * FROM dashboard.mv_ejecucion_fisica_temp");
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("DROP TABLE dashboard.mv_ejecucion_fisica_temp");
 			pstm.executeUpdate();
 			pstm.close();
 			
@@ -410,9 +422,22 @@ public class CEjecucionFisica {
 		try{
 			CLogger.writeConsole("CEjecucionFisica (Ejercicios "+ejercicio_inicio+"  al "+ejercicio_fin+"):");
 			CLogger.writeConsole("Elminiando la data actual de MV_EJECUCION_FISICA");
-			PreparedStatement pstm = conn.prepareStatement("DELETE FROM dashboard.mv_ejecucion_fisica WHERE ejercicio between ? and ?");
+			PreparedStatement pstm;
+			pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard.mv_ejecucion_fisica_temp");
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("CREATE TABLE dashboard.mv_ejecucion_fisica_temp AS SELECT * FROM dashboard.mv_ejecucion_fisica WHERE ejercicio not between ? and ?");
 			pstm.setInt(1, ejercicio_inicio);
 			pstm.setInt(2, ejercicio_fin);
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_ejecucion_fisica");
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ejecucion_fisica SELECT * FROM dashboard.mv_ejecucion_fisica_temp");
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("DROP TABLE dashboard.mv_ejecucion_fisica_temp");
 			pstm.executeUpdate();
 			pstm.close();
 			

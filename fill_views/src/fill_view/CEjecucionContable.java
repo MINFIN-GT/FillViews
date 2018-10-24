@@ -14,8 +14,20 @@ public class CEjecucionContable {
 				CLogger.writeConsole("CEjecucionPresupuestaria Entidades (Ejercicio "+ejercicio+"):");
 				PreparedStatement pstm;
 				CLogger.writeConsole("Eliminando data del ejercicio - MV_ANTICIPO_CONTABLE");
-				pstm = conn.prepareStatement("DELETE FROM dashboard.mv_anticipo_contable WHERE ejercicio=?");
+				pstm = conn.prepareStatement("DROP TABLE IF dashboard.mv_anticipo_contable_temp");
+				pstm.executeUpdate();
+				pstm.close();
+				pstm = conn.prepareStatement("CREATE TABLE dashboard.mv_anticipo_contable_temp AS dashaboard.mv_anticipo_contable WHERE ejercicio<>?");
+				pstm.executeUpdate();
+				pstm.close();
+				pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_anticipo_contable WHERE ejercicio=?");
 				pstm.setInt(1, ejercicio);
+				pstm.executeUpdate();
+				pstm.close();
+				pstm = conn.prepareStatement("INSERT INTO dashboard.mv_anticipo_contable SELECT * FROM dashaboard.mv_anticipo_contable_temp");
+				pstm.executeUpdate();
+				pstm.close();
+				pstm = conn.prepareStatement("DROP dashboard.mv_anticipo_contable_temp");
 				pstm.executeUpdate();
 				pstm.close();
 				

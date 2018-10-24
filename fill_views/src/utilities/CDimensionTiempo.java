@@ -11,9 +11,15 @@ public class CDimensionTiempo {
 			DateTime end = new DateTime(end_year+1,1,1,0,0);
 			try{
 				if(!conn.isClosed()){
-					PreparedStatement pstm_delete = conn.prepareStatement("DELETE FROM dashboard.tiempo WHERE ejercicio BETWEEN ? AND ?");
+					PreparedStatement pstm_delete = conn.prepareStatement("DROP TABLE IF EXISTS dashboard.tiempo_temp");
+					pstm_delete.executeUpdate();
+					pstm_delete = conn.prepareStatement("CREATE TABLE dashboard.tiempo_temp AS SELECT * FROM dashboard.tiempo WHERE ejercicio NOT BETWEEN ? AND ?");
 					pstm_delete.setInt(1, init_year);
 					pstm_delete.setInt(2, end_year);
+					pstm_delete.executeUpdate();
+					pstm_delete = conn.prepareStatement("TRUNCATE TABLE dashboard.tiempo");
+					pstm_delete.executeUpdate();
+					pstm_delete = conn.prepareStatement("INSERT INTO dashboard.tiempo SELECT * FROM dashboard.tiempo_temp");
 					pstm_delete.executeUpdate();
 					long cont=0;
 					String query="INSERT INTO dashboard.tiempo VALUES ";
@@ -38,6 +44,8 @@ public class CDimensionTiempo {
 					if(values.length()>0)
 						pstm.executeUpdate(query + values.substring(1));
 					pstm.close();
+					pstm_delete = conn.prepareStatement("DROP TABLE dashboard.tiempo_temp");
+					pstm_delete.executeUpdate();
 					CLogger.writeConsole("Totald e registros insertados "+cont);
 				}
 			}

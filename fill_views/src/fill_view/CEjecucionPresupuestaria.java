@@ -29,9 +29,21 @@ public class CEjecucionPresupuestaria {
 					if(con_historia) {
 						CLogger.writeConsole("Eliminando la data del ejercicio:");
 						for(String tabla:tablas){
-							CLogger.writeConsole("Copiando historia - "+tabla);
-							pstm = conn.prepareStatement("DELETE FROM dashboard."+tabla+ " WHERE ejercicio=?");
+							CLogger.writeConsole("Eliminado data actual - "+tabla);
+							pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard."+tabla+"temp");
+							pstm.executeUpdate();
+							pstm.close();
+							pstm = conn.prepareStatement("CREATE TABLE dashboard."+tabla+"_temp AS SELECT * FROM dashboard."+tabla+" WHERE ejercicio <> ?");
 							pstm.setInt(1, ejercicio);
+							pstm.executeUpdate();
+							pstm.close();
+							pstm = conn.prepareStatement("TRUNCATE TABLE dashboard."+tabla);
+							pstm.executeUpdate();
+							pstm.close();
+							pstm = conn.prepareStatement("INSERT INTO dashboard."+tabla+" SELECT * FROM dashboard."+tabla+"_temp");
+							pstm.executeUpdate();
+							pstm.close();
+							pstm = conn.prepareStatement("DROP TABLE dashboard."+tabla+"_temp");
 							pstm.executeUpdate();
 							pstm.close();
 						}
@@ -1231,9 +1243,21 @@ public static boolean loadEjecucionPresupuestariaHistoria(Connection conn, Integ
 							"mv_ejecucion_presupuestaria", "mv_ejecucion_presupuestaria_geografico", "mv_ejecucion_presupuestaria_mensualizada");
 					
 						for(String tabla:tablas){
-							pstm = conn.prepareStatement("DELETE FROM dashboard."+tabla+" WHERE ejercicio between ? and ?");
+							pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard."+tabla+"_temp");
+							pstm.executeUpdate();
+							pstm.close();
+							pstm = conn.prepareStatement("CREATE TABLE dashboard."+tabla+"_temp AS SELECT * FROM dashboard."+tabla+" WHERE ejercicio not between ? and ?");
 							pstm.setInt(1, ejercicio_inicio);
 							pstm.setInt(2, ejercicio_fin);
+							pstm.executeUpdate();
+							pstm.close();
+							pstm = conn.prepareStatement("TRUNCATE TABLE dashboard."+tabla);
+							pstm.executeUpdate();
+							pstm.close();
+							pstm = conn.prepareStatement("INSERT INTO dashboard."+tabla+" SELECT * FROM dashboard."+tabla+"_temp");
+							pstm.executeUpdate();
+							pstm.close();
+							pstm = conn.prepareStatement("DROP TABLE dashboard."+tabla+"_temp");
 							pstm.executeUpdate();
 							pstm.close();
 						}
@@ -2121,8 +2145,20 @@ public static boolean loadEjecucionPresupuestariaFinalidadFuncionDivision(Connec
 			PreparedStatement pstm;
 			
 			CLogger.writeConsole("Eliminando data actual:");
-			pstm = conn.prepareStatement("DELETE FROM dashboard.mv_ejecucion_presupuestaria_finalidad WHERE ejercicio=?");
+			pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard.mv_ejecucion_presupuestaria_finalidad_temp");
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("CREATE TABLE dashboard.mv_ejecucion_presupuestaria_finalidad_temp AS SELECT * FROM dashboard.mv_ejecucion_presupuestaria_finalidad WHERE ejercicio <> ?");
 			pstm.setInt(1, ejercicio);
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_ejecucion_presupuestaria_finalidad");
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ejecucion_presupuestaria_finalidad SELECT * FROM dashboard.mv_ejecucion_presupuestaria_finalidad_temp");
+			pstm.executeUpdate();
+			pstm.close();
+			pstm = conn.prepareStatement("DROP TABLE dashboard.mv_ejecucion_presupuestaria_finalidad_temp");
 			pstm.executeUpdate();
 			pstm.close();
 			
@@ -2263,8 +2299,20 @@ public static boolean loadGastoSinRegularizaciones(Connection conn, Integer ejer
 				
 				if(con_historia) {
 					for(String tabla:tablas){
-						pstm = conn.prepareStatement("DELETE FROM dashboard."+tabla+ " WHERE ejercicio=?");
+						pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard."+tabla+"_temp");
+						pstm.executeUpdate();
+						pstm.close();
+						pstm = conn.prepareStatement("CREATE TABLE dashboard."+tabla+"_temp AS SELECT * FROM dashboard."+tabla+" WHERE ejercicio <> ?");
 						pstm.setInt(1, ejercicio);
+						pstm.executeUpdate();
+						pstm.close();
+						pstm = conn.prepareStatement("TRUNCATE TABLE dashboard."+tabla);
+						pstm.executeUpdate();
+						pstm.close();
+						pstm = conn.prepareStatement("INSERT INTO dashboard."+tabla+" SELECT * FROM dashboard."+tabla+"_temp");
+						pstm.executeUpdate();
+						pstm.close();
+						pstm = conn.prepareStatement("DROP TABLE dashboard."+tabla+"_temp");
 						pstm.executeUpdate();
 						pstm.close();
 					}

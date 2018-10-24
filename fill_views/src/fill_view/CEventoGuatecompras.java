@@ -21,10 +21,23 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio, boolean 
 				PreparedStatement pstm;
 				if(getdata) {
 					CLogger.writeConsole("Eliminando data actual:");
-					pstm = conn.prepareStatement("DELETE FROM dashboard.mv_evento_gc WHERE ano_publicacion=?");
+					pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard.mv_evento_gc_temp");
+					pstm.executeUpdate();
+					pstm.close();
+					pstm = conn.prepareStatement("CREATE TABLE dashboard.mv_evento_gc_temp AS SELECT * FROM dashboard.mv_ejecucion_fisica WHERE ano_publicacion <> ?");
 					pstm.setInt(1, ejercicio);
 					pstm.executeUpdate();
 					pstm.close();
+					pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_evento_gc");
+					pstm.executeUpdate();
+					pstm.close();
+					pstm = conn.prepareStatement("INSERT INTO dashboard.mv_evento_gc SELECT * FROM dashboard.mv_evento_gc_temp");
+					pstm.executeUpdate();
+					pstm.close();
+					pstm = conn.prepareStatement("DROP TABLE dashboard.mv_evento_gc_temp");
+					pstm.executeUpdate();
+					pstm.close();
+					
 					
 					CLogger.writeConsole("Insertando valores a MV_EVENTO_GC");
 					pstm = conn.prepareStatement("insert into table dashboard.mv_evento_gc "+
@@ -285,9 +298,21 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio, boolean 
 				PreparedStatement pstm;
 				if(getdata) {
 					CLogger.writeConsole("Eliminando data actual:");
-					pstm = conn.prepareStatement("DELETE FROM dashboard.mv_eventos_gc WHERE ano_publicacion BETWEEN ? and ?");
+					pstm = conn.prepareStatement("DROP TABLE IF EXISTS mv_eventos_gc_temp");
+					pstm.executeUpdate();
+					pstm.close();
+					pstm = conn.prepareStatement("CREATE TABLE dashboard.mv_eventos_gc_temp AS SELECT * FROM dashboard.mv_eventos_gc WHERE ejercicio not between ? and ?");
 					pstm.setInt(1, ejercicio_inicio);
 					pstm.setInt(2, ejercicio_fin);
+					pstm.executeUpdate();
+					pstm.close();
+					pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_eventos_gc");
+					pstm.executeUpdate();
+					pstm.close();
+					pstm = conn.prepareStatement("INSERT INTO dashboard.mv_eventos_gc SELECT * FROM dashboard.mv_eventos_gc_temp");
+					pstm.executeUpdate();
+					pstm.close();
+					pstm = conn.prepareStatement("DROP TABLE dashboard.mv_eventos_gc_temp");
 					pstm.executeUpdate();
 					pstm.close();
 					
@@ -413,10 +438,21 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio, boolean 
 					pstm1.close();
 					if(getdata) {
 						CLogger.writeConsole("Eliminando data actual de MV_EVENTO_GC_GROUP:");
-						
-						pstm = conn.prepareStatement("DELETE FROM dashboard.mv_eventos_gc_group WHERE ano_publicacion BETWEEN ? and ?");
+						pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard.mv_eventos_gc_group_temp");
+						pstm.executeUpdate();
+						pstm.close();
+						pstm = conn.prepareStatement("CREATE TABLE dashboard.mv_eventos_gc_group_temp AS SELECT * FROM dashboard.mv_eventos_gc_group WHERE ejercicio not between ? and ?");
 						pstm.setInt(1, ejercicio_inicio);
 						pstm.setInt(2, ejercicio_fin);
+						pstm.executeUpdate();
+						pstm.close();
+						pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_eventos_gc_group");
+						pstm.executeUpdate();
+						pstm.close();
+						pstm = conn.prepareStatement("INSERT INTO dashboard.mv_eventos_gc_group SELECT * FROM dashboard.mv_eventos_gc_group_temp");
+						pstm.executeUpdate();
+						pstm.close();
+						pstm = conn.prepareStatement("DROP TABLE dashboard.mv_eventos_gc_group_temp");
 						pstm.executeUpdate();
 						pstm.close();
 						
