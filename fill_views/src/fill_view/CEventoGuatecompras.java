@@ -24,7 +24,7 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio, boolean 
 					pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard.mv_evento_gc_temp");
 					pstm.executeUpdate();
 					pstm.close();
-					pstm = conn.prepareStatement("CREATE TABLE dashboard.mv_evento_gc_temp AS SELECT * FROM dashboard.mv_evento_gc_temp WHERE ano_publicacion <> ?");
+					pstm = conn.prepareStatement("CREATE TABLE dashboard.mv_evento_gc_temp AS SELECT * FROM dashboard.mv_evento_gc WHERE ano_publicacion <> ?");
 					pstm.setInt(1, ejercicio);
 					pstm.executeUpdate();
 					pstm.close();

@@ -702,8 +702,7 @@ public class CEjecucionPresupuestaria {
 							"where ejercicio= ? " +
 							"group by  ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, proyecto, actividad, obra, fuente, grupo, subgrupo, economico, renglon, geografico " +
 							") g  " + 
-							"on(  g.ejercicio = v.ejercicio " +
-							"and g.mes = v.mes   " + 
+							"on(  g.mes = v.mes   " + 
 							"and g.entidad = v.entidad  " + 
 							"and g.unidad_ejecutora = v.unidad_ejecutora  " + 
 							"and g.programa = v.programa  " + 

@@ -17,7 +17,7 @@ public class CEjecucionContable {
 				pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard.mv_anticipo_contable_temp");
 				pstm.executeUpdate();
 				pstm.close();
-				pstm = conn.prepareStatement("CREATE TABLE dashboard.mv_anticipo_contable_temp AS dashaboard.mv_anticipo_contable WHERE ejercicio<>?");
+				pstm = conn.prepareStatement("CREATE TABLE dashboard.mv_anticipo_contable_temp AS SELECT * FROM dashaboard.mv_anticipo_contable WHERE ejercicio<>?");
 				pstm.executeUpdate();
 				pstm.close();
 				pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_anticipo_contable WHERE ejercicio=?");
