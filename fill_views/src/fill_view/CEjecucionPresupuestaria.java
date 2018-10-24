@@ -275,6 +275,7 @@ public class CEjecucionPresupuestaria {
 					pstm = conn.prepareStatement("insert into table dashboard.mv_gasto_anual " + 
 							"select gh.ejercicio,month(gh.fec_aprobado) mes, gd.entidad, gd.unidad_ejecutora, gd.programa, gd.subprograma, gd.proyecto, gd.actividad, gd.obra, gd.renglon, gd.fuente,             " + 
 							"							  gd.renglon - (gd.renglon%100) grupo, gd.renglon - (gd.renglon%10) subgrupo, gd.geografico,        " + 
+							"							  f.economico,     " + 
 							"							  gd.organismo, gd.correlativo, gd.entidad_receptora,     " + 
 							"							  case  " + 
 							"							     when gh.ejercicio > 2009 then (f.funcion-(f.funcion%10000))  " + 
@@ -288,7 +289,6 @@ public class CEjecucionPresupuestaria {
 							"							     when gh.ejercicio > 2009 then f.funcion " + 
 							"							     else null  " + 
 							"							  end division,     " + 
-							"							  f.economico,     " + 
 							"							  (f.tipo_presupuesto - (f.tipo_presupuesto%10)) tipo_gasto,    " + 
 							"							  f.tipo_presupuesto subgrupo_tipo_gasto,              " + 
 							"							  sum(gd.monto_renglon) ejecucion              " + 
