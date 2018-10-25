@@ -18,6 +18,7 @@ public class CEjecucionContable {
 				pstm.executeUpdate();
 				pstm.close();
 				pstm = conn.prepareStatement("CREATE TABLE dashboard.mv_anticipo_contable_temp AS SELECT * FROM dashaboard.mv_anticipo_contable WHERE ejercicio<>?");
+				pstm.setInt(1, ejercicio);
 				pstm.executeUpdate();
 				pstm.close();
 				pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_anticipo_contable WHERE ejercicio=?");
