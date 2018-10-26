@@ -31,6 +31,46 @@ public class CMemSQL {
 		schemades = CProperties.getmemsql_schemades();
 	}
 	
+	public static String getHost() {
+		return host;
+	}
+
+	public static void setHost(String host) {
+		CMemSQL.host = host;
+	}
+
+	public static Integer getPort() {
+		return port;
+	}
+
+	public static void setPort(Integer port) {
+		CMemSQL.port = port;
+	}
+
+	public static String getUser() {
+		return user;
+	}
+
+	public static void setUser(String user) {
+		CMemSQL.user = user;
+	}
+
+	public static String getPassword() {
+		return password;
+	}
+
+	public static void setPassword(String password) {
+		CMemSQL.password = password;
+	}
+
+	public static String getSchema() {
+		return schema;
+	}
+
+	public static void setSchema(String schema) {
+		CMemSQL.schema = schema;
+	}
+
 	public static boolean connect(){
 		try{
 			Class.forName("com.mysql.jdbc.Driver").newInstance();

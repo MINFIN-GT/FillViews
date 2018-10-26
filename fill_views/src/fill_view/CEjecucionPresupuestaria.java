@@ -1,5 +1,6 @@
 package fill_view;
 
+import java.lang.ProcessBuilder.Redirect;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -786,7 +787,46 @@ public class CEjecucionPresupuestaria {
 					int rows = 0;
 					int rows_total=0;
 					boolean first=true;
-					PreparedStatement pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ejecucion_presupuestaria(ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, " + 
+					PreparedStatement pstm1;
+					pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard.mv_ejecucion_presupuestaria_load");
+					pstm.executeUpdate();
+					pstm.close();
+					pstm = conn.prepareStatement("CREATE TABLE dashboard.mv_ejecucion_presupuestaria_load AS SELECT cast(ejercicio as int) ejercicio, cast(mes as int) mes, " + 
+							"              cast(entidad as bigint) entidad, " + 
+							"              cast(unidad_ejecutora as int) unidad_ejecutora, cast(programa as int) programa, cast(subprograma as int) subprograma, " + 
+							"              cast(proyecto as int) proyecto, " + 
+							"							cast(actividad as int) actividad, cast(obra as int) obra, cast(renglon as int) renglon, renglon_nombre, " + 
+							"							cast(subgrupo as int) subgrupo, subgrupo_nombre, cast(grupo as int) grupo, grupo_nombre, " + 
+							"							cast(fuente as int) fuente, " + 
+							"							ano_1, ano_2, ano_3, ano_4, ano_5, ano_actual, solicitado_cuota solicitado, aprobado_cuota aprobado, asignado, vigente, anticipo_cuota anticipo, " + 
+							"							compromiso, economico FROM dashboard.mv_ejecucion_presupuestaria WHERE ejercicio = ?");
+					pstm.setInt(1, ejercicio);
+					pstm.executeUpdate();
+					pstm.close();
+					pstm = conn.prepareStatement("SELECT count(*) total FROM  dashboard.mv_ejecucion_presupuestaria_load");
+					ResultSet rs = pstm.executeQuery();
+					rows_total=rs.next() ? rs.getInt("total") : 0;
+					rs.close();
+					if(rows_total>0) {
+						PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ejecucion_presupuestaria where ejercicio =  ? ");
+						pstm2.setInt(1, ejercicio);
+						if (pstm2.executeUpdate()>0)
+							CLogger.writeConsole("Registros eliminados");
+						else
+							CLogger.writeConsole("Sin registros para eliminar");	
+						pstm2.close();
+						String[] command= {"sh","-c","/usr/hdp/current/sqoop/bin/sqoop export --connect jdbc:mysql://"+CMemSQL.getHost()+":"+CMemSQL.getPort()+"/"+CMemSQL.getSchema()+
+								" --username "+ CMemSQL.getUser()+ " --table mv_ejecucion_presupuestaria --hcatalog-database dashboard --hcatalog-table mv_ejecucion_presupuestaria_load"};
+						ProcessBuilder pb = new ProcessBuilder(command);
+						pb.redirectOutput(Redirect.INHERIT);
+						pb.redirectError(Redirect.INHERIT);
+						pb.start().waitFor();
+					}
+					pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard.mv_ejecucion_presupuestaria_load");
+					pstm.executeUpdate();
+					pstm.close();
+					
+					/*PreparedStatement pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ejecucion_presupuestaria(ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, " + 
 							"proyecto, actividad, obra, economico, renglon, renglon_nombre, subgrupo, subgrupo_nombre, grupo," + 
 							"grupo_nombre, fuente, ano_1, ano_2, ano_3, ano_4, ano_5, ano_actual, solicitado, aprobado, anticipo, asignado, vigente, compromiso) "
 							+ "values (?,?,?,?,?,?,?,?,?,?,"
@@ -865,12 +905,50 @@ public class CEjecucionPresupuestaria {
 						pstm.close();
 						CMemSQL.getConnection().commit();
 					}
-					
-					CLogger.writeConsole("Records escritos Totales: "+rows_total);
 					pstm1.close();
+					*/
+					CLogger.writeConsole("Records escritos Totales: "+rows_total);
 					
 					CLogger.writeConsole("Cargando datos a cache de MV_EJECUCION_PRESUPUESTARIA_GEOGRAFICO");
-					ret = true;
+					pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard.mv_ejecucion_presupuestaria_geografico_load");
+					pstm.executeUpdate();
+					pstm.close();
+					pstm = conn.prepareStatement("CREATE TABLE dashboard.mv_ejecucion_presupuestaria_geografico_load AS SELECT cast(ejercicio as int) ejercicio, cast(mes as int) mes, " + 
+							"              cast(entidad as bigint) entidad, " + 
+							"              cast(unidad_ejecutora as int) unidad_ejecutora, cast(programa as int) programa, cast(subprograma as int) subprograma, " + 
+							"              cast(proyecto as int) proyecto, " + 
+							"							cast(actividad as int) actividad, cast(obra as int) obra, cast(renglon as int) renglon,  " + 
+							"							cast(subgrupo as int) subgrupo,  cast(grupo as int) grupo,  " + 
+							"							cast(fuente as int) fuente, cast(geografico as int) geografico, " + 
+							"							ano_actual, asignado, vigente, compromiso, " + 
+							"							economico FROM dashboard.mv_ejecucion_presupuestaria_geografico WHERE ejercicio = ?");
+					pstm.setInt(1, ejercicio);
+					pstm.executeUpdate();
+					pstm.close();
+					pstm = conn.prepareStatement("SELECT count(*) FROM  dashboard.mv_ejecucion_presupuestaria_geografico_load");
+					rs = pstm.executeQuery();
+					rows_total=rs.next() ? rs.getInt(1) : 0;
+					rs.close();
+					if(rows_total>0) {
+						PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_ejecucion_presupuestaria_geografico where ejercicio = ? ");
+						pstm2.setInt(1, ejercicio);
+						if (pstm2.executeUpdate()>0)
+							CLogger.writeConsole("Registros eliminados");
+						else
+							CLogger.writeConsole("Sin registros para eliminar");	
+						pstm2.close();
+						first=false;
+						String[] command = {"sh","-c","/usr/hdp/current/sqoop/bin/sqoop export --connect jdbc:mysql://"+CMemSQL.getHost()+":"+CMemSQL.getPort()+"/"+CMemSQL.getSchema()+
+								" --username"+CMemSQL.getUser()+" --table mv_ejecucion_presupuestaria_geografico --hcatalog-database dashboard --hcatalog-table mv_ejecucion_presupuestaria_geografico_load"};
+						ProcessBuilder pb = new ProcessBuilder(command);
+						pb.redirectOutput(Redirect.INHERIT);
+						pb.redirectError(Redirect.INHERIT);
+						pb.start().waitFor();
+					}
+					pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard.mv_ejecucion_presupuestaria_geografico_load");
+					pstm.executeUpdate();
+					pstm.close();
+					/*ret = true;
 					rows = 0;
 					first=true;
 					pstm1 = CMemSQL.getConnection().prepareStatement("Insert INTO mv_ejecucion_presupuestaria_geografico(ejercicio, mes, entidad, unidad_ejecutora, programa, subprograma, " + 
@@ -929,9 +1007,10 @@ public class CEjecucionPresupuestaria {
 						pstm.close();
 						CMemSQL.getConnection().commit();
 					}
-					
-					CLogger.writeConsole("Records escritos Totales: "+rows_total);
 					pstm1.close();
+					*/
+					CLogger.writeConsole("Records escritos Totales: "+rows_total);
+					
 					
 					
 					CLogger.writeConsole("Cargando datos a cache de MV_ESTRUCTURA");
@@ -946,7 +1025,7 @@ public class CEjecucionPresupuestaria {
 					pstm = conn.prepareStatement("SELECT * FROM dashboard.mv_estructura where ejercicio = ? ");
 					pstm.setInt(1, ejercicio);
 					pstm.setFetchSize(10000);
-					ResultSet rs = pstm.executeQuery();
+					rs = pstm.executeQuery();
 					while(rs!=null && rs.next()){
 						if(first){
 							PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("delete from mv_estructura where ejercicio = ? ");

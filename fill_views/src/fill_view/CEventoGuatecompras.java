@@ -158,9 +158,20 @@ public static boolean loadEventosGC(Connection conn, Integer ejercicio, boolean 
 					
 					if(getdata) {
 						CLogger.writeConsole("Eliminando data actual de MV_EVENTO_GC_GROUP:");
-						
-						pstm = conn.prepareStatement("DELETE FROM dashboard.mv_evento_gc_group WHERE ano_publicacion=?");
+						pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard.mv_evento_gc_group_temp");
+						pstm.executeUpdate();
+						pstm.close();
+						pstm = conn.prepareStatement("CREATE TABLE dashboard.mv_evento_gc_group_temp AS SELECT * FROM dashboard.mv_evento_gc_group WHERE ano_publicacion <> ?");
 						pstm.setInt(1, ejercicio);
+						pstm.executeUpdate();
+						pstm.close();
+						pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_evento_gc_group");
+						pstm.executeUpdate();
+						pstm.close();
+						pstm = conn.prepareStatement("INSERT INTO dashboard.mv_evento_gc_group SELECT * FROM dashboard.mv_evento_gc_group_temp");
+						pstm.executeUpdate();
+						pstm.close();
+						pstm = conn.prepareStatement("DROP TABLE dashboard.mv_evento_gc_group_temp");
 						pstm.executeUpdate();
 						pstm.close();
 						
