@@ -1063,6 +1063,7 @@ public class CEjecucionPresupuestaria {
 					rs.close();
 					pstm.close();
 					CMemSQL.getConnection().commit();
+					CLogger.writeConsole("Records escritos Totales: "+rows);
 					
 					CLogger.writeConsole("Cargando datos a cache de MV_GASTO_SIN_REGULARIZACIONES");
 					ret = true;
@@ -1116,6 +1117,7 @@ public class CEjecucionPresupuestaria {
 					rs.close();
 					pstm.close();
 					CMemSQL.getConnection().commit();
+					CLogger.writeConsole("Records escritos Totales: "+rows);
 					
 					CLogger.writeConsole("Cargando datos a cache de MV_GASTO_SIN_REGULARIZACIONES_FECHA_PAGADO_TOTAL");
 					ret = true;
@@ -1169,6 +1171,7 @@ public class CEjecucionPresupuestaria {
 					rs.close();
 					pstm.close();
 					CMemSQL.getConnection().commit();
+					CLogger.writeConsole("Records escritos Totales: "+rows);
 					
 					
 					CLogger.writeConsole("Cargando datos a cache de MV_EJECUCION_PRESUPUESTARIA_MENSUALIZADA");
