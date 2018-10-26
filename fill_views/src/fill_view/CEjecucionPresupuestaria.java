@@ -816,7 +816,8 @@ public class CEjecucionPresupuestaria {
 							CLogger.writeConsole("Sin registros para eliminar");	
 						pstm2.close();
 						String[] command= {"sh","-c","/usr/hdp/current/sqoop/bin/sqoop export --connect jdbc:mysql://"+CMemSQL.getHost()+":"+CMemSQL.getPort()+"/"+CMemSQL.getSchema()+
-								" --username "+ CMemSQL.getUser()+ " --table mv_ejecucion_presupuestaria --hcatalog-database dashboard --hcatalog-table mv_ejecucion_presupuestaria_load"};
+								" --username "+ CMemSQL.getUser()+ " --table mv_ejecucion_presupuestaria --hcatalog-database dashboard --hcatalog-table mv_ejecucion_presupuestaria_load" + 
+								" -Dmapred.job.queue.name=NodeMaster"};
 						ProcessBuilder pb = new ProcessBuilder(command);
 						pb.redirectOutput(Redirect.INHERIT);
 						pb.redirectError(Redirect.INHERIT);
@@ -939,7 +940,8 @@ public class CEjecucionPresupuestaria {
 						pstm2.close();
 						first=false;
 						String[] command = {"sh","-c","/usr/hdp/current/sqoop/bin/sqoop export --connect jdbc:mysql://"+CMemSQL.getHost()+":"+CMemSQL.getPort()+"/"+CMemSQL.getSchema()+
-								" --username "+CMemSQL.getUser()+" --table mv_ejecucion_presupuestaria_geografico --hcatalog-database dashboard --hcatalog-table mv_ejecucion_presupuestaria_geografico_load"};
+								" --username "+CMemSQL.getUser()+" --table mv_ejecucion_presupuestaria_geografico --hcatalog-database dashboard --hcatalog-table mv_ejecucion_presupuestaria_geografico_load"+
+								" -Dmapred.job.queue.name=NodeMaster "};
 						ProcessBuilder pb = new ProcessBuilder(command);
 						pb.redirectOutput(Redirect.INHERIT);
 						pb.redirectError(Redirect.INHERIT);
