@@ -17,18 +17,17 @@ public class CEjecucionContable {
 				pstm = conn.prepareStatement("DROP TABLE IF EXISTS dashboard.mv_anticipo_contable_temp");
 				pstm.executeUpdate();
 				pstm.close();
-				pstm = conn.prepareStatement("CREATE TABLE dashboard.mv_anticipo_contable_temp AS SELECT * FROM dashaboard.mv_anticipo_contable WHERE ejercicio<>?");
+				pstm = conn.prepareStatement("CREATE TABLE dashboard.mv_anticipo_contable_temp AS SELECT * FROM dashboard.mv_anticipo_contable WHERE ejercicio<>?");
 				pstm.setInt(1, ejercicio);
 				pstm.executeUpdate();
 				pstm.close();
-				pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_anticipo_contable WHERE ejercicio=?");
-				pstm.setInt(1, ejercicio);
+				pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_anticipo_contable");
 				pstm.executeUpdate();
 				pstm.close();
-				pstm = conn.prepareStatement("INSERT INTO dashboard.mv_anticipo_contable SELECT * FROM dashaboard.mv_anticipo_contable_temp");
+				pstm = conn.prepareStatement("INSERT INTO dashboard.mv_anticipo_contable SELECT * FROM dashboard.mv_anticipo_contable_temp");
 				pstm.executeUpdate();
 				pstm.close();
-				pstm = conn.prepareStatement("DROP dashboard.mv_anticipo_contable_temp");
+				pstm = conn.prepareStatement("DROP TABLE dashboard.mv_anticipo_contable_temp");
 				pstm.executeUpdate();
 				pstm.close();
 				
