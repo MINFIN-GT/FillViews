@@ -41,6 +41,7 @@ public class CMain {
 		options.addOption("ei", "ejecucion-ingresos", true, "cargar ingresos");
 		options.addOption("ing_ra", "ing_ra", true, "cargar ingresos recurso auxiliar por año");
 		options.addOption("ing_r", "ing_r", true, "cargar ingresos recurso por año");
+		options.addOption("ing_f", "ing_f", true, "cargar ingresos recurso por año");
 		options.addOption("sn", "snips", false, "cargar snips");
 		options.addOption("egc", "eventos-guatecompras", true, "cargar eventos guatecompras");
 		options.addOption("egch", "eventos-guatecompras-historia", true, "cargar historia de eventos guatecompras");
@@ -103,8 +104,10 @@ public class CMain {
 				 CLogger.writeConsole("Inicio de actualizacion de eventos guatecompras para el estado de calamidad para el subprograma indicado");
 				 Integer subprograma = cline.getOptionValue("eec_gc")!=null && cline.getOptionValue("eec_gc").length()>0 ? 
 						 Integer.parseInt(cline.getOptionValue("eec_gc")) : 0;
-				 if(CEjecucionCalamidad.actualizarEventosGuatecompras(subprograma))
+				 if(CEjecucionCalamidad.actualizarEventosGuatecompras(subprograma)) {
+					 CFechaActualizacionData.UpdateLoadDate("estadoscalamidad");
 					 CLogger.writeConsole("Eventos de Guatecompras del estado de calamidad en el subprograma actualizados con éxito");
+				 }
 			 }
 			 else if(cline.hasOption("ejecucion-metas-presidenciales")){
 				 CLogger.writeConsole("Inicio registro avance fisico y financiero de metas presidenciales...");
@@ -127,11 +130,11 @@ public class CMain {
 					 CLogger.writeConsole("Datos de prestamos cargados con exito");
 			 }else if (cline.hasOption("update-all")){
 				 CLogger.writeConsole("Inicio de importacion de todos las tablas.");
-				 if(	CFechaActualizacionData.UpdateLoadDate("ejecucionpresupuestaria") &&
-						CEjecucionFisica.loadEjeucionHoja(conn, false, false) &&
+				 if(	CEjecucionFisica.loadEjeucionHoja(conn, false, false) &&
 						CEjecucionFisica.loadEjecucionDetalle(conn, false, false) &&
 						CUnidadMedida.loadUnidadesMedida(conn, false, false) &&
-						CEjecucionPrestamos.loadEjecucionFinanciera()
+						CEjecucionPrestamos.loadEjecucionFinanciera() &&
+						CFechaActualizacionData.UpdateLoadDate("ejecucionpresupuestaria")
 					)
 					CLogger.writeConsole("todas las tablas importadas con exito");
 			 }
@@ -150,8 +153,10 @@ public class CMain {
 				 Integer ejercicio =  argumentos!=null && argumentos.length>0 ? 
 						 Integer.parseInt(argumentos[0]) : start.getYear();
 				 boolean con_historia = argumentos!=null && argumentos.length>1 ? argumentos[1]=="true" : true;		 
-				 if(CEjecucionPresupuestaria.loadEjecucionPresupuestaria(conn, ejercicio, true, con_historia))
+				 if(CEjecucionPresupuestaria.loadEjecucionPresupuestaria(conn, ejercicio, true, con_historia)) {
+					 //CFechaActualizacionData.UpdateLoadDate("ejecucionpresupuestaria");
 					 CLogger.writeConsole("Datos de ejecucion presupuestaria cargados con exito");
+				 }
 			 }
 			 else if(cline.hasOption("ejecucion-presupuestaria-load")){
 				 CLogger.writeConsole("Inicio carga de cache de ejecucion presupuestaria");
@@ -244,6 +249,13 @@ public class CMain {
 						 Integer.parseInt(cline.getOptionValue("ing_r")) : start.getYear();
 				 if(CIngreso.loadIngresosRecurso(conn, ejercicio))
 					 CLogger.writeConsole("Datos de ingresos por recurso cargados con exito");
+			 }
+			 else if(cline.hasOption("ing_f")){
+				 CLogger.writeConsole("Inicio carga de ingresos por fuente");
+				 Integer ejercicio = cline.getOptionValue("ing_f")!=null && cline.getOptionValue("ing_f").length()>0 ? 
+						 Integer.parseInt(cline.getOptionValue("ing_f")) : start.getYear();
+				 if(CIngreso.loadIngresosRecurso(conn, ejercicio))
+					 CLogger.writeConsole("Datos de ingresos por fuente cargados con exito");
 			 }
 			 else if(cline.hasOption("catalogos")){
 				 CLogger.writeConsole("Inicio carga de catalogos");

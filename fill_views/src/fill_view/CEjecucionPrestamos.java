@@ -91,8 +91,8 @@ public class CEjecucionPrestamos {
 								  + "?,?,?,?,?,"
 								  + "?,?,?) "); 
 				while(rs.next()){	
-					ret = true;	
 					if (first){
+						ret = true;	
 						first=false;							
 						PreparedStatement pstm2 = CMemSQL.getConnection().prepareStatement("truncate table prestamo")  ;
 						pstm2.executeUpdate();
@@ -135,7 +135,7 @@ public class CEjecucionPrestamos {
 						CLogger.writeConsole(String.join("Records escritos: ",String.valueOf(rows)));
 					}
 				}
-				ret = ret & pstm.executeBatch().length>0;
+				ret = ret && pstm.executeBatch().length>0;
 				pstm.close();
 				pstm0.close();
 			}			
