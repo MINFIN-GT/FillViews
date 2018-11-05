@@ -254,7 +254,7 @@ public class CMain {
 				 CLogger.writeConsole("Inicio carga de ingresos por fuente");
 				 Integer ejercicio = cline.getOptionValue("ing_f")!=null && cline.getOptionValue("ing_f").length()>0 ? 
 						 Integer.parseInt(cline.getOptionValue("ing_f")) : start.getYear();
-				 if(CIngreso.loadIngresosRecurso(conn, ejercicio))
+				 if(CIngreso.loadIngresosFuente(conn, ejercicio))
 					 CLogger.writeConsole("Datos de ingresos por fuente cargados con exito");
 			 }
 			 else if(cline.hasOption("catalogos")){

@@ -639,7 +639,7 @@ public class CIngreso {
 			pstm = conn.prepareStatement("TRUNCATE TABLE dashboard.mv_ingreso_fuente");
 			pstm.executeUpdate();
 			pstm.close();
-			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_fuente_recurso SELECT * FROM dashboard.mv_ingreso_fuente_temp");
+			pstm = conn.prepareStatement("INSERT INTO dashboard.mv_ingreso_fuente SELECT * FROM dashboard.mv_ingreso_fuente_temp");
 			pstm.executeUpdate();
 			pstm.close();
 			pstm = conn.prepareStatement("DROP TABLE dashboard.mv_ingreso_fuente_temp");
@@ -772,7 +772,7 @@ public class CIngreso {
 						first=false;
 					}
 					pstm1.setInt(1, rs.getInt("fuente"));
-					pstm1.setString(2, rs.getString("fuente_nombre"));
+					pstm1.setString(2, "");
 					pstm1.setInt(3, rs.getInt("ejercicio"));
 					pstm1.setDouble(4, rs.getDouble("m1"));
 					pstm1.setDouble(5, rs.getDouble("m2"));
